@@ -17,7 +17,6 @@ class ApplicationsScreen extends StatefulWidget {
 class _ApplicationsScreenState extends State<ApplicationsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _searchQuery = '';
   ApplicationStatus? _filterStatus;
   String _sortBy = AppStrings.sortByDeadline;
 
@@ -266,9 +265,9 @@ class _ApplicationsScreenState extends State<ApplicationsScreen>
           const SizedBox(height: 16),
           Text(
             '$tabName 공고가 없습니다',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -284,13 +283,8 @@ class _ApplicationsScreenState extends State<ApplicationsScreen>
           autofocus: true,
           decoration: InputDecoration(
             hintText: AppStrings.searchPlaceholder,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          onChanged: (value) {
-            _searchQuery = value;
-          },
         ),
         actions: [
           TextButton(
@@ -327,86 +321,74 @@ class _ApplicationsScreenState extends State<ApplicationsScreen>
               children: [
                 Text(
                   '상태',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                ...ApplicationStatus.values.map((status) {
-                  return RadioListTile<ApplicationStatus>(
-                    title: Text(_getStatusText(status)),
-                    value: status,
-                    groupValue: selectedStatus,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedStatus = value;
-                      });
-                    },
-                    contentPadding: EdgeInsets.zero,
-                  );
-                }),
-                RadioListTile<ApplicationStatus?>(
-                  title: const Text('전체'),
-                  value: null,
+                RadioGroup<ApplicationStatus?>(
                   groupValue: selectedStatus,
                   onChanged: (value) {
                     setDialogState(() {
                       selectedStatus = value;
                     });
                   },
-                  contentPadding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      ...ApplicationStatus.values.map((status) {
+                        return RadioListTile<ApplicationStatus>(
+                          title: Text(_getStatusText(status)),
+                          value: status,
+                          contentPadding: EdgeInsets.zero,
+                        );
+                      }),
+                      RadioListTile<ApplicationStatus?>(
+                        title: const Text('전체'),
+                        value: null,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   '마감일',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                RadioListTile<String?>(
-                  title: const Text('전체'),
-                  value: null,
+                RadioGroup<String?>(
                   groupValue: selectedDeadline,
                   onChanged: (value) {
                     setDialogState(() {
                       selectedDeadline = value;
                     });
                   },
-                  contentPadding: EdgeInsets.zero,
-                ),
-                RadioListTile<String?>(
-                  title: const Text(AppStrings.deadlineWithin7Days),
-                  value: AppStrings.deadlineWithin7Days,
-                  groupValue: selectedDeadline,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      selectedDeadline = value;
-                    });
-                  },
-                  contentPadding: EdgeInsets.zero,
-                ),
-                RadioListTile<String?>(
-                  title: const Text(AppStrings.deadlineWithin3Days),
-                  value: AppStrings.deadlineWithin3Days,
-                  groupValue: selectedDeadline,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      selectedDeadline = value;
-                    });
-                  },
-                  contentPadding: EdgeInsets.zero,
-                ),
-                RadioListTile<String?>(
-                  title: const Text(AppStrings.deadlinePassed),
-                  value: AppStrings.deadlinePassed,
-                  groupValue: selectedDeadline,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      selectedDeadline = value;
-                    });
-                  },
-                  contentPadding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      RadioListTile<String?>(
+                        title: const Text('전체'),
+                        value: null,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      RadioListTile<String?>(
+                        title: const Text(AppStrings.deadlineWithin7Days),
+                        value: AppStrings.deadlineWithin7Days,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      RadioListTile<String?>(
+                        title: const Text(AppStrings.deadlineWithin3Days),
+                        value: AppStrings.deadlineWithin3Days,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      RadioListTile<String?>(
+                        title: const Text(AppStrings.deadlinePassed),
+                        value: AppStrings.deadlinePassed,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

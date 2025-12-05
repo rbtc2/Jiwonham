@@ -81,4 +81,36 @@ class AppStrings {
   static const String deadlineWithin7Days = 'D-7 이내';
   static const String deadlineWithin3Days = 'D-3 이내';
   static const String deadlinePassed = '마감됨';
+
+  // Application Detail Screen
+  static const String applicationDetail = '공고 상세';
+  static const String edit = '수정';
+  static const String delete = '삭제';
+  static const String deleteConfirm = '정말 삭제하시겠습니까?';
+  static const String deleteConfirmMessage = '이 작업은 되돌릴 수 없습니다.';
+  static const String cancel = '취소';
+  static const String confirm = '확인';
+  static const String write = '작성하기';
+  static const String editMemo = '메모 편집';
+  static const String interviewReview = '면접 후기';
+  static const String writeInterviewReview = '면접 후기 작성';
+  static const String noInterviewReview = '면접 후기가 없습니다. 면접 후기를 작성해보세요.';
+  static const String noMemo = '메모가 없습니다.';
+  static const String changeStatus = '상태 변경';
+  static const String notAppliedStatus = '지원 전';
+  static const String appliedStatus = '지원 완료';
+  static const String inProgressStatus = '진행중';
+  static const String passedStatus = '합격';
+  static const String rejectedStatus = '불합격';
+  static const String openLink = '지원서 링크 열기';
+  static const String question = '문항';
+  static const String answer = '답변';
+  static const String characterCount = '글자 수';
+  static const String maxCharacters = '최대';
+  static const String interviewDate = '면접 일시';
+  static const String interviewType = '면접 유형';
+  static const String interviewQuestions = '면접 질문';
+  static const String interviewReviewText = '면접 후기';
+  static const String rating = '평가';
+  static const String addInterviewQuestion = '질문 추가';
 }

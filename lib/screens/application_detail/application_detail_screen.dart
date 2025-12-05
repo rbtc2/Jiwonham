@@ -6,29 +6,76 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../widgets/d_day_badge.dart';
 import '../../widgets/status_chip.dart';
+import '../add_edit_application/add_edit_application_screen.dart';
 
-class ApplicationDetailScreen extends StatelessWidget {
+class ApplicationDetailScreen extends StatefulWidget {
   const ApplicationDetailScreen({super.key});
+
+  @override
+  State<ApplicationDetailScreen> createState() =>
+      _ApplicationDetailScreenState();
+}
+
+class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
+  // 더미 데이터
+  final String _companyName = '네이버';
+  final String _position = '백엔드 개발자';
+  final DateTime _deadline = DateTime.now().add(const Duration(days: 5));
+  final String _applicationLink = 'https://recruit.navercorp.com';
+  ApplicationStatus _currentStatus = ApplicationStatus.inProgress;
+  final String _memo = '면접 준비를 철저히 해야 함. 기술 질문 위주로 준비할 것.';
+
+  // 자기소개서 문항 더미 데이터
+  final List<Map<String, dynamic>> _coverLetterQuestions = [
+    {
+      'question': '1. 지원동기 (500자)',
+      'answer': '네이버의 기술력과 서비스에 감명받아...',
+      'maxLength': 500,
+      'currentLength': 120,
+    },
+    {
+      'question': '2. 입사 후 포부 (300자)',
+      'answer': '',
+      'maxLength': 300,
+      'currentLength': 0,
+    },
+  ];
+
+  // 면접 후기 더미 데이터
+  final List<Map<String, dynamic>> _interviewReviews = [
+    {
+      'date': DateTime.now().subtract(const Duration(days: 5)),
+      'type': '1차 면접',
+      'questions': ['자기소개를 해주세요', '지원동기는?', '프로젝트 경험을 설명해주세요'],
+      'review': '전반적으로 좋은 분위기였습니다. 기술 질문이 많았고, 팀 문화에 대해 많이 물어보셨습니다.',
+      'rating': 4,
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('공고 상세'),
+        title: const Text(AppStrings.applicationDetail),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              // TODO: 수정 화면으로 이동
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddEditApplicationScreen(),
+                ),
+              );
             },
-            tooltip: '수정',
+            tooltip: AppStrings.edit,
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: () {
-              // TODO: 삭제 확인 다이얼로그
+              _showDeleteConfirmDialog(context);
             },
-            tooltip: '삭제',
+            tooltip: AppStrings.delete,
           ),
         ],
       ),
@@ -66,7 +113,6 @@ class ApplicationDetailScreen extends StatelessWidget {
   }
 
   Widget _buildBasicInfoCard(BuildContext context) {
-    final deadline = DateTime.now().add(const Duration(days: 5));
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -80,20 +126,19 @@ class ApplicationDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '회사명',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        _companyName,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '직무명',
+                        _position,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
                   ),
                 ),
-                DDayBadge(deadline: deadline),
+                DDayBadge(deadline: _deadline),
               ],
             ),
             const SizedBox(height: 16),
@@ -103,9 +148,20 @@ class ApplicationDetailScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       // TODO: 지원서 링크 열기
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('지원서 링크: $_applicationLink'),
+                          action: SnackBarAction(
+                            label: '열기',
+                            onPressed: () {
+                              // TODO: URL 열기
+                            },
+                          ),
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.link),
-                    label: const Text('지원서 링크 열기'),
+                    label: const Text(AppStrings.openLink),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                     ),
@@ -114,10 +170,10 @@ class ApplicationDetailScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: () {
-                    // TODO: 알림 설정
+                    _showNotificationSettingsDialog(context);
                   },
                   icon: const Icon(Icons.notifications_outlined),
-                  tooltip: '알림 설정',
+                  tooltip: AppStrings.notificationSettings,
                 ),
               ],
             ),
@@ -128,6 +184,10 @@ class ApplicationDetailScreen extends StatelessWidget {
   }
 
   Widget _buildApplicationInfoSection(BuildContext context) {
+    final announcementDate = _deadline.add(const Duration(days: 5));
+    final interviewDate = _deadline.add(const Duration(days: 10));
+    final finalDate = _deadline.add(const Duration(days: 15));
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -136,18 +196,42 @@ class ApplicationDetailScreen extends StatelessWidget {
           children: [
             Text(
               '지원 정보',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildInfoRow(context, Icons.calendar_today, '서류 마감일', '2024.01.20', 'D-5'),
+            _buildInfoRow(
+              context,
+              Icons.calendar_today,
+              '서류 마감일',
+              _formatDate(_deadline),
+              'D-${_deadline.difference(DateTime.now()).inDays}',
+            ),
             const Divider(height: 24),
-            _buildInfoRow(context, Icons.campaign, '서류 발표일', '2024.01.25', null),
+            _buildInfoRow(
+              context,
+              Icons.campaign,
+              '서류 발표일',
+              _formatDate(announcementDate),
+              null,
+            ),
             const Divider(height: 24),
-            _buildInfoRow(context, Icons.event, '다음 전형 일정', '면접: 2024.01.30', null),
+            _buildInfoRow(
+              context,
+              Icons.event,
+              '다음 전형 일정',
+              '면접: ${_formatDate(interviewDate)}',
+              null,
+            ),
             const SizedBox(height: 8),
-            _buildInfoRow(context, Icons.event, '', '최종: 2024.02.05', null),
+            _buildInfoRow(
+              context,
+              Icons.event,
+              '',
+              '최종: ${_formatDate(finalDate)}',
+              null,
+            ),
           ],
         ),
       ),
@@ -174,20 +258,25 @@ class ApplicationDetailScreen extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Text(
-                    value,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
                   if (badge != null) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -218,44 +307,122 @@ class ApplicationDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              AppStrings.coverLetterQuestions,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppStrings.coverLetterQuestions,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    // TODO: 문항 추가
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text(AppStrings.addQuestion),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            _buildQuestionItem(context, '1. 지원동기 (500자)', '작성하기'),
-            const Divider(height: 16),
-            _buildQuestionItem(context, '2. 입사 후 포부 (300자)', '작성하기'),
+            ...List.generate(_coverLetterQuestions.length, (index) {
+              final question = _coverLetterQuestions[index];
+              final hasAnswer = (question['answer'] as String).isNotEmpty;
+              return Column(
+                children: [
+                  _buildQuestionItem(
+                    context,
+                    question['question'] as String,
+                    question['answer'] as String,
+                    question['maxLength'] as int,
+                    question['currentLength'] as int,
+                    hasAnswer,
+                    index,
+                  ),
+                  if (index < _coverLetterQuestions.length - 1)
+                    const Divider(height: 16),
+                ],
+              );
+            }),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildQuestionItem(BuildContext context, String question, String action) {
+  Widget _buildQuestionItem(
+    BuildContext context,
+    String question,
+    String answer,
+    int maxLength,
+    int currentLength,
+    bool hasAnswer,
+    int index,
+  ) {
     return InkWell(
       onTap: () {
-        // TODO: 자기소개서 작성 화면으로 이동
+        _showCoverLetterDialog(context, question, answer, maxLength, index);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                question,
-                style: Theme.of(context).textTheme.bodyMedium,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    question,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _showCoverLetterDialog(
+                      context,
+                      question,
+                      answer,
+                      maxLength,
+                      index,
+                    );
+                  },
+                  child: Text(hasAnswer ? '수정하기' : AppStrings.write),
+                ),
+              ],
+            ),
+            if (hasAnswer) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      answer,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$currentLength / $maxLength ${AppStrings.characterCount}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                // TODO: 작성 화면으로 이동
-              },
-              child: Text(action),
-            ),
+            ],
           ],
         ),
       ),
@@ -273,44 +440,189 @@ class ApplicationDetailScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '면접 후기',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  AppStrings.interviewReview,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    // TODO: 면접 후기 작성 화면으로 이동
+                    _showInterviewReviewDialog(context);
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('면접 후기 작성'),
+                  label: const Text(AppStrings.writeInterviewReview),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
+            if (_interviewReviews.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: AppColors.textSecondary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        AppStrings.noInterviewReview,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ...List.generate(_interviewReviews.length, (index) {
+                final review = _interviewReviews[index];
+                return _buildInterviewReviewItem(context, review, index);
+              }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInterviewReviewItem(
+    BuildContext context,
+    Map<String, dynamic> review,
+    int index,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.textSecondary),
+                  Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDate(review['date'] as DateTime),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: Text(
-                      '면접 후기가 없습니다. 면접 후기를 작성해보세요.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                      review['type'] as String,
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
+              Row(
+                children: [
+                  ...List.generate(
+                    5,
+                    (i) => Icon(
+                      i < (review['rating'] as int)
+                          ? Icons.star
+                          : Icons.star_border,
+                      size: 16,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if ((review['questions'] as List).isNotEmpty) ...[
+            Text(
+              AppStrings.interviewQuestions,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 4),
+            ...(review['questions'] as List<String>).map((q) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 8, bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '• ',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    Expanded(
+                      child: Text(
+                        q,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
           ],
-        ),
+          Text(
+            AppStrings.interviewReviewText,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            review['review'] as String,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  _showInterviewReviewDialog(
+                    context,
+                    review: review,
+                    index: index,
+                  );
+                },
+                child: const Text('수정'),
+              ),
+              TextButton(
+                onPressed: () {
+                  // TODO: 삭제 로직
+                },
+                child: Text('삭제', style: TextStyle(color: AppColors.error)),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -322,11 +634,22 @@ class ApplicationDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              AppStrings.memo,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppStrings.memo,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _showMemoDialog(context);
+                  },
+                  child: const Text(AppStrings.editMemo),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Container(
@@ -336,10 +659,12 @@ class ApplicationDetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '메모 내용이 여기에 표시됩니다.',
+                _memo.isNotEmpty ? _memo : AppStrings.noMemo,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                  color: _memo.isNotEmpty
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
+                ),
               ),
             ),
           ],
@@ -356,17 +681,51 @@ class ApplicationDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '상태 변경',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              AppStrings.changeStatus,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildStatusRadio(context, ApplicationStatus.notApplied, '지원 전'),
-            _buildStatusRadio(context, ApplicationStatus.applied, '지원 완료'),
-            _buildStatusRadio(context, ApplicationStatus.inProgress, '진행중'),
-            _buildStatusRadio(context, ApplicationStatus.passed, '합격'),
-            _buildStatusRadio(context, ApplicationStatus.rejected, '불합격'),
+            RadioGroup<ApplicationStatus>(
+              groupValue: _currentStatus,
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _currentStatus = value;
+                  });
+                }
+              },
+              child: Column(
+                children: [
+                  _buildStatusRadio(
+                    context,
+                    ApplicationStatus.notApplied,
+                    AppStrings.notAppliedStatus,
+                  ),
+                  _buildStatusRadio(
+                    context,
+                    ApplicationStatus.applied,
+                    AppStrings.appliedStatus,
+                  ),
+                  _buildStatusRadio(
+                    context,
+                    ApplicationStatus.inProgress,
+                    AppStrings.inProgressStatus,
+                  ),
+                  _buildStatusRadio(
+                    context,
+                    ApplicationStatus.passed,
+                    AppStrings.passedStatus,
+                  ),
+                  _buildStatusRadio(
+                    context,
+                    ApplicationStatus.rejected,
+                    AppStrings.rejectedStatus,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -387,11 +746,370 @@ class ApplicationDetailScreen extends StatelessWidget {
         ],
       ),
       value: status,
-      groupValue: ApplicationStatus.inProgress, // TODO: 실제 상태로 교체
-      onChanged: (value) {
-        // TODO: 상태 변경 로직
-      },
       contentPadding: EdgeInsets.zero,
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  }
+
+  void _showDeleteConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.deleteConfirm),
+        content: const Text(AppStrings.deleteConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // TODO: 삭제 로직
+              Navigator.pop(context);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('공고가 삭제되었습니다.')));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text(AppStrings.delete),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotificationSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.notificationSettings),
+        content: const SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [Text('알림 설정 기능은 추후 구현됩니다.')],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(AppStrings.confirm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCoverLetterDialog(
+    BuildContext context,
+    String question,
+    String answer,
+    int maxLength,
+    int index,
+  ) {
+    final controller = TextEditingController(text: answer);
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(question),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: controller,
+                  maxLines: 10,
+                  maxLength: maxLength,
+                  decoration: InputDecoration(
+                    hintText: '답변을 입력하세요',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setDialogState(() {});
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${controller.text.length} / $maxLength ${AppStrings.characterCount}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(AppStrings.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // TODO: 저장 로직
+                setState(() {
+                  _coverLetterQuestions[index]['answer'] = controller.text;
+                  _coverLetterQuestions[index]['currentLength'] =
+                      controller.text.length;
+                });
+                Navigator.pop(context);
+              },
+              child: const Text(AppStrings.save),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showInterviewReviewDialog(
+    BuildContext context, {
+    Map<String, dynamic>? review,
+    int? index,
+  }) {
+    final isEdit = review != null && index != null;
+    final dateController = TextEditingController(
+      text: isEdit ? _formatDate(review['date'] as DateTime) : '',
+    );
+    final typeController = TextEditingController(
+      text: isEdit ? review['type'] as String : '',
+    );
+    final reviewController = TextEditingController(
+      text: isEdit ? review['review'] as String : '',
+    );
+    int rating = isEdit ? review['rating'] as int : 3;
+    final List<String> questions = isEdit
+        ? List<String>.from(review['questions'] as List)
+        : [];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(isEdit ? '면접 후기 수정' : AppStrings.writeInterviewReview),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: dateController,
+                  decoration: InputDecoration(
+                    labelText: AppStrings.interviewDate,
+                    hintText: AppStrings.selectDate,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: const Icon(Icons.calendar_today),
+                  ),
+                  readOnly: true,
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime.now().subtract(
+                        const Duration(days: 365),
+                      ),
+                      lastDate: DateTime.now(),
+                      locale: const Locale('ko', 'KR'),
+                    );
+                    if (picked != null) {
+                      dateController.text = _formatDate(picked);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: typeController,
+                  decoration: InputDecoration(
+                    labelText: AppStrings.interviewType,
+                    hintText: '예: 1차 면접, 2차 면접, 최종 면접',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  AppStrings.interviewQuestions,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ...List.generate(
+                  questions.length,
+                  (i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                      controller: TextEditingController(text: questions[i]),
+                      decoration: InputDecoration(
+                        hintText: '질문 ${i + 1}',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () {
+                            setDialogState(() {
+                              questions.removeAt(i);
+                            });
+                          },
+                        ),
+                      ),
+                      onChanged: (value) {
+                        questions[i] = value;
+                      },
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    setDialogState(() {
+                      questions.add('');
+                    });
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text(AppStrings.addInterviewQuestion),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  AppStrings.interviewReviewText,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: reviewController,
+                  maxLines: 5,
+                  decoration: InputDecoration(
+                    hintText: '면접 분위기, 느낀 점, 개선할 점 등을 작성하세요',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  AppStrings.rating,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    5,
+                    (i) => IconButton(
+                      icon: Icon(
+                        i < rating ? Icons.star : Icons.star_border,
+                        color: AppColors.warning,
+                        size: 32,
+                      ),
+                      onPressed: () {
+                        setDialogState(() {
+                          rating = i + 1;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(AppStrings.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // TODO: 저장 로직
+                if (isEdit) {
+                  setState(() {
+                    _interviewReviews[index] = {
+                      'date': DateTime.now(), // TODO: 실제 날짜 파싱
+                      'type': typeController.text,
+                      'questions': questions
+                          .where((q) => q.isNotEmpty)
+                          .toList(),
+                      'review': reviewController.text,
+                      'rating': rating,
+                    };
+                  });
+                } else {
+                  setState(() {
+                    _interviewReviews.add({
+                      'date': DateTime.now(), // TODO: 실제 날짜 파싱
+                      'type': typeController.text,
+                      'questions': questions
+                          .where((q) => q.isNotEmpty)
+                          .toList(),
+                      'review': reviewController.text,
+                      'rating': rating,
+                    });
+                  });
+                }
+                Navigator.pop(context);
+              },
+              child: const Text(AppStrings.save),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMemoDialog(BuildContext context) {
+    final controller = TextEditingController(text: _memo);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.editMemo),
+        content: TextField(
+          controller: controller,
+          maxLines: 5,
+          decoration: InputDecoration(
+            hintText: '메모를 입력하세요',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // TODO: 저장 로직
+              setState(() {
+                // _memo = controller.text; // 실제로는 상태 관리 필요
+              });
+              Navigator.pop(context);
+            },
+            child: const Text(AppStrings.save),
+          ),
+        ],
+      ),
     );
   }
 }
