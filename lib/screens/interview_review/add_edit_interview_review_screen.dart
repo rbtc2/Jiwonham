@@ -138,15 +138,15 @@ class _AddEditInterviewReviewScreenState
                   Text(
                     widget.companyName,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   if (widget.position != null)
                     Text(
                       widget.position!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                 ],
               ),
@@ -163,13 +163,17 @@ class _AddEditInterviewReviewScreenState
       children: [
         Row(
           children: [
-            Icon(Icons.calendar_today, size: 20, color: AppColors.textSecondary),
+            Icon(
+              Icons.calendar_today,
+              size: 20,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(width: 8),
             Text(
               '${AppStrings.interviewDate} *',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -229,9 +233,9 @@ class _AddEditInterviewReviewScreenState
             const SizedBox(width: 8),
             Text(
               AppStrings.interviewType,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -240,9 +244,7 @@ class _AddEditInterviewReviewScreenState
           controller: _typeController,
           decoration: InputDecoration(
             hintText: '예: 1차 면접, 2차 면접, 최종 면접',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: AppColors.surface,
           ),
@@ -260,13 +262,17 @@ class _AddEditInterviewReviewScreenState
           children: [
             Row(
               children: [
-                Icon(Icons.help_outline, size: 20, color: AppColors.textSecondary),
+                Icon(
+                  Icons.help_outline,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   AppStrings.interviewQuestions,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -297,50 +303,47 @@ class _AddEditInterviewReviewScreenState
                   child: Text(
                     '면접 질문을 추가하려면 [+ 질문 추가] 버튼을 누르세요',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
             ),
           )
         else
-          ...List.generate(
-            _questionControllers.length,
-            (index) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _questionControllers[index],
-                        decoration: InputDecoration(
-                          hintText: '질문 ${index + 1}',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.surface,
+          ...List.generate(_questionControllers.length, (index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _questionControllers[index],
+                      decoration: InputDecoration(
+                        hintText: '질문 ${index + 1}',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        filled: true,
+                        fillColor: AppColors.surface,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _questionControllers[index].dispose();
-                          _questionControllers.removeAt(index);
-                        });
-                      },
-                      icon: const Icon(Icons.delete_outline),
-                      color: AppColors.error,
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _questionControllers[index].dispose();
+                        _questionControllers.removeAt(index);
+                      });
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                    color: AppColors.error,
+                  ),
+                ],
+              ),
+            );
+          }),
       ],
     );
   }
@@ -355,9 +358,9 @@ class _AddEditInterviewReviewScreenState
             const SizedBox(width: 8),
             Text(
               AppStrings.interviewReviewText,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -367,9 +370,7 @@ class _AddEditInterviewReviewScreenState
           maxLines: 8,
           decoration: InputDecoration(
             hintText: '면접 분위기, 느낀 점, 개선할 점 등을 작성하세요',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: AppColors.surface,
           ),
@@ -388,9 +389,9 @@ class _AddEditInterviewReviewScreenState
             const SizedBox(width: 8),
             Text(
               AppStrings.rating,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -398,23 +399,20 @@ class _AddEditInterviewReviewScreenState
         Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              5,
-              (index) {
-                return IconButton(
-                  icon: Icon(
-                    index < _rating ? Icons.star : Icons.star_border,
-                    color: AppColors.warning,
-                    size: 40,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _rating = index + 1;
-                    });
-                  },
-                );
-              },
-            ),
+            children: List.generate(5, (index) {
+              return IconButton(
+                icon: Icon(
+                  index < _rating ? Icons.star : Icons.star_border,
+                  color: AppColors.warning,
+                  size: 40,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _rating = index + 1;
+                  });
+                },
+              );
+            }),
           ),
         ),
         const SizedBox(height: 8),
@@ -422,9 +420,9 @@ class _AddEditInterviewReviewScreenState
           child: Text(
             '$_rating / 5',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.warning,
-                ),
+              fontWeight: FontWeight.bold,
+              color: AppColors.warning,
+            ),
           ),
         ),
       ],
@@ -434,9 +432,9 @@ class _AddEditInterviewReviewScreenState
   void _saveReview() {
     if (_formKey.currentState!.validate()) {
       if (_selectedDate == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('면접 일시를 선택해주세요.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('면접 일시를 선택해주세요.')));
         return;
       }
 
