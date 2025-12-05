@@ -23,4 +23,25 @@ class AppStrings {
 
   // Notification
   static const String notificationSettings = '알림 설정';
+
+  // Add/Edit Application Screen
+  static const String addApplication = '새 공고 추가';
+  static const String editApplication = '공고 수정';
+  static const String save = '저장';
+  static const String companyName = '회사명';
+  static const String companyNameRequired = '회사명 *';
+  static const String position = '직무명';
+  static const String applicationLink = '지원서 링크';
+  static const String applicationLinkRequired = '지원서 링크 *';
+  static const String testLink = '링크 테스트';
+  static const String deadline = '서류 마감일';
+  static const String deadlineRequired = '서류 마감일 *';
+  static const String selectDate = '날짜 선택';
+  static const String announcementDate = '서류 발표일';
+  static const String nextStage = '다음 전형 일정';
+  static const String addStage = '일정 추가';
+  static const String coverLetterQuestions = '자기소개서 문항';
+  static const String addQuestion = '문항 추가';
+  static const String memo = '기타 메모';
+  static const String requiredField = '*';
 }

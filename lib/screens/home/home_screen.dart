@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
+import '../add_edit_application/add_edit_application_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -53,7 +54,12 @@ class HomeScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // TODO: 새 공고 추가 화면으로 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddEditApplicationScreen(),
+            ),
+          );
         },
         icon: const Icon(Icons.add),
         label: const Text(AppStrings.addNewApplication),
