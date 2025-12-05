@@ -113,4 +113,33 @@ class AppStrings {
   static const String interviewReviewText = '면접 후기';
   static const String rating = '평가';
   static const String addInterviewQuestion = '질문 추가';
+
+  // Calendar Screen
+  static const String noSchedule = '일정이 없습니다';
+  static const String deadlineEvent = '마감일';
+  static const String announcementEvent = '발표일';
+  static const String interviewEvent = '면접';
+  static const String legend = '범례';
+
+  // Statistics Screen
+  static const String overallStatus = '전체 현황';
+  static const String monthlyTrend = '월별 지원 추이';
+  static const String passRate = '합격률';
+  static const String overall = '전체';
+  static const String thisMonth = '이번 달';
+  static const String keyStatistics = '주요 통계';
+  static const String scheduleStatus = '일정 현황';
+  static const String averageApplicationPeriod = '평균 지원 기간';
+  static const String mostAppliedPosition = '가장 많이 지원한 직무';
+  static const String inProgressApplications = '진행 중인 공고';
+  static const String urgentApplicationsCount = '마감 임박 공고';
+  static const String thisWeekInterview = '이번 주 면접';
+  static const String thisWeekAnnouncement = '이번 주 발표일';
+  static const String thisWeekDeadline = '이번 주 마감일';
+  static const String allPeriod = '전체';
+  static const String thisMonthPeriod = '이번 달';
+  static const String last3Months = '지난 3개월';
+  static const String last6Months = '지난 6개월';
+  static const String thisYear = '올해';
+  static const String customPeriod = '사용자 지정';
 }
