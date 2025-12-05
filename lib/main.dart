@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/main_navigation.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_strings.dart';
 
@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomeScreen(),
+      home: const MainNavigation(),
     );
   }
 }

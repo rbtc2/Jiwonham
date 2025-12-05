@@ -44,4 +44,41 @@ class AppStrings {
   static const String addQuestion = '문항 추가';
   static const String memo = '기타 메모';
   static const String requiredField = '*';
+
+  // Navigation
+  static const String navHome = '홈';
+  static const String navApplications = '공고';
+  static const String navCalendar = '캘린더';
+  static const String navStatistics = '통계';
+
+  // Applications Screen
+  static const String applicationsTitle = '공고 목록';
+  static const String search = '검색';
+  static const String filter = '필터';
+  static const String all = '전체';
+  static const String notApplied = '지원전';
+  static const String rejected = '불합격';
+  static const String sortBy = '정렬';
+
+  // Calendar Screen
+  static const String calendarTitle = '캘린더';
+  static const String today = '오늘';
+  static const String monthly = '월간';
+  static const String weekly = '주간';
+  static const String daily = '일간';
+
+  // Statistics Screen
+  static const String statisticsTitle = '통계';
+  static const String periodSelection = '기간 선택';
+
+  // Search & Filter
+  static const String searchPlaceholder = '회사명, 직무명 검색...';
+  static const String applyFilter = '필터 적용';
+  static const String resetFilter = '초기화';
+  static const String sortByDeadline = '마감일순';
+  static const String sortByDate = '등록일순';
+  static const String sortByCompany = '회사명순';
+  static const String deadlineWithin7Days = 'D-7 이내';
+  static const String deadlineWithin3Days = 'D-3 이내';
+  static const String deadlinePassed = '마감됨';
 }
