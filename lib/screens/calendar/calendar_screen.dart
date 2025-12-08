@@ -4,6 +4,9 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
+import '../../models/application.dart';
+import '../../models/application_status.dart';
+import '../../services/storage_service.dart';
 import '../../widgets/calendar_event_marker.dart';
 import '../application_detail/application_detail_screen.dart';
 
@@ -28,7 +31,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       {'type': 'deadline', 'company': '카카오', 'position': '프론트엔드 개발자'},
     ],
     DateTime(2024, 1, 18): [
-      {'type': 'interview', 'company': '삼성전자', 'position': '소프트웨어 엔지니어', 'time': '14:00'},
+      {
+        'type': 'interview',
+        'company': '삼성전자',
+        'position': '소프트웨어 엔지니어',
+        'time': '14:00',
+      },
     ],
     DateTime(2024, 1, 25): [
       {'type': 'announcement', 'company': '네이버', 'position': '백엔드 개발자'},
@@ -44,7 +52,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
           icon: const Icon(Icons.chevron_left),
           onPressed: () {
             setState(() {
-              _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+              _currentMonth = DateTime(
+                _currentMonth.year,
+                _currentMonth.month - 1,
+              );
             });
           },
         ),
@@ -53,7 +64,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
             icon: const Icon(Icons.chevron_right),
             onPressed: () {
               setState(() {
-                _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+                _currentMonth = DateTime(
+                  _currentMonth.year,
+                  _currentMonth.month + 1,
+                );
               });
             },
           ),
@@ -73,9 +87,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           // 뷰 전환 버튼
           _buildViewToggle(context),
           // 캘린더
-          Expanded(
-            child: _buildCalendar(context),
-          ),
+          Expanded(child: _buildCalendar(context)),
           // 범례
           _buildLegend(context),
           // 선택된 날짜의 일정 목록
@@ -103,7 +115,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildViewButton(BuildContext context, String label, CalendarView view) {
+  Widget _buildViewButton(
+    BuildContext context,
+    String label,
+    CalendarView view,
+  ) {
     final isSelected = _currentView == view;
     return Expanded(
       child: Padding(
@@ -167,12 +183,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 if (dayOffset < 0 || dayOffset >= daysInMonth) {
                   return const SizedBox.shrink();
                 }
-                final date = DateTime(_currentMonth.year, _currentMonth.month, dayOffset + 1);
+                final date = DateTime(
+                  _currentMonth.year,
+                  _currentMonth.month,
+                  dayOffset + 1,
+                );
                 final isSelected = _isSameDay(date, _selectedDate);
                 final isToday = _isSameDay(date, DateTime.now());
                 final events = _getEventsForDate(date);
 
-                return _buildCalendarDay(context, date, isSelected, isToday, events);
+                return _buildCalendarDay(
+                  context,
+                  date,
+                  isSelected,
+                  isToday,
+                  events,
+                );
               },
             ),
           ),
@@ -190,13 +216,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
             child: Text(
               day,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: day == '일'
-                        ? AppColors.error
-                        : day == '토'
-                            ? AppColors.primary
-                            : AppColors.textPrimary,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: day == '일'
+                    ? AppColors.error
+                    : day == '토'
+                    ? AppColors.primary
+                    : AppColors.textPrimary,
+              ),
             ),
           ),
         );
@@ -233,13 +259,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
             Text(
               '${date.day}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected
-                        ? AppColors.primary
-                        : isToday
-                            ? AppColors.primary
-                            : AppColors.textPrimary,
-                  ),
+                fontWeight: isSelected || isToday
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                color: isSelected
+                    ? AppColors.primary
+                    : isToday
+                    ? AppColors.primary
+                    : AppColors.textPrimary,
+              ),
             ),
             if (events.isNotEmpty) ...[
               const SizedBox(height: 2),
@@ -268,7 +296,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildWeeklyCalendar(BuildContext context) {
-    final weekStart = _selectedDate.subtract(Duration(days: _selectedDate.weekday % 7));
+    final weekStart = _selectedDate.subtract(
+      Duration(days: _selectedDate.weekday % 7),
+    );
     final weekDays = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
     return Padding(
@@ -307,22 +337,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         children: [
                           Text(
                             '${date.day}',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
                                   fontWeight: isSelected || isToday
                                       ? FontWeight.bold
                                       : FontWeight.normal,
                                   color: isSelected
                                       ? AppColors.primary
                                       : isToday
-                                          ? AppColors.primary
-                                          : AppColors.textPrimary,
+                                      ? AppColors.primary
+                                      : AppColors.textPrimary,
                                 ),
                           ),
                           const SizedBox(height: 8),
                           if (events.isNotEmpty)
                             ...events.map((event) {
                               return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
                                 child: _buildEventChip(context, event),
                               );
                             }),
@@ -357,15 +390,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 Text(
                   '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _getDayOfWeek(_selectedDate),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -386,8 +419,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Text(
                       AppStrings.noSchedule,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -491,19 +524,61 @@ class _CalendarScreenState extends State<CalendarScreen> {
         trailing: event['time'] != null
             ? Text(
                 event['time'] as String,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: color, fontWeight: FontWeight.bold),
               )
             : null,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ApplicationDetailScreen(),
-            ),
-          );
+        onTap: () async {
+          // company와 position으로 Application 찾기
+          final company = event['company'] as String;
+          final position = event['position'] as String?;
+
+          try {
+            final storageService = StorageService();
+            final applications = await storageService.getAllApplications();
+            final application = applications.firstWhere(
+              (app) =>
+                  app.companyName == company &&
+                  (position == null || app.position == position),
+              orElse: () => Application(
+                id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                companyName: company,
+                position: position,
+                applicationLink: null,
+                deadline: DateTime.now(),
+                status: ApplicationStatus.notApplied,
+              ),
+            );
+
+            if (mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ApplicationDetailScreen(application: application),
+                ),
+              );
+            }
+          } catch (e) {
+            // 에러 발생 시 기본 Application 생성
+            if (mounted) {
+              final defaultApplication = Application(
+                id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                companyName: company,
+                position: position,
+                applicationLink: null,
+                deadline: DateTime.now(),
+                status: ApplicationStatus.notApplied,
+              );
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ApplicationDetailScreen(application: defaultApplication),
+                ),
+              );
+            }
+          }
         },
       ),
     );
@@ -517,9 +592,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           _buildLegendItem(context, AppColors.error, AppStrings.deadlineEvent),
           const SizedBox(width: 16),
-          _buildLegendItem(context, AppColors.info, AppStrings.announcementEvent),
+          _buildLegendItem(
+            context,
+            AppColors.info,
+            AppStrings.announcementEvent,
+          ),
           const SizedBox(width: 16),
-          _buildLegendItem(context, AppColors.warning, AppStrings.interviewEvent),
+          _buildLegendItem(
+            context,
+            AppColors.warning,
+            AppStrings.interviewEvent,
+          ),
         ],
       ),
     );
@@ -531,17 +614,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -566,9 +646,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           Text(
             '${_formatDate(_selectedDate)} ($dayOfWeek)',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -577,8 +657,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Text(
                       AppStrings.noSchedule,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   )
                 : ListView.builder(
@@ -631,15 +711,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${event['company']} - ${event['position']}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -647,10 +727,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           if (event['time'] != null)
             Text(
               event['time'] as String,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
             ),
         ],
       ),
