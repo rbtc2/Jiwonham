@@ -110,6 +110,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(
           widget.application != null ? '공고 수정' : AppStrings.addApplication,
@@ -127,9 +128,11 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Phase 1: 필수 입력 필드
             _buildRequiredFields(context),
@@ -141,6 +144,12 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
 
             // Phase 3: 동적 추가 기능
             _buildDynamicFields(context),
+            const SizedBox(height: 24),
+
+            // 기타 메모 입력 (제일 하단)
+            _buildMemoField(context),
+            // 하단 여백 추가 (키보드가 올라올 때를 대비)
+            const SizedBox(height: 100),
           ],
         ),
       ),
@@ -364,10 +373,6 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
           },
           notificationType: 'announcement',
         ),
-        const SizedBox(height: 24),
-
-        // 기타 메모 입력
-        _buildMemoField(context),
       ],
     );
   }
@@ -1795,19 +1800,21 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       return;
     }
 
-    // URL 열기
+    // URL 열기 - canLaunchUrl 체크 없이 직접 시도
+    // LaunchMode.externalApplication을 사용하면 사용자가 브라우저를 선택할 수 있습니다
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('링크를 열 수 없습니다.'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('링크를 열 수 없습니다.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
