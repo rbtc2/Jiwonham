@@ -3,8 +3,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/main_navigation.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_strings.dart';
+import 'services/storage_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // StorageService 초기화
+  await StorageService().init();
   runApp(const MyApp());
 }
 

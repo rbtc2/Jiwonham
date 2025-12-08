@@ -6,6 +6,8 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../widgets/d_day_badge.dart';
 import '../../widgets/status_chip.dart';
+import '../../models/application.dart';
+import '../../models/application_status.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 
 class ApplicationDetailScreen extends StatefulWidget {
@@ -61,12 +63,29 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
+              // Phase 7: 더미 Application 생성 (실제로는 파라미터로 받아야 함)
+              final dummyApplication = Application(
+                id: 'dummy_id',
+                companyName: _companyName,
+                position: _position,
+                applicationLink: _applicationLink,
+                deadline: _deadline,
+                status: _currentStatus,
+                memo: _memo,
+              );
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const AddEditApplicationScreen(),
+                  builder: (context) => AddEditApplicationScreen(
+                    application: dummyApplication,
+                  ),
                 ),
-              );
+              ).then((result) {
+                // Phase 7: 수정 완료 후 화면 새로고침 (실제로는 필요시 구현)
+                if (result == true) {
+                  // TODO: 화면 새로고침 로직
+                }
+              });
             },
             tooltip: AppStrings.edit,
           ),

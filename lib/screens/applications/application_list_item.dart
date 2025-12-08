@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
+import '../../models/application_status.dart';
 import '../../widgets/d_day_badge.dart';
 import '../../widgets/status_chip.dart';
 import '../application_detail/application_detail_screen.dart';
@@ -30,9 +31,7 @@ class ApplicationListItem extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -67,14 +66,18 @@ class ApplicationListItem extends StatelessWidget {
               // 회사명
               Row(
                 children: [
-                  Icon(Icons.business, size: 20, color: AppColors.textSecondary),
+                  Icon(
+                    Icons.business,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       companyName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -85,7 +88,11 @@ class ApplicationListItem extends StatelessWidget {
               if (position != null && position!.isNotEmpty) ...[
                 Row(
                   children: [
-                    Icon(Icons.work_outline, size: 20, color: AppColors.textSecondary),
+                    Icon(
+                      Icons.work_outline,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -101,23 +108,31 @@ class ApplicationListItem extends StatelessWidget {
               // 날짜 정보
               Row(
                 children: [
-                  Icon(Icons.calendar_today, size: 20, color: AppColors.textSecondary),
+                  Icon(
+                    Icons.calendar_today,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     '마감: ${_formatDate(deadline)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   if (interviewDate != null) ...[
                     const SizedBox(width: 16),
-                    Icon(Icons.phone_in_talk, size: 20, color: AppColors.textSecondary),
+                    Icon(
+                      Icons.phone_in_talk,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       '면접: ${_formatDate(interviewDate!)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ],

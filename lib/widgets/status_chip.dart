@@ -3,14 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
-
-enum ApplicationStatus {
-  notApplied, // 지원 전
-  applied,    // 지원 완료
-  inProgress, // 진행중
-  passed,     // 합격
-  rejected,   // 불합격
-}
+import '../models/application_status.dart';
 
 class StatusChip extends StatelessWidget {
   final ApplicationStatus status;

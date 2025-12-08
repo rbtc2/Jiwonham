@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
-import '../../widgets/status_chip.dart';
+import '../../models/application_status.dart';
 import 'application_list_item.dart';
 
 class ApplicationsScreen extends StatefulWidget {
