@@ -38,9 +38,7 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.notificationSettings),
-      ),
+      appBar: AppBar(title: const Text(AppStrings.notificationSettings)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -79,17 +77,17 @@ class _NotificationSettingsScreenState
             const SizedBox(width: 12),
             Text(
               AppStrings.enableNotifications,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
         subtitle: Text(
           '모든 알림을 한 번에 켜거나 끌 수 있습니다',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
         ),
         value: _enableAllNotifications,
         onChanged: (value) {
@@ -123,9 +121,9 @@ class _NotificationSettingsScreenState
                 const SizedBox(width: 12),
                 Text(
                   AppStrings.deadlineNotification,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -146,66 +144,52 @@ class _NotificationSettingsScreenState
               const SizedBox(height: 8),
               Text(
                 AppStrings.notificationTiming,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.daysBefore7,
-                AppStrings.daysBefore7,
-                _deadlineTiming,
-                (value) {
-                  setState(() {
-                    _deadlineTiming = value;
-                  });
+              RadioGroup<NotificationTiming>(
+                groupValue: _deadlineTiming,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _deadlineTiming = value;
+                      if (value == NotificationTiming.custom) {
+                        // TODO: 사용자 지정 시간 입력 다이얼로그
+                      }
+                    });
+                  }
                 },
-              ),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.daysBefore3,
-                AppStrings.daysBefore3,
-                _deadlineTiming,
-                (value) {
-                  setState(() {
-                    _deadlineTiming = value;
-                  });
-                },
-              ),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.daysBefore1,
-                AppStrings.daysBefore1,
-                _deadlineTiming,
-                (value) {
-                  setState(() {
-                    _deadlineTiming = value;
-                  });
-                },
-              ),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.onTheDay,
-                AppStrings.onTheDay,
-                _deadlineTiming,
-                (value) {
-                  setState(() {
-                    _deadlineTiming = value;
-                  });
-                },
-              ),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.custom,
-                AppStrings.customTime,
-                _deadlineTiming,
-                (value) {
-                  setState(() {
-                    _deadlineTiming = value;
-                  });
-                  // TODO: 사용자 지정 시간 입력 다이얼로그
-                },
+                child: Column(
+                  children: [
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.daysBefore7,
+                      AppStrings.daysBefore7,
+                    ),
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.daysBefore3,
+                      AppStrings.daysBefore3,
+                    ),
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.daysBefore1,
+                      AppStrings.daysBefore1,
+                    ),
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.onTheDay,
+                      AppStrings.onTheDay,
+                    ),
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.custom,
+                      AppStrings.customTime,
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -227,9 +211,9 @@ class _NotificationSettingsScreenState
                 const SizedBox(width: 12),
                 Text(
                   AppStrings.announcementNotification,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -250,32 +234,34 @@ class _NotificationSettingsScreenState
               const SizedBox(height: 8),
               Text(
                 AppStrings.notificationTiming,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.onTheDay,
-                AppStrings.onTheDay,
-                _announcementTiming,
-                (value) {
-                  setState(() {
-                    _announcementTiming = value;
-                  });
+              RadioGroup<NotificationTiming>(
+                groupValue: _announcementTiming,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _announcementTiming = value;
+                    });
+                  }
                 },
-              ),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.daysBefore1,
-                AppStrings.daysBefore1,
-                _announcementTiming,
-                (value) {
-                  setState(() {
-                    _announcementTiming = value;
-                  });
-                },
+                child: Column(
+                  children: [
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.onTheDay,
+                      AppStrings.onTheDay,
+                    ),
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.daysBefore1,
+                      AppStrings.daysBefore1,
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -297,9 +283,9 @@ class _NotificationSettingsScreenState
                 const SizedBox(width: 12),
                 Text(
                   AppStrings.interviewNotification,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -320,44 +306,42 @@ class _NotificationSettingsScreenState
               const SizedBox(height: 8),
               Text(
                 AppStrings.notificationTiming,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.daysBefore1,
-                AppStrings.daysBefore1,
-                _interviewTiming,
-                (value) {
-                  setState(() {
-                    _interviewTiming = value;
-                  });
+              RadioGroup<NotificationTiming>(
+                groupValue: _interviewTiming,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _interviewTiming = value;
+                      if (value == NotificationTiming.custom) {
+                        // TODO: 시간 지정 다이얼로그
+                      }
+                    });
+                  }
                 },
-              ),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.onTheDay,
-                AppStrings.onTheDay,
-                _interviewTiming,
-                (value) {
-                  setState(() {
-                    _interviewTiming = value;
-                  });
-                },
-              ),
-              _buildTimingRadio(
-                context,
-                NotificationTiming.custom,
-                '${AppStrings.timeBefore} (예: 1시간 전)',
-                _interviewTiming,
-                (value) {
-                  setState(() {
-                    _interviewTiming = value;
-                  });
-                  // TODO: 시간 지정 다이얼로그
-                },
+                child: Column(
+                  children: [
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.daysBefore1,
+                      AppStrings.daysBefore1,
+                    ),
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.onTheDay,
+                      AppStrings.onTheDay,
+                    ),
+                    _buildTimingRadio(
+                      context,
+                      NotificationTiming.custom,
+                      '${AppStrings.timeBefore} (예: 1시간 전)',
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -379,9 +363,9 @@ class _NotificationSettingsScreenState
                 const SizedBox(width: 12),
                 Text(
                   AppStrings.defaultNotificationTime,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -427,18 +411,10 @@ class _NotificationSettingsScreenState
     BuildContext context,
     NotificationTiming value,
     String label,
-    NotificationTiming groupValue,
-    Function(NotificationTiming) onChanged,
   ) {
     return RadioListTile<NotificationTiming>(
       title: Text(label),
       value: value,
-      groupValue: groupValue,
-      onChanged: (newValue) {
-        if (newValue != null) {
-          onChanged(newValue);
-        }
-      },
       contentPadding: EdgeInsets.zero,
     );
   }
