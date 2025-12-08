@@ -30,45 +30,72 @@ class ApplicationListItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Stack(
-        children: [
-          // 전체 카드 클릭 영역 (체크박스 영역 제외)
-          Positioned.fill(
-            left: 56, // 체크박스 영역만큼 왼쪽에서 시작
-            child: InkWell(
-              onTap: isSelectionMode
-                  ? () {
-                      // 선택 모드일 때는 카드 클릭 시 체크박스 토글
-                      if (onSelectionChanged != null) {
-                        onSelectionChanged!(!isSelected);
-                      }
-                    }
-                  : () async {
-                      // 일반 모드일 때는 상세 화면으로 이동
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ApplicationDetailScreen(application: application),
-                        ),
-                      );
-                      // 상태 변경 등으로 인해 변경사항이 있으면 콜백 호출
-                      if (result == true && onChanged != null) {
-                        onChanged!();
-                      }
-                    },
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+      child: InkWell(
+        onTap: isSelectionMode
+            ? () {
+                // 선택 모드일 때는 카드 클릭 시 체크박스 토글
+                if (onSelectionChanged != null) {
+                  onSelectionChanged!(!isSelected);
+                }
+              }
+            : () async {
+                // 일반 모드일 때는 상세 화면으로 이동
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ApplicationDetailScreen(application: application),
+                  ),
+                );
+                // 상태 변경 등으로 인해 변경사항이 있으면 콜백 호출
+                if (result == true && onChanged != null) {
+                  onChanged!();
+                }
+              },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 체크박스 영역
+              GestureDetector(
+                // 체크박스 클릭 이벤트가 InkWell로 전파되지 않도록 차단
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  // 체크박스 클릭 시 직접 처리 (이벤트 소비)
+                  if (isSelectionMode && onSelectionChanged != null) {
+                    onSelectionChanged!(!isSelected);
+                  }
+                },
+                child: isSelectionMode
+                    ? Checkbox(
+                        value: isSelected,
+                        onChanged: (value) {
+                          if (onSelectionChanged != null && value != null) {
+                            onSelectionChanged!(value);
+                          }
+                        },
+                        activeColor: AppColors.primary,
+                      )
+                    : Checkbox(
+                        value: application.isApplied,
+                        onChanged: (value) {
+                          // TODO: 지원 완료 상태 변경 (추후 구현)
+                        },
+                        activeColor: AppColors.primary,
+                      ),
+              ),
+              const SizedBox(width: 8),
+              // 나머지 내용
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 상단: D-day 배지
                     Row(
-                      children: [
-                        const Spacer(),
-                        DDayBadge(deadline: application.deadline),
-                      ],
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [DDayBadge(deadline: application.deadline)],
                     ),
                     const SizedBox(height: 12),
 
@@ -152,42 +179,9 @@ class ApplicationListItem extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-          // 체크박스를 Stack의 위 레이어에 배치하여 클릭 이벤트를 독립적으로 처리
-          Positioned(
-            left: 0,
-            top: 0,
-            child: Container(
-              width: 56,
-              height: 56,
-              alignment: Alignment.center,
-              // 체크박스 클릭 이벤트가 하위 InkWell로 전파되지 않도록 차단
-              child: GestureDetector(
-                // 이벤트를 소비하여 InkWell로 전파되지 않도록 함
-                // 하지만 체크박스의 onChanged는 정상적으로 호출됨
-                behavior: HitTestBehavior.opaque,
-                child: isSelectionMode
-                    ? Checkbox(
-                        value: isSelected,
-                        onChanged: (value) {
-                          if (onSelectionChanged != null && value != null) {
-                            onSelectionChanged!(value);
-                          }
-                        },
-                        activeColor: AppColors.primary,
-                      )
-                    : Checkbox(
-                        value: application.isApplied,
-                        onChanged: (value) {
-                          // TODO: 지원 완료 상태 변경 (추후 구현)
-                        },
-                        activeColor: AppColors.primary,
-                      ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

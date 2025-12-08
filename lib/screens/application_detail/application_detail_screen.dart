@@ -23,16 +23,26 @@ class ApplicationDetailScreen extends StatefulWidget {
       _ApplicationDetailScreenState();
 }
 
-class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
+class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
+    with SingleTickerProviderStateMixin {
   // Phase 1: 실제 Application 데이터 사용
   late Application _application;
   // 상태 변경 추적 플래그
   bool _hasChanges = false;
+  // 탭 컨트롤러
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _application = widget.application;
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   // Phase 1: Application 데이터 다시 로드
@@ -185,41 +195,95 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               tooltip: AppStrings.delete,
             ),
           ],
-        ),
-        body: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 기본 정보 카드
-              _buildBasicInfoCard(context),
-              const SizedBox(height: 16),
-
-              // 지원 정보 섹션
-              _buildApplicationInfoSection(context),
-              const SizedBox(height: 16),
-
-              // 자기소개서 문항 섹션
-              _buildCoverLetterSection(context),
-              const SizedBox(height: 16),
-
-              // 면접 후기 섹션
-              _buildInterviewReviewSection(context),
-              const SizedBox(height: 16),
-
-              // 메모 섹션
-              _buildMemoSection(context),
-              const SizedBox(height: 16),
-
-              // 상태 변경 섹션
-              _buildStatusSection(context),
-              // 하단 패딩 추가 (스크롤이 끝까지 내려가도록)
-              const SizedBox(height: 100),
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: '정보'),
+              Tab(text: AppStrings.coverLetterAnswers),
+              Tab(text: AppStrings.interviewReview),
             ],
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textSecondary,
+            indicatorColor: AppColors.primary,
           ),
         ),
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            // 정보 탭: 기본 정보, 지원 정보, 메모, 상태 변경
+            _buildInfoTab(context),
+            // 자기소개서 탭
+            _buildCoverLetterTab(context),
+            // 면접 후기 탭
+            _buildInterviewReviewTab(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 정보 탭 빌드
+  Widget _buildInfoTab(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 기본 정보 카드
+          _buildBasicInfoCard(context),
+          const SizedBox(height: 16),
+
+          // 지원 정보 섹션
+          _buildApplicationInfoSection(context),
+          const SizedBox(height: 16),
+
+          // 메모 섹션
+          _buildMemoSection(context),
+          const SizedBox(height: 16),
+
+          // 상태 변경 섹션
+          _buildStatusSection(context),
+          // 하단 패딩 추가 (스크롤이 끝까지 내려가도록)
+          const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  // 자기소개서 탭 빌드
+  Widget _buildCoverLetterTab(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 자기소개서 문항 섹션
+          _buildCoverLetterSection(context),
+          // 하단 패딩 추가
+          const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  // 면접 후기 탭 빌드
+  Widget _buildInterviewReviewTab(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 면접 후기 섹션
+          _buildInterviewReviewSection(context),
+          // 하단 패딩 추가
+          const SizedBox(height: 100),
+        ],
       ),
     );
   }
