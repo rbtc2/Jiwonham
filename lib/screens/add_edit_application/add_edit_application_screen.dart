@@ -138,10 +138,6 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
             _buildRequiredFields(context),
             const SizedBox(height: 24),
 
-            // Phase 2: 선택 입력 필드
-            _buildOptionalFields(context),
-            const SizedBox(height: 24),
-
             // Phase 3: 동적 추가 기능
             _buildDynamicFields(context),
             const SizedBox(height: 24),
@@ -179,6 +175,16 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         ),
         const SizedBox(height: 24),
 
+        // 직무명 입력
+        _buildTextField(
+          context,
+          label: AppStrings.position,
+          controller: _positionController,
+          icon: Icons.work_outline,
+          hintText: '직무명을 입력하세요',
+        ),
+        const SizedBox(height: 24),
+
         // 지원서 링크 입력
         _buildLinkField(context),
         if (_applicationLinkError != null)
@@ -211,6 +217,27 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
             });
           },
           notificationType: 'deadline',
+        ),
+        const SizedBox(height: 24),
+
+        // 서류 발표일 선택
+        _buildDateFieldWithNotification(
+          context,
+          label: AppStrings.announcementDate,
+          icon: Icons.campaign,
+          selectedDate: _announcementDate,
+          notificationSettings: _announcementNotificationSettings,
+          onDateSelected: (date) {
+            setState(() {
+              _announcementDate = date;
+            });
+          },
+          onNotificationSettingsChanged: (settings) {
+            setState(() {
+              _announcementNotificationSettings = settings;
+            });
+          },
+          notificationType: 'announcement',
         ),
       ],
     );
@@ -277,7 +304,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
             Icon(Icons.link, size: 20, color: AppColors.textSecondary),
             const SizedBox(width: 8),
             Text(
-              AppStrings.applicationLinkRequired,
+              AppStrings.applicationLink,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -1621,12 +1648,9 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       _companyNameError = null;
     }
 
-    // 지원서 링크 검증
+    // 지원서 링크 검증 (선택 항목이지만 입력한 경우 URL 형식 검증)
     final linkText = _applicationLinkController.text.trim();
-    if (linkText.isEmpty) {
-      _applicationLinkError = '지원서 링크를 입력해주세요.';
-      isValid = false;
-    } else if (!_isValidUrl(linkText)) {
+    if (linkText.isNotEmpty && !_isValidUrl(linkText)) {
       _applicationLinkError = '올바른 URL 형식을 입력해주세요. (예: https://...)';
       isValid = false;
     } else {
@@ -1710,7 +1734,9 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         position: _positionController.text.trim().isEmpty
             ? null
             : _positionController.text.trim(),
-        applicationLink: _applicationLinkController.text.trim(),
+        applicationLink: _applicationLinkController.text.trim().isEmpty
+            ? null
+            : _applicationLinkController.text.trim(),
         deadline: _deadline!,
         announcementDate: _announcementDate,
         nextStages: nextStages,

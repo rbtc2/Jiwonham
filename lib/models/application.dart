@@ -9,26 +9,26 @@ import 'interview_review.dart';
 
 class Application {
   final String id;
-  final String companyName;                    // 회사명 (필수)
-  final String? position;                     // 직무명
-  final String applicationLink;                // 지원서 링크 (필수)
-  final DateTime deadline;                     // 서류 마감일 (필수)
-  final DateTime? announcementDate;            // 서류 발표일
-  final List<NextStage> nextStages;            // 다음 전형 일정 리스트
+  final String companyName; // 회사명 (필수)
+  final String? position; // 직무명
+  final String? applicationLink; // 지원서 링크 (선택)
+  final DateTime deadline; // 서류 마감일 (필수)
+  final DateTime? announcementDate; // 서류 발표일
+  final List<NextStage> nextStages; // 다음 전형 일정 리스트
   final List<CoverLetterQuestion> coverLetterQuestions; // 자기소개서 문항 리스트
   final List<InterviewReview> interviewReviews; // 면접 후기 리스트
-  final String? memo;                          // 기타 메모
-  final ApplicationStatus status;              // 상태
-  final bool isApplied;                        // 지원 완료 체크
+  final String? memo; // 기타 메모
+  final ApplicationStatus status; // 상태
+  final bool isApplied; // 지원 완료 체크
   final NotificationSettings notificationSettings; // 알림 설정
-  final DateTime createdAt;                    // 생성일
-  final DateTime updatedAt;                    // 수정일
+  final DateTime createdAt; // 생성일
+  final DateTime updatedAt; // 수정일
 
   Application({
     required this.id,
     required this.companyName,
     this.position,
-    required this.applicationLink,
+    this.applicationLink,
     required this.deadline,
     this.announcementDate,
     List<NextStage>? nextStages,
@@ -40,12 +40,12 @@ class Application {
     NotificationSettings? notificationSettings,
     DateTime? createdAt,
     DateTime? updatedAt,
-  })  : nextStages = nextStages ?? [],
-        coverLetterQuestions = coverLetterQuestions ?? [],
-        interviewReviews = interviewReviews ?? [],
-        notificationSettings = notificationSettings ?? NotificationSettings(),
-        createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : nextStages = nextStages ?? [],
+       coverLetterQuestions = coverLetterQuestions ?? [],
+       interviewReviews = interviewReviews ?? [],
+       notificationSettings = notificationSettings ?? NotificationSettings(),
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   // JSON 직렬화
   Map<String, dynamic> toJson() {
@@ -57,7 +57,9 @@ class Application {
       'deadline': deadline.toIso8601String(),
       'announcementDate': announcementDate?.toIso8601String(),
       'nextStages': nextStages.map((stage) => stage.toJson()).toList(),
-      'coverLetterQuestions': coverLetterQuestions.map((q) => q.toJson()).toList(),
+      'coverLetterQuestions': coverLetterQuestions
+          .map((q) => q.toJson())
+          .toList(),
       'interviewReviews': interviewReviews.map((r) => r.toJson()).toList(),
       'memo': memo,
       'status': status.name,
@@ -74,20 +76,25 @@ class Application {
       id: json['id'] as String,
       companyName: json['companyName'] as String,
       position: json['position'] as String?,
-      applicationLink: json['applicationLink'] as String,
+      applicationLink: json['applicationLink'] as String?,
       deadline: DateTime.parse(json['deadline'] as String),
       announcementDate: json['announcementDate'] != null
           ? DateTime.parse(json['announcementDate'] as String)
           : null,
-      nextStages: (json['nextStages'] as List<dynamic>?)
+      nextStages:
+          (json['nextStages'] as List<dynamic>?)
               ?.map((e) => NextStage.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      coverLetterQuestions: (json['coverLetterQuestions'] as List<dynamic>?)
-              ?.map((e) => CoverLetterQuestion.fromJson(e as Map<String, dynamic>))
+      coverLetterQuestions:
+          (json['coverLetterQuestions'] as List<dynamic>?)
+              ?.map(
+                (e) => CoverLetterQuestion.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
-      interviewReviews: (json['interviewReviews'] as List<dynamic>?)
+      interviewReviews:
+          (json['interviewReviews'] as List<dynamic>?)
               ?.map((e) => InterviewReview.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -98,7 +105,9 @@ class Application {
       ),
       isApplied: json['isApplied'] as bool? ?? false,
       notificationSettings: json['notificationSettings'] != null
-          ? NotificationSettings.fromJson(json['notificationSettings'] as Map<String, dynamic>)
+          ? NotificationSettings.fromJson(
+              json['notificationSettings'] as Map<String, dynamic>,
+            )
           : NotificationSettings(),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
