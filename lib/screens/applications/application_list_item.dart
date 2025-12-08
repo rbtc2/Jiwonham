@@ -14,6 +14,7 @@ class ApplicationListItem extends StatelessWidget {
   final bool isSelectionMode;
   final bool isSelected;
   final ValueChanged<bool>? onSelectionChanged;
+  final VoidCallback? onLongPress;
 
   const ApplicationListItem({
     super.key,
@@ -22,6 +23,7 @@ class ApplicationListItem extends StatelessWidget {
     this.isSelectionMode = false,
     this.isSelected = false,
     this.onSelectionChanged,
+    this.onLongPress,
   });
 
   @override
@@ -29,117 +31,170 @@ class ApplicationListItem extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      // PHASE 3: 선택 모드일 때 선택된 항목에 테두리 추가
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isSelectionMode && isSelected
+            ? BorderSide(
+                color: AppColors.primary,
+                width: 2,
+              )
+            : BorderSide.none,
+      ),
+      // PHASE 3: 선택 모드일 때 선택된 항목에 시각적 피드백
+      color: isSelectionMode && isSelected
+          ? AppColors.primary.withValues(alpha: 0.1)
+          : null,
       child: InkWell(
-        onTap: () async {
-          // 상세 화면으로 이동
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  ApplicationDetailScreen(application: application),
-            ),
-          );
-          // 상태 변경 등으로 인해 변경사항이 있으면 콜백 호출
-          if (result == true && onChanged != null) {
-            onChanged!();
+        onTap: isSelectionMode
+            ? () {
+                // 선택 모드일 때는 항목 선택/해제 토글
+                if (onSelectionChanged != null) {
+                  onSelectionChanged!(!isSelected);
+                }
+              }
+            : () async {
+                // 일반 모드일 때는 상세 화면으로 이동
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ApplicationDetailScreen(application: application),
+                  ),
+                );
+                // 상태 변경 등으로 인해 변경사항이 있으면 콜백 호출
+                if (result == true && onChanged != null) {
+                  onChanged!();
+                }
+              },
+        onLongPress: () {
+          // PHASE 1: 롱프레스 시 선택 모드 활성화
+          if (onLongPress != null) {
+            onLongPress!();
           }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 상단: D-day 배지
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [DDayBadge(deadline: application.deadline)],
-              ),
-              const SizedBox(height: 12),
-
-              // 회사명
-              Row(
-                children: [
-                  Icon(
-                    Icons.business,
-                    size: 20,
-                    color: AppColors.textSecondary,
+              // PHASE 3: 선택 모드일 때 체크박스 표시
+              if (isSelectionMode) ...[
+                GestureDetector(
+                  // 체크박스 클릭 이벤트가 InkWell로 전파되지 않도록 차단
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    // 체크박스 클릭 시 직접 처리 (이벤트 소비)
+                    if (onSelectionChanged != null) {
+                      onSelectionChanged!(!isSelected);
+                    }
+                  },
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (value) {
+                      if (onSelectionChanged != null && value != null) {
+                        onSelectionChanged!(value);
+                      }
+                    },
+                    activeColor: AppColors.primary,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      application.companyName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // 직무명
-              if (application.position != null &&
-                  application.position!.isNotEmpty) ...[
-                Row(
+                ),
+                const SizedBox(width: 8),
+              ],
+              // 나머지 내용
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.work_outline,
-                      size: 20,
-                      color: AppColors.textSecondary,
+                    // 상단: D-day 배지
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [DDayBadge(deadline: application.deadline)],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        application.position!,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                    const SizedBox(height: 12),
+
+                    // 회사명
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.business,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            application.companyName,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // 직무명
+                    if (application.position != null &&
+                        application.position!.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.work_outline,
+                            size: 20,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              application.position!,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // 날짜 정보
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '마감: ${_formatDate(application.deadline)}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                        // 다음 전형 일정이 있으면 표시
+                        if (application.nextStages.isNotEmpty) ...[
+                          const SizedBox(width: 16),
+                          Icon(
+                            Icons.phone_in_talk,
+                            size: 20,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '면접: ${_formatDate(application.nextStages.first.date)}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ],
                     ),
+                    const SizedBox(height: 12),
+
+                    // 상태 칩
+                    StatusChip(status: application.status),
                   ],
                 ),
-                const SizedBox(height: 8),
-              ],
-
-              // 날짜 정보
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 20,
-                    color: AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '마감: ${_formatDate(application.deadline)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  // 다음 전형 일정이 있으면 표시
-                  if (application.nextStages.isNotEmpty) ...[
-                    const SizedBox(width: 16),
-                    Icon(
-                      Icons.phone_in_talk,
-                      size: 20,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '면접: ${_formatDate(application.nextStages.first.date)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
               ),
-              const SizedBox(height: 12),
-
-              // 상태 칩
-              StatusChip(status: application.status),
-            ],
-          ),
+          ],
         ),
       ),
     );

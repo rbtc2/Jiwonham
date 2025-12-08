@@ -2,6 +2,7 @@
 // 모든 공고를 목록 형태로 보여주고, 검색 및 필터 기능 제공
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../models/application.dart';
@@ -82,239 +83,263 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
         _filterStatus != null ||
         _deadlineFilter != null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: _isSelectionMode
-            ? Text('${_selectedApplicationIds.length}개 선택됨')
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(AppStrings.applicationsTitle),
-                  if (hasActiveFilters) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      _buildActiveFiltersText(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
+    return PopScope(
+      // PHASE 6: 뒤로 가기 버튼으로 선택 모드 종료
+      canPop: !_isSelectionMode,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _isSelectionMode) {
+          // 선택 모드일 때 뒤로 가기 시 선택 모드 종료
+          setState(() {
+            _isSelectionMode = false;
+            _selectedApplicationIds.clear();
+          });
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: _isSelectionMode
+              ? Text('${_selectedApplicationIds.length}개 선택됨')
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(AppStrings.applicationsTitle),
+                    if (hasActiveFilters) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        _buildActiveFiltersText(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
-              ),
-        leading: _isSelectionMode
-            ? IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  setState(() {
-                    _isSelectionMode = false;
-                    _selectedApplicationIds.clear();
-                  });
-                },
-              )
-            : null,
-        actions: _isSelectionMode
-            ? [
-                // Phase 5: 전체 선택/해제 버튼
-                IconButton(
-                  icon: Icon(
-                    _selectedApplicationIds.length ==
-                            _getFilteredApplications(_getCurrentStatus()).length
-                        ? Icons.check_box
-                        : Icons.check_box_outline_blank,
-                  ),
+                ),
+          leading: _isSelectionMode
+              ? IconButton(
+                  icon: const Icon(Icons.close),
                   onPressed: () {
+                    // PHASE 6: 취소 버튼으로 선택 모드 종료
                     setState(() {
+                      _isSelectionMode = false;
+                      _selectedApplicationIds.clear();
+                    });
+                  },
+                  tooltip: '선택 모드 종료',
+                )
+              : null,
+          actions: _isSelectionMode
+              ? [
+                  // PHASE 4: 전체 선택/해제 버튼
+                  Builder(
+                    builder: (context) {
                       final filteredApps = _getFilteredApplications(
                         _getCurrentStatus(),
                       );
-                      if (_selectedApplicationIds.length ==
-                          filteredApps.length) {
-                        // 전체 해제
-                        _selectedApplicationIds.clear();
-                      } else {
-                        // 전체 선택
-                        _selectedApplicationIds = filteredApps
-                            .map((app) => app.id)
-                            .toSet();
-                      }
-                    });
-                  },
-                  tooltip:
-                      _selectedApplicationIds.length ==
-                          _getFilteredApplications(_getCurrentStatus()).length
-                      ? '전체 해제'
-                      : '전체 선택',
-                ),
-                // Phase 4: 삭제 버튼
-                if (_selectedApplicationIds.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () {
-                      _showMultiDeleteConfirmDialog(context);
-                    },
-                    tooltip: '삭제',
-                  ),
-              ]
-            : [
-                // Phase 2: 검색 아이콘 (검색어가 있을 때 배지 표시)
-                Stack(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () {
-                        _showSearchDialog(context);
-                      },
-                      tooltip: AppStrings.search,
-                    ),
-                    if (_searchQuery.isNotEmpty)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 8,
-                            minHeight: 8,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                // Phase 5: 필터 아이콘 (필터가 적용되었을 때 배지 표시)
-                Stack(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.filter_list),
-                      onPressed: () {
-                        _showFilterDialog(context);
-                      },
-                      tooltip: AppStrings.filter,
-                    ),
-                    if (_filterStatus != null || _deadlineFilter != null)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 8,
-                            minHeight: 8,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                // Phase 5: 정렬 메뉴 (현재 정렬 상태 표시)
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.sort),
-                  tooltip: '${AppStrings.sortBy}: ${_getSortByText(_sortBy)}',
-                  onSelected: (value) {
-                    setState(() {
-                      _sortBy = value;
-                    });
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: AppStrings.sortByDeadline,
-                      child: Row(
-                        children: [
-                          Icon(
-                            _sortBy == AppStrings.sortByDeadline
-                                ? Icons.check
-                                : Icons.check_box_outline_blank,
-                            size: 20,
-                            color: _sortBy == AppStrings.sortByDeadline
-                                ? AppColors.primary
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(AppStrings.sortByDeadline),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: AppStrings.sortByDate,
-                      child: Row(
-                        children: [
-                          Icon(
-                            _sortBy == AppStrings.sortByDate
-                                ? Icons.check
-                                : Icons.check_box_outline_blank,
-                            size: 20,
-                            color: _sortBy == AppStrings.sortByDate
-                                ? AppColors.primary
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(AppStrings.sortByDate),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: AppStrings.sortByCompany,
-                      child: Row(
-                        children: [
-                          Icon(
-                            _sortBy == AppStrings.sortByCompany
-                                ? Icons.check
-                                : Icons.check_box_outline_blank,
-                            size: 20,
-                            color: _sortBy == AppStrings.sortByCompany
-                                ? AppColors.primary
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(AppStrings.sortByCompany),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-        bottom: _buildTabBar(context),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildApplicationList(context, ApplicationStatus.notApplied),
-          _buildApplicationList(context, ApplicationStatus.notApplied),
-          _buildApplicationList(context, ApplicationStatus.inProgress),
-          _buildApplicationList(context, ApplicationStatus.passed),
-          _buildApplicationList(context, ApplicationStatus.rejected),
-        ],
-      ),
-      // Phase 4: 새 공고 추가 버튼 (선택 모드일 때는 숨김)
-      floatingActionButton: _isSelectionMode
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () async {
-                // Phase 4: 새 공고 추가 후 결과 확인
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddEditApplicationScreen(),
-                  ),
-                );
+                      final isAllSelected =
+                          filteredApps.isNotEmpty &&
+                          _selectedApplicationIds.length == filteredApps.length;
+                      final isEmpty = filteredApps.isEmpty;
 
-                // Phase 4: 저장 성공 시 목록 새로고침
-                if (result == true) {
-                  refresh();
-                }
-              },
-              icon: const Icon(Icons.add),
-              label: const Text(AppStrings.addNewApplication),
-              backgroundColor: AppColors.primary,
-            ),
+                      return IconButton(
+                        icon: Icon(
+                          isAllSelected
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                        ),
+                        onPressed: isEmpty
+                            ? null
+                            : () {
+                                // PHASE 4: 전체 선택/해제 시 햅틱 피드백
+                                HapticFeedback.mediumImpact();
+                                setState(() {
+                                  if (isAllSelected) {
+                                    // 전체 해제
+                                    _selectedApplicationIds.clear();
+                                  } else {
+                                    // 전체 선택
+                                    _selectedApplicationIds = filteredApps
+                                        .map((app) => app.id)
+                                        .toSet();
+                                  }
+                                });
+                              },
+                        tooltip: isEmpty
+                            ? '선택할 항목이 없습니다'
+                            : (isAllSelected ? '전체 해제' : '전체 선택'),
+                      );
+                    },
+                  ),
+                  // Phase 4: 삭제 버튼
+                  if (_selectedApplicationIds.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () {
+                        _showMultiDeleteConfirmDialog(context);
+                      },
+                      tooltip: '삭제',
+                    ),
+                ]
+              : [
+                  // Phase 2: 검색 아이콘 (검색어가 있을 때 배지 표시)
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: () {
+                          _showSearchDialog(context);
+                        },
+                        tooltip: AppStrings.search,
+                      ),
+                      if (_searchQuery.isNotEmpty)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 8,
+                              minHeight: 8,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  // Phase 5: 필터 아이콘 (필터가 적용되었을 때 배지 표시)
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.filter_list),
+                        onPressed: () {
+                          _showFilterDialog(context);
+                        },
+                        tooltip: AppStrings.filter,
+                      ),
+                      if (_filterStatus != null || _deadlineFilter != null)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 8,
+                              minHeight: 8,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  // Phase 5: 정렬 메뉴 (현재 정렬 상태 표시)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.sort),
+                    tooltip: '${AppStrings.sortBy}: ${_getSortByText(_sortBy)}',
+                    onSelected: (value) {
+                      setState(() {
+                        _sortBy = value;
+                      });
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: AppStrings.sortByDeadline,
+                        child: Row(
+                          children: [
+                            Icon(
+                              _sortBy == AppStrings.sortByDeadline
+                                  ? Icons.check
+                                  : Icons.check_box_outline_blank,
+                              size: 20,
+                              color: _sortBy == AppStrings.sortByDeadline
+                                  ? AppColors.primary
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(AppStrings.sortByDeadline),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: AppStrings.sortByDate,
+                        child: Row(
+                          children: [
+                            Icon(
+                              _sortBy == AppStrings.sortByDate
+                                  ? Icons.check
+                                  : Icons.check_box_outline_blank,
+                              size: 20,
+                              color: _sortBy == AppStrings.sortByDate
+                                  ? AppColors.primary
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(AppStrings.sortByDate),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: AppStrings.sortByCompany,
+                        child: Row(
+                          children: [
+                            Icon(
+                              _sortBy == AppStrings.sortByCompany
+                                  ? Icons.check
+                                  : Icons.check_box_outline_blank,
+                              size: 20,
+                              color: _sortBy == AppStrings.sortByCompany
+                                  ? AppColors.primary
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(AppStrings.sortByCompany),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+          bottom: _buildTabBar(context),
+        ),
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildApplicationList(context, ApplicationStatus.notApplied),
+            _buildApplicationList(context, ApplicationStatus.notApplied),
+            _buildApplicationList(context, ApplicationStatus.inProgress),
+            _buildApplicationList(context, ApplicationStatus.passed),
+            _buildApplicationList(context, ApplicationStatus.rejected),
+          ],
+        ),
+        // Phase 4: 새 공고 추가 버튼 (선택 모드일 때는 숨김)
+        floatingActionButton: _isSelectionMode
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () async {
+                  // Phase 4: 새 공고 추가 후 결과 확인
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddEditApplicationScreen(),
+                    ),
+                  );
+
+                  // Phase 4: 저장 성공 시 목록 새로고침
+                  if (result == true) {
+                    refresh();
+                  }
+                },
+                icon: const Icon(Icons.add),
+                label: const Text(AppStrings.addNewApplication),
+                backgroundColor: AppColors.primary,
+              ),
+      ),
     );
   }
 
@@ -410,6 +435,19 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                 if (_selectedApplicationIds.isEmpty) {
                   _isSelectionMode = false;
                 }
+              }
+            });
+          },
+          onLongPress: () {
+            // PHASE 1: 롱프레스 시 선택 모드 활성화 및 첫 항목 선택
+            setState(() {
+              if (!_isSelectionMode) {
+                // 선택 모드 활성화
+                _isSelectionMode = true;
+                // 롱프레스한 항목을 첫 번째로 선택
+                _selectedApplicationIds.add(app.id);
+                // 햅틱 피드백
+                HapticFeedback.mediumImpact();
               }
             });
           },
@@ -821,13 +859,36 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   }
 
   // Phase 4: 다중 삭제 확인 다이얼로그
+  // PHASE 5: 다중 삭제 확인 다이얼로그
   void _showMultiDeleteConfirmDialog(BuildContext context) {
     final count = _selectedApplicationIds.length;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text(AppStrings.deleteConfirm),
-        content: Text('선택한 $count개의 공고를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
+            const SizedBox(width: 8),
+            const Expanded(child: Text(AppStrings.deleteConfirm)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '선택한 $count개의 공고를 삭제하시겠습니까?',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '이 작업은 되돌릴 수 없습니다.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -848,13 +909,23 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     );
   }
 
-  // Phase 4: 선택된 공고 삭제
+  // PHASE 5: 선택된 공고 삭제
   Future<void> _deleteSelectedApplications() async {
+    // PHASE 5: 삭제 중 로딩 표시
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
     final storageService = StorageService();
     int successCount = 0;
     int failCount = 0;
+    final selectedIds = List<String>.from(_selectedApplicationIds);
 
-    for (final id in _selectedApplicationIds) {
+    for (final id in selectedIds) {
       final success = await storageService.deleteApplication(id);
       if (success) {
         successCount++;
@@ -864,7 +935,11 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     }
 
     if (mounted) {
+      // 로딩 다이얼로그 닫기
+      Navigator.pop(context);
+
       setState(() {
+        // PHASE 5: 삭제 후 선택 모드 자동 종료
         _isSelectionMode = false;
         _selectedApplicationIds.clear();
       });
@@ -872,13 +947,18 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
       // 목록 새로고침
       refresh();
 
-      // 결과 메시지 표시
+      // PHASE 5: 삭제 결과 메시지 표시
       if (failCount == 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$successCount개의 공고가 삭제되었습니다.'),
             backgroundColor: AppColors.success,
             duration: const Duration(seconds: 2),
+            action: SnackBarAction(
+              label: '확인',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
           ),
         );
       } else {
@@ -887,6 +967,11 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
             content: Text('$successCount개 삭제 성공, $failCount개 삭제 실패'),
             backgroundColor: AppColors.error,
             duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: '확인',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
           ),
         );
       }
