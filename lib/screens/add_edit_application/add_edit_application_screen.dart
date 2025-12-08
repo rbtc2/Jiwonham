@@ -49,6 +49,12 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
   NotificationSettings? _deadlineNotificationSettings;
   NotificationSettings? _announcementNotificationSettings;
 
+  // 시간 포함 여부 및 시간 선택
+  bool _deadlineIncludeTime = false;
+  bool _announcementDateIncludeTime = false;
+  TimeOfDay? _deadlineTime;
+  TimeOfDay? _announcementDateTime;
+
   // Phase 7: 수정 모드용 ID
   String? _editingApplicationId;
 
@@ -65,11 +71,32 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
   void _loadApplicationData(Application application) {
     _editingApplicationId = application.id;
     _companyNameController.text = application.companyName;
-    _applicationLinkController.text = application.applicationLink;
+    _applicationLinkController.text = application.applicationLink ?? '';
     _deadline = application.deadline;
     _positionController.text = application.position ?? '';
     _announcementDate = application.announcementDate;
     _memoController.text = application.memo ?? '';
+
+    // 시간 정보 추출
+    if (_deadline != null) {
+      final deadlineHour = _deadline!.hour;
+      final deadlineMinute = _deadline!.minute;
+      if (deadlineHour != 0 || deadlineMinute != 0) {
+        _deadlineIncludeTime = true;
+        _deadlineTime = TimeOfDay(hour: deadlineHour, minute: deadlineMinute);
+      }
+    }
+    if (_announcementDate != null) {
+      final announcementHour = _announcementDate!.hour;
+      final announcementMinute = _announcementDate!.minute;
+      if (announcementHour != 0 || announcementMinute != 0) {
+        _announcementDateIncludeTime = true;
+        _announcementDateTime = TimeOfDay(
+          hour: announcementHour,
+          minute: announcementMinute,
+        );
+      }
+    }
 
     // NextStage 리스트 로드
     _nextStages.clear();
@@ -205,10 +232,64 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
           selectedDate: _deadline,
           errorText: _deadlineError,
           notificationSettings: _deadlineNotificationSettings,
+          includeTime: _deadlineIncludeTime,
+          selectedTime: _deadlineTime,
           onDateSelected: (date) {
             setState(() {
-              _deadline = date;
+              // 날짜만 선택한 경우, 시간 포함 여부에 따라 시간 설정
+              if (_deadlineIncludeTime && _deadlineTime != null) {
+                _deadline = DateTime(
+                  date.year,
+                  date.month,
+                  date.day,
+                  _deadlineTime!.hour,
+                  _deadlineTime!.minute,
+                );
+              } else {
+                _deadline = DateTime(date.year, date.month, date.day);
+              }
               _deadlineError = null;
+            });
+          },
+          onTimeToggled: (includeTime) {
+            setState(() {
+              _deadlineIncludeTime = includeTime;
+              if (includeTime) {
+                _deadlineTime =
+                    _deadlineTime ?? const TimeOfDay(hour: 0, minute: 0);
+                if (_deadline != null) {
+                  _deadline = DateTime(
+                    _deadline!.year,
+                    _deadline!.month,
+                    _deadline!.day,
+                    _deadlineTime!.hour,
+                    _deadlineTime!.minute,
+                  );
+                }
+              } else {
+                _deadlineTime = null;
+                if (_deadline != null) {
+                  _deadline = DateTime(
+                    _deadline!.year,
+                    _deadline!.month,
+                    _deadline!.day,
+                  );
+                }
+              }
+            });
+          },
+          onTimeSelected: (time) {
+            setState(() {
+              _deadlineTime = time;
+              if (_deadline != null) {
+                _deadline = DateTime(
+                  _deadline!.year,
+                  _deadline!.month,
+                  _deadline!.day,
+                  time.hour,
+                  time.minute,
+                );
+              }
             });
           },
           onNotificationSettingsChanged: (settings) {
@@ -227,9 +308,65 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
           icon: Icons.campaign,
           selectedDate: _announcementDate,
           notificationSettings: _announcementNotificationSettings,
+          includeTime: _announcementDateIncludeTime,
+          selectedTime: _announcementDateTime,
           onDateSelected: (date) {
             setState(() {
-              _announcementDate = date;
+              // 날짜만 선택한 경우, 시간 포함 여부에 따라 시간 설정
+              if (_announcementDateIncludeTime &&
+                  _announcementDateTime != null) {
+                _announcementDate = DateTime(
+                  date.year,
+                  date.month,
+                  date.day,
+                  _announcementDateTime!.hour,
+                  _announcementDateTime!.minute,
+                );
+              } else {
+                _announcementDate = DateTime(date.year, date.month, date.day);
+              }
+            });
+          },
+          onTimeToggled: (includeTime) {
+            setState(() {
+              _announcementDateIncludeTime = includeTime;
+              if (includeTime) {
+                _announcementDateTime =
+                    _announcementDateTime ??
+                    const TimeOfDay(hour: 0, minute: 0);
+                if (_announcementDate != null) {
+                  _announcementDate = DateTime(
+                    _announcementDate!.year,
+                    _announcementDate!.month,
+                    _announcementDate!.day,
+                    _announcementDateTime!.hour,
+                    _announcementDateTime!.minute,
+                  );
+                }
+              } else {
+                _announcementDateTime = null;
+                if (_announcementDate != null) {
+                  _announcementDate = DateTime(
+                    _announcementDate!.year,
+                    _announcementDate!.month,
+                    _announcementDate!.day,
+                  );
+                }
+              }
+            });
+          },
+          onTimeSelected: (time) {
+            setState(() {
+              _announcementDateTime = time;
+              if (_announcementDate != null) {
+                _announcementDate = DateTime(
+                  _announcementDate!.year,
+                  _announcementDate!.month,
+                  _announcementDate!.day,
+                  time.hour,
+                  time.minute,
+                );
+              }
             });
           },
           onNotificationSettingsChanged: (settings) {
@@ -366,44 +503,6 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     );
   }
 
-  // Phase 2: 선택 입력 필드 섹션
-  Widget _buildOptionalFields(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 직무명 입력
-        _buildTextField(
-          context,
-          label: AppStrings.position,
-          controller: _positionController,
-          icon: Icons.work_outline,
-          hintText: '직무명을 입력하세요',
-        ),
-        const SizedBox(height: 24),
-
-        // 서류 발표일 선택
-        _buildDateFieldWithNotification(
-          context,
-          label: AppStrings.announcementDate,
-          icon: Icons.campaign,
-          selectedDate: _announcementDate,
-          notificationSettings: _announcementNotificationSettings,
-          onDateSelected: (date) {
-            setState(() {
-              _announcementDate = date;
-            });
-          },
-          onNotificationSettingsChanged: (settings) {
-            setState(() {
-              _announcementNotificationSettings = settings;
-            });
-          },
-          notificationType: 'announcement',
-        ),
-      ],
-    );
-  }
-
   // 날짜 선택 필드 (알림 설정 포함)
   Widget _buildDateFieldWithNotification(
     BuildContext context, {
@@ -415,6 +514,10 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     required Function(DateTime) onDateSelected,
     required Function(NotificationSettings?) onNotificationSettingsChanged,
     required String notificationType,
+    bool includeTime = false,
+    TimeOfDay? selectedTime,
+    Function(bool)? onTimeToggled,
+    Function(TimeOfDay)? onTimeSelected,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,6 +535,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
           ],
         ),
         const SizedBox(height: 8),
+        // 날짜 선택 필드와 시간 포함 토글
         Row(
           children: [
             Expanded(
@@ -465,7 +569,9 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
                     children: [
                       Text(
                         selectedDate != null
-                            ? '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')}'
+                            ? includeTime && selectedTime != null
+                                  ? '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')} ${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}'
+                                  : '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')}'
                             : AppStrings.selectDate,
                         style: TextStyle(
                           color: selectedDate != null
@@ -485,14 +591,24 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
                 ),
               ),
             ),
-            if (errorText != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                child: Text(
-                  errorText,
-                  style: const TextStyle(color: AppColors.error, fontSize: 12),
+            const SizedBox(width: 8),
+            // 시간 포함 토글
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '시간',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 4),
+                Switch(
+                  value: includeTime,
+                  onChanged: onTimeToggled ?? (value) {},
+                ),
+              ],
+            ),
             const SizedBox(width: 8),
             IconButton(
               onPressed: () {
@@ -513,6 +629,76 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
             ),
           ],
         ),
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+            child: Text(
+              errorText,
+              style: const TextStyle(color: AppColors.error, fontSize: 12),
+            ),
+          ),
+        // 시간 선택 필드 (토글이 켜져 있을 때만 표시)
+        if (includeTime) ...[
+          const SizedBox(height: 12),
+          InkWell(
+            onTap: () async {
+              final TimeOfDay? picked = await showTimePicker(
+                context: context,
+                initialTime:
+                    selectedTime ?? const TimeOfDay(hour: 0, minute: 0),
+                builder: (context, child) {
+                  return MediaQuery(
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(alwaysUse24HourFormat: true),
+                    child: child!,
+                  );
+                },
+              );
+              if (picked != null && onTimeSelected != null) {
+                onTimeSelected(picked);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300, width: 1),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 20,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        selectedTime != null
+                            ? '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}'
+                            : '00:00',
+                        style: TextStyle(
+                          color: selectedTime != null
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Icon(
+                    Icons.arrow_drop_down,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
