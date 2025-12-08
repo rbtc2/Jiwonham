@@ -97,25 +97,33 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: _isSelectionMode
-              ? Text('${_selectedApplicationIds.length}개 선택됨')
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(AppStrings.applicationsTitle),
-                    if (hasActiveFilters) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        _buildActiveFiltersText(),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
+          // PHASE 7: 선택 모드 진입 시 AppBar 애니메이션
+          title: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _isSelectionMode
+                ? Text(
+                    '${_selectedApplicationIds.length}개 선택됨',
+                    key: const ValueKey('selection'),
+                  )
+                : Column(
+                    key: const ValueKey('normal'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(AppStrings.applicationsTitle),
+                      if (hasActiveFilters) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          _buildActiveFiltersText(),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
-                ),
+                  ),
+          ),
           leading: _isSelectionMode
               ? IconButton(
                   icon: const Icon(Icons.close),

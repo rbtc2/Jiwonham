@@ -28,24 +28,31 @@ class ApplicationListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return AnimatedContainer(
+      // PHASE 7: 선택 모드 진입 시 애니메이션
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      // PHASE 3: 선택 모드일 때 선택된 항목에 테두리 추가
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: isSelectionMode && isSelected
+            ? AppColors.primary.withValues(alpha: 0.1)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        side: isSelectionMode && isSelected
-            ? BorderSide(
+        border: isSelectionMode && isSelected
+            ? Border.all(
                 color: AppColors.primary,
                 width: 2,
               )
-            : BorderSide.none,
+            : null,
       ),
-      // PHASE 3: 선택 모드일 때 선택된 항목에 시각적 피드백
-      color: isSelectionMode && isSelected
-          ? AppColors.primary.withValues(alpha: 0.1)
-          : null,
-      child: InkWell(
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide.none,
+        ),
+        color: Colors.transparent,
+        child: InkWell(
         onTap: isSelectionMode
             ? () {
                 // 선택 모드일 때는 항목 선택/해제 토글
@@ -79,29 +86,33 @@ class ApplicationListItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // PHASE 3: 선택 모드일 때 체크박스 표시
-              if (isSelectionMode) ...[
-                GestureDetector(
-                  // 체크박스 클릭 이벤트가 InkWell로 전파되지 않도록 차단
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    // 체크박스 클릭 시 직접 처리 (이벤트 소비)
-                    if (onSelectionChanged != null) {
-                      onSelectionChanged!(!isSelected);
-                    }
-                  },
-                  child: Checkbox(
-                    value: isSelected,
-                    onChanged: (value) {
-                      if (onSelectionChanged != null && value != null) {
-                        onSelectionChanged!(value);
-                      }
-                    },
-                    activeColor: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
+              // PHASE 7: 선택 모드일 때 체크박스 표시 (애니메이션 추가)
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: isSelectionMode
+                    ? GestureDetector(
+                        // 체크박스 클릭 이벤트가 InkWell로 전파되지 않도록 차단
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          // 체크박스 클릭 시 직접 처리 (이벤트 소비)
+                          if (onSelectionChanged != null) {
+                            onSelectionChanged!(!isSelected);
+                          }
+                        },
+                        child: Checkbox(
+                          value: isSelected,
+                          onChanged: (value) {
+                            if (onSelectionChanged != null && value != null) {
+                              onSelectionChanged!(value);
+                            }
+                          },
+                          activeColor: AppColors.primary,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              if (isSelectionMode) const SizedBox(width: 8),
               // 나머지 내용
               Expanded(
                 child: Column(
@@ -195,6 +206,8 @@ class ApplicationListItem extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+      ),
         ),
       ),
     );
