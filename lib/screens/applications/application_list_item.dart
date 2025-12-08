@@ -11,11 +11,17 @@ import '../application_detail/application_detail_screen.dart';
 class ApplicationListItem extends StatelessWidget {
   final Application application;
   final VoidCallback? onChanged;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final ValueChanged<bool>? onSelectionChanged;
 
   const ApplicationListItem({
     super.key,
     required this.application,
     this.onChanged,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelectionChanged,
   });
 
   @override
@@ -25,19 +31,27 @@ class ApplicationListItem extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  ApplicationDetailScreen(application: application),
-            ),
-          );
-          // 상태 변경 등으로 인해 변경사항이 있으면 콜백 호출
-          if (result == true && onChanged != null) {
-            onChanged!();
-          }
-        },
+        onTap: isSelectionMode
+            ? () {
+                // 선택 모드일 때는 체크박스 토글
+                if (onSelectionChanged != null) {
+                  onSelectionChanged!(!isSelected);
+                }
+              }
+            : () async {
+                // 일반 모드일 때는 상세 화면으로 이동
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ApplicationDetailScreen(application: application),
+                  ),
+                );
+                // 상태 변경 등으로 인해 변경사항이 있으면 콜백 호출
+                if (result == true && onChanged != null) {
+                  onChanged!();
+                }
+              },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -47,13 +61,25 @@ class ApplicationListItem extends StatelessWidget {
               // 상단: 체크박스와 D-day 배지
               Row(
                 children: [
-                  Checkbox(
-                    value: application.isApplied,
-                    onChanged: (value) {
-                      // TODO: 지원 완료 상태 변경
-                    },
-                    activeColor: AppColors.primary,
-                  ),
+                  // Phase 2: 선택 모드일 때는 선택 체크박스, 아닐 때는 지원 완료 체크박스
+                  if (isSelectionMode)
+                    Checkbox(
+                      value: isSelected,
+                      onChanged: (value) {
+                        if (onSelectionChanged != null && value != null) {
+                          onSelectionChanged!(value);
+                        }
+                      },
+                      activeColor: AppColors.primary,
+                    )
+                  else
+                    Checkbox(
+                      value: application.isApplied,
+                      onChanged: (value) {
+                        // TODO: 지원 완료 상태 변경 (추후 구현)
+                      },
+                      activeColor: AppColors.primary,
+                    ),
                   const Spacer(),
                   DDayBadge(deadline: application.deadline),
                 ],

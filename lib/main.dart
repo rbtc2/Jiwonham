@@ -26,16 +26,14 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('ko', 'KR'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('ko', 'KR'), Locale('en', 'US')],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
           brightness: Brightness.light,
         ),
         useMaterial3: true,
+        fontFamily: 'Pretendard',
         scaffoldBackgroundColor: AppColors.background,
         cardTheme: CardThemeData(
           elevation: 2,
