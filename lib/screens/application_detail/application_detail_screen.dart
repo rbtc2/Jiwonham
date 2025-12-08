@@ -2,16 +2,21 @@
 // 선택한 공고의 모든 정보를 보여주는 화면
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../widgets/d_day_badge.dart';
 import '../../widgets/status_chip.dart';
 import '../../models/application.dart';
 import '../../models/application_status.dart';
+import '../../models/interview_review.dart';
+import '../../services/storage_service.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 
 class ApplicationDetailScreen extends StatefulWidget {
-  const ApplicationDetailScreen({super.key});
+  final Application application;
+
+  const ApplicationDetailScreen({super.key, required this.application});
 
   @override
   State<ApplicationDetailScreen> createState() =>
@@ -19,71 +24,144 @@ class ApplicationDetailScreen extends StatefulWidget {
 }
 
 class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
-  // 더미 데이터
-  final String _companyName = '네이버';
-  final String _position = '백엔드 개발자';
-  final DateTime _deadline = DateTime.now().add(const Duration(days: 5));
-  final String _applicationLink = 'https://recruit.navercorp.com';
-  ApplicationStatus _currentStatus = ApplicationStatus.inProgress;
-  final String _memo = '면접 준비를 철저히 해야 함. 기술 질문 위주로 준비할 것.';
+  // Phase 1: 실제 Application 데이터 사용
+  late Application _application;
 
-  // 자기소개서 문항 더미 데이터
-  final List<Map<String, dynamic>> _coverLetterQuestions = [
-    {
-      'question': '1. 지원동기 (500자)',
-      'answer': '네이버의 기술력과 서비스에 감명받아...',
-      'maxLength': 500,
-      'currentLength': 120,
-    },
-    {
-      'question': '2. 입사 후 포부 (300자)',
-      'answer': '',
-      'maxLength': 300,
-      'currentLength': 0,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _application = widget.application;
+  }
 
-  // 면접 후기 더미 데이터
-  final List<Map<String, dynamic>> _interviewReviews = [
-    {
-      'date': DateTime.now().subtract(const Duration(days: 5)),
-      'type': '1차 면접',
-      'questions': ['자기소개를 해주세요', '지원동기는?', '프로젝트 경험을 설명해주세요'],
-      'review': '전반적으로 좋은 분위기였습니다. 기술 질문이 많았고, 팀 문화에 대해 많이 물어보셨습니다.',
-      'rating': 4,
-    },
-  ];
+  // Phase 1: Application 데이터 다시 로드
+  Future<void> _loadApplication() async {
+    try {
+      final storageService = StorageService();
+      final applications = await storageService.getAllApplications();
+      final updatedApplication = applications.firstWhere(
+        (app) => app.id == _application.id,
+        orElse: () => _application,
+      );
+
+      if (mounted) {
+        setState(() {
+          _application = updatedApplication;
+        });
+      }
+    } catch (e) {
+      // 에러 발생 시 기존 데이터 유지
+    }
+  }
+
+  // Phase 1: 지원서 링크 열기
+  Future<void> _openApplicationLink(String link) async {
+    try {
+      Uri uri = Uri.parse(link);
+      if (!uri.hasScheme) {
+        uri = Uri.parse('https://$link');
+      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('링크를 열 수 없습니다: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Phase 2: 상태 변경 메서드
+  Future<void> _updateApplicationStatus(ApplicationStatus newStatus) async {
+    // 상태 변경 전에 로딩 표시 (선택사항)
+    final updatedApplication = _application.copyWith(
+      status: newStatus,
+      updatedAt: DateTime.now(),
+    );
+
+    try {
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success && mounted) {
+        setState(() {
+          _application = updatedApplication;
+        });
+
+        // 성공 메시지 표시
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('상태가 "${_getStatusText(newStatus)}"로 변경되었습니다.'),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        // Phase 4: 이전 화면에 변경사항 전달하여 자동 새로고침 유도
+        // (WidgetsBindingObserver가 자동으로 처리하지만, 명시적으로 전달)
+      } else if (mounted) {
+        // 실패 메시지 표시
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('상태 변경에 실패했습니다.'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('오류가 발생했습니다: $e'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  // Phase 2: 상태 텍스트 가져오기
+  String _getStatusText(ApplicationStatus status) {
+    switch (status) {
+      case ApplicationStatus.notApplied:
+        return AppStrings.notAppliedStatus;
+      case ApplicationStatus.applied:
+        return AppStrings.appliedStatus;
+      case ApplicationStatus.inProgress:
+        return AppStrings.inProgressStatus;
+      case ApplicationStatus.passed:
+        return AppStrings.passedStatus;
+      case ApplicationStatus.rejected:
+        return AppStrings.rejectedStatus;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text(AppStrings.applicationDetail),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              // Phase 7: 더미 Application 생성 (실제로는 파라미터로 받아야 함)
-              final dummyApplication = Application(
-                id: 'dummy_id',
-                companyName: _companyName,
-                position: _position,
-                applicationLink: _applicationLink,
-                deadline: _deadline,
-                status: _currentStatus,
-                memo: _memo,
-              );
+              // Phase 1: 실제 Application 사용
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AddEditApplicationScreen(
-                    application: dummyApplication,
-                  ),
+                  builder: (context) =>
+                      AddEditApplicationScreen(application: _application),
                 ),
               ).then((result) {
-                // Phase 7: 수정 완료 후 화면 새로고침 (실제로는 필요시 구현)
-                if (result == true) {
-                  // TODO: 화면 새로고침 로직
+                // Phase 4: 수정 완료 후 화면 새로고침
+                if (result == true && mounted) {
+                  // Application 데이터 다시 로드
+                  _loadApplication();
                 }
               });
             },
@@ -99,8 +177,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 기본 정보 카드
@@ -125,6 +205,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
 
             // 상태 변경 섹션
             _buildStatusSection(context),
+            // 하단 패딩 추가 (스크롤이 끝까지 내려가도록)
+            const SizedBox(height: 100),
           ],
         ),
       ),
@@ -145,19 +227,21 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _companyName,
+                        _application.companyName,
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        _position,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
+                      if (_application.position != null &&
+                          _application.position!.isNotEmpty)
+                        Text(
+                          _application.position!,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                     ],
                   ),
                 ),
-                DDayBadge(deadline: _deadline),
+                DDayBadge(deadline: _application.deadline),
               ],
             ),
             const SizedBox(height: 16),
@@ -165,20 +249,12 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: 지원서 링크 열기
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('지원서 링크: $_applicationLink'),
-                          action: SnackBarAction(
-                            label: '열기',
-                            onPressed: () {
-                              // TODO: URL 열기
-                            },
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: _application.applicationLink != null
+                        ? () {
+                            // Phase 1: 지원서 링크 열기
+                            _openApplicationLink(_application.applicationLink!);
+                          }
+                        : null,
                     icon: const Icon(Icons.link),
                     label: const Text(AppStrings.openLink),
                     style: ElevatedButton.styleFrom(
@@ -203,10 +279,6 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
   }
 
   Widget _buildApplicationInfoSection(BuildContext context) {
-    final announcementDate = _deadline.add(const Duration(days: 5));
-    final interviewDate = _deadline.add(const Duration(days: 10));
-    final finalDate = _deadline.add(const Duration(days: 15));
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -224,33 +296,34 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               context,
               Icons.calendar_today,
               '서류 마감일',
-              _formatDate(_deadline),
-              'D-${_deadline.difference(DateTime.now()).inDays}',
+              _formatDate(_application.deadline),
+              'D-${_application.daysUntilDeadline}',
             ),
-            const Divider(height: 24),
-            _buildInfoRow(
-              context,
-              Icons.campaign,
-              '서류 발표일',
-              _formatDate(announcementDate),
-              null,
-            ),
-            const Divider(height: 24),
-            _buildInfoRow(
-              context,
-              Icons.event,
-              '다음 전형 일정',
-              '면접: ${_formatDate(interviewDate)}',
-              null,
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow(
-              context,
-              Icons.event,
-              '',
-              '최종: ${_formatDate(finalDate)}',
-              null,
-            ),
+            if (_application.announcementDate != null) ...[
+              const Divider(height: 24),
+              _buildInfoRow(
+                context,
+                Icons.campaign,
+                '서류 발표일',
+                _formatDate(_application.announcementDate!),
+                null,
+              ),
+            ],
+            if (_application.nextStages.isNotEmpty) ...[
+              const Divider(height: 24),
+              ..._application.nextStages.map((stage) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildInfoRow(
+                    context,
+                    Icons.event,
+                    stage.type,
+                    _formatDate(stage.date),
+                    null,
+                  ),
+                );
+              }).toList(),
+            ],
           ],
         ),
       ),
@@ -345,25 +418,40 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            ...List.generate(_coverLetterQuestions.length, (index) {
-              final question = _coverLetterQuestions[index];
-              final hasAnswer = (question['answer'] as String).isNotEmpty;
-              return Column(
-                children: [
-                  _buildQuestionItem(
-                    context,
-                    question['question'] as String,
-                    question['answer'] as String,
-                    question['maxLength'] as int,
-                    question['currentLength'] as int,
-                    hasAnswer,
-                    index,
+            if (_application.coverLetterQuestions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(
+                  child: Text(
+                    '자기소개서 문항이 없습니다',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                  if (index < _coverLetterQuestions.length - 1)
-                    const Divider(height: 16),
-                ],
-              );
-            }),
+                ),
+              )
+            else
+              ...List.generate(_application.coverLetterQuestions.length, (
+                index,
+              ) {
+                final question = _application.coverLetterQuestions[index];
+                final hasAnswer = question.hasAnswer;
+                return Column(
+                  children: [
+                    _buildQuestionItem(
+                      context,
+                      question.question,
+                      question.answer ?? '',
+                      question.maxLength,
+                      question.answerLength,
+                      hasAnswer,
+                      index,
+                    ),
+                    if (index < _application.coverLetterQuestions.length - 1)
+                      const Divider(height: 16),
+                  ],
+                );
+              }),
           ],
         ),
       ),
@@ -474,7 +562,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            if (_interviewReviews.isEmpty)
+            if (_application.interviewReviews.isEmpty)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -497,8 +585,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                 ),
               )
             else
-              ...List.generate(_interviewReviews.length, (index) {
-                final review = _interviewReviews[index];
+              ...List.generate(_application.interviewReviews.length, (index) {
+                final review = _application.interviewReviews[index];
                 return _buildInterviewReviewItem(context, review, index);
               }),
           ],
@@ -509,9 +597,25 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
 
   Widget _buildInterviewReviewItem(
     BuildContext context,
-    Map<String, dynamic> review,
+    dynamic review, // Phase 1: 임시로 dynamic 사용 (InterviewReview 또는 Map)
     int index,
   ) {
+    // Phase 1: InterviewReview 객체인지 Map인지 확인
+    final date = review is InterviewReview
+        ? review.date
+        : (review as Map<String, dynamic>)['date'] as DateTime;
+    final type = review is InterviewReview
+        ? review.type
+        : (review as Map<String, dynamic>)['type'] as String;
+    final questions = review is InterviewReview
+        ? review.questions
+        : (review as Map<String, dynamic>)['questions'] as List<String>;
+    final reviewText = review is InterviewReview
+        ? review.review
+        : (review as Map<String, dynamic>)['review'] as String;
+    final rating = review is InterviewReview
+        ? review.rating
+        : (review as Map<String, dynamic>)['rating'] as int;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -535,7 +639,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _formatDate(review['date'] as DateTime),
+                    _formatDate(date),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -551,7 +655,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      review['type'] as String,
+                      type,
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 10,
@@ -566,9 +670,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                   ...List.generate(
                     5,
                     (i) => Icon(
-                      i < (review['rating'] as int)
-                          ? Icons.star
-                          : Icons.star_border,
+                      i < rating ? Icons.star : Icons.star_border,
                       size: 16,
                       color: AppColors.warning,
                     ),
@@ -578,7 +680,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          if ((review['questions'] as List).isNotEmpty) ...[
+          if (questions.isNotEmpty) ...[
             Text(
               AppStrings.interviewQuestions,
               style: Theme.of(
@@ -586,7 +688,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            ...(review['questions'] as List<String>).map((q) {
+            ...questions.map((q) {
               return Padding(
                 padding: const EdgeInsets.only(left: 8, bottom: 4),
                 child: Row(
@@ -615,10 +717,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          Text(
-            review['review'] as String,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(reviewText, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -678,9 +777,12 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                _memo.isNotEmpty ? _memo : AppStrings.noMemo,
+                _application.memo != null && _application.memo!.isNotEmpty
+                    ? _application.memo!
+                    : AppStrings.noMemo,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _memo.isNotEmpty
+                  color:
+                      _application.memo != null && _application.memo!.isNotEmpty
                       ? AppColors.textPrimary
                       : AppColors.textSecondary,
                 ),
@@ -707,12 +809,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             ),
             const SizedBox(height: 16),
             RadioGroup<ApplicationStatus>(
-              groupValue: _currentStatus,
+              groupValue: _application.status,
               onChanged: (value) {
                 if (value != null) {
-                  setState(() {
-                    _currentStatus = value;
-                  });
+                  // Phase 2: 상태 변경 시 저장 (다음 Phase에서 구현)
+                  _updateApplicationStatus(value);
                 }
               },
               child: Column(
@@ -878,12 +979,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                // TODO: 저장 로직
-                setState(() {
-                  _coverLetterQuestions[index]['answer'] = controller.text;
-                  _coverLetterQuestions[index]['currentLength'] =
-                      controller.text.length;
-                });
+                // TODO: Phase 2에서 저장 로직 구현
+                // setState(() {
+                //   _application.coverLetterQuestions[index] = ...
+                // });
                 Navigator.pop(context);
               },
               child: const Text(AppStrings.save),
@@ -1060,32 +1159,16 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                // TODO: 저장 로직
-                if (isEdit) {
-                  setState(() {
-                    _interviewReviews[index] = {
-                      'date': DateTime.now(), // TODO: 실제 날짜 파싱
-                      'type': typeController.text,
-                      'questions': questions
-                          .where((q) => q.isNotEmpty)
-                          .toList(),
-                      'review': reviewController.text,
-                      'rating': rating,
-                    };
-                  });
-                } else {
-                  setState(() {
-                    _interviewReviews.add({
-                      'date': DateTime.now(), // TODO: 실제 날짜 파싱
-                      'type': typeController.text,
-                      'questions': questions
-                          .where((q) => q.isNotEmpty)
-                          .toList(),
-                      'review': reviewController.text,
-                      'rating': rating,
-                    });
-                  });
-                }
+                // TODO: Phase 2에서 저장 로직 구현
+                // if (isEdit) {
+                //   setState(() {
+                //     _application.interviewReviews[index] = ...
+                //   });
+                // } else {
+                //   setState(() {
+                //     _application.interviewReviews.add(...);
+                //   });
+                // }
                 Navigator.pop(context);
               },
               child: const Text(AppStrings.save),
@@ -1097,7 +1180,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
   }
 
   void _showMemoDialog(BuildContext context) {
-    final controller = TextEditingController(text: _memo);
+    final controller = TextEditingController(text: _application.memo ?? '');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

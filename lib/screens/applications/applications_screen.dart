@@ -335,14 +335,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
             break;
           }
         }
-        return ApplicationListItem(
-          companyName: app.companyName,
-          position: app.position,
-          deadline: app.deadline,
-          status: app.status,
-          isApplied: app.isApplied,
-          interviewDate: interviewDate,
-        );
+        return ApplicationListItem(application: app);
       },
     );
   }

@@ -3,28 +3,15 @@
 
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../models/application_status.dart';
+import '../../models/application.dart';
 import '../../widgets/d_day_badge.dart';
 import '../../widgets/status_chip.dart';
 import '../application_detail/application_detail_screen.dart';
 
 class ApplicationListItem extends StatelessWidget {
-  final String companyName;
-  final String? position;
-  final DateTime deadline;
-  final ApplicationStatus status;
-  final bool isApplied;
-  final DateTime? interviewDate;
+  final Application application;
 
-  const ApplicationListItem({
-    super.key,
-    required this.companyName,
-    this.position,
-    required this.deadline,
-    required this.status,
-    this.isApplied = false,
-    this.interviewDate,
-  });
+  const ApplicationListItem({super.key, required this.application});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +24,8 @@ class ApplicationListItem extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const ApplicationDetailScreen(),
+              builder: (context) =>
+                  ApplicationDetailScreen(application: application),
             ),
           );
         },
@@ -51,14 +39,14 @@ class ApplicationListItem extends StatelessWidget {
               Row(
                 children: [
                   Checkbox(
-                    value: isApplied,
+                    value: application.isApplied,
                     onChanged: (value) {
                       // TODO: 지원 완료 상태 변경
                     },
                     activeColor: AppColors.primary,
                   ),
                   const Spacer(),
-                  DDayBadge(deadline: deadline),
+                  DDayBadge(deadline: application.deadline),
                 ],
               ),
               const SizedBox(height: 12),
@@ -74,7 +62,7 @@ class ApplicationListItem extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      companyName,
+                      application.companyName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -85,7 +73,8 @@ class ApplicationListItem extends StatelessWidget {
               const SizedBox(height: 8),
 
               // 직무명
-              if (position != null && position!.isNotEmpty) ...[
+              if (application.position != null &&
+                  application.position!.isNotEmpty) ...[
                 Row(
                   children: [
                     Icon(
@@ -96,7 +85,7 @@ class ApplicationListItem extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        position!,
+                        application.position!,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
@@ -115,12 +104,13 @@ class ApplicationListItem extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '마감: ${_formatDate(deadline)}',
+                    '마감: ${_formatDate(application.deadline)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  if (interviewDate != null) ...[
+                  // 다음 전형 일정이 있으면 표시
+                  if (application.nextStages.isNotEmpty) ...[
                     const SizedBox(width: 16),
                     Icon(
                       Icons.phone_in_talk,
@@ -129,7 +119,7 @@ class ApplicationListItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '면접: ${_formatDate(interviewDate!)}',
+                      '면접: ${_formatDate(application.nextStages.first.date)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -140,7 +130,7 @@ class ApplicationListItem extends StatelessWidget {
               const SizedBox(height: 12),
 
               // 상태 칩
-              StatusChip(status: status),
+              StatusChip(status: application.status),
             ],
           ),
         ),

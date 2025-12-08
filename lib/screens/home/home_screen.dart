@@ -445,11 +445,11 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // TODO: ApplicationDetailScreen에 application 파라미터 전달
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const ApplicationDetailScreen(),
+              builder: (context) =>
+                  ApplicationDetailScreen(application: application),
             ),
           );
         },
@@ -557,12 +557,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: ApplicationDetailScreen에 application 파라미터 전달
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const ApplicationDetailScreen(),
+                            builder: (context) => ApplicationDetailScreen(
+                              application: application,
+                            ),
                           ),
                         );
                       },
@@ -641,12 +641,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (index > 0) const Divider(height: 24),
                         InkWell(
                           onTap: () {
-                            // TODO: ApplicationDetailScreen에 application 파라미터 전달
+                            final app = schedule['application'] as Application;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const ApplicationDetailScreen(),
+                                    ApplicationDetailScreen(application: app),
                               ),
                             );
                           },
