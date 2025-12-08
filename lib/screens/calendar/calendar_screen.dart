@@ -549,35 +549,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             );
 
-            if (mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ApplicationDetailScreen(application: application),
-                ),
-              );
-            }
+            _navigateToApplicationDetail(application);
           } catch (e) {
             // 에러 발생 시 기본 Application 생성
-            if (mounted) {
-              final defaultApplication = Application(
-                id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
-                companyName: company,
-                position: position,
-                applicationLink: null,
-                deadline: DateTime.now(),
-                status: ApplicationStatus.notApplied,
-              );
+            final defaultApplication = Application(
+              id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+              companyName: company,
+              position: position,
+              applicationLink: null,
+              deadline: DateTime.now(),
+              status: ApplicationStatus.notApplied,
+            );
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ApplicationDetailScreen(application: defaultApplication),
-                ),
-              );
-            }
+            _navigateToApplicationDetail(defaultApplication);
           }
         },
       ),
@@ -752,5 +736,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
   String _getDayOfWeek(DateTime date) {
     const days = ['일', '월', '화', '수', '목', '금', '토'];
     return days[date.weekday % 7];
+  }
+
+  // ApplicationDetailScreen으로 이동
+  void _navigateToApplicationDetail(Application application) {
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ApplicationDetailScreen(application: application),
+      ),
+    );
   }
 }

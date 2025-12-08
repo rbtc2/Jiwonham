@@ -326,15 +326,6 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
       itemCount: filteredApplications.length,
       itemBuilder: (context, index) {
         final app = filteredApplications[index];
-        // Phase 1: 다음 전형 일정에서 면접 날짜 찾기
-        DateTime? interviewDate;
-        for (final stage in app.nextStages) {
-          if (stage.type.toLowerCase().contains('면접') ||
-              stage.type.toLowerCase().contains('interview')) {
-            interviewDate = stage.date;
-            break;
-          }
-        }
         return ApplicationListItem(application: app);
       },
     );

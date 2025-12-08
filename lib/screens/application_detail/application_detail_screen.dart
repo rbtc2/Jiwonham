@@ -322,7 +322,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                     null,
                   ),
                 );
-              }).toList(),
+              }),
             ],
           ],
         ),
