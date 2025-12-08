@@ -186,6 +186,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Widget _buildMonthlyTrend(BuildContext context) {
     final maxValue = _monthlyData.values.reduce((a, b) => a > b ? a : b);
     final chartHeight = 200.0;
+    // 텍스트와 간격을 위한 공간 확보 (8px 간격 + 약 20px 텍스트)
+    final textAreaHeight = 28.0;
+    final maxBarHeight = chartHeight - textAreaHeight;
 
     return Card(
       child: Padding(
@@ -206,7 +209,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: _monthlyData.entries.map((entry) {
-                  final height = (entry.value / maxValue) * chartHeight;
+                  final height = (entry.value / maxValue) * maxBarHeight;
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
