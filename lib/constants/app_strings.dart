@@ -142,4 +142,21 @@ class AppStrings {
   static const String last6Months = '지난 6개월';
   static const String thisYear = '올해';
   static const String customPeriod = '사용자 지정';
+
+  // Notification Settings Screen
+  static const String enableNotifications = '알림 활성화';
+  static const String deadlineNotification = '마감일 알림';
+  static const String announcementNotification = '발표일 알림';
+  static const String interviewNotification = '면접 알림';
+  static const String notificationTime = '알림 시간';
+  static const String defaultNotificationTime = '기본 알림 시간';
+  static const String receiveNotification = '알림 받기';
+  static const String notificationTiming = '알림 시점';
+  static const String daysBefore7 = 'D-7';
+  static const String daysBefore3 = 'D-3';
+  static const String daysBefore1 = 'D-1';
+  static const String onTheDay = '당일';
+  static const String customTime = '사용자 지정';
+  static const String timeBefore = '시간 전';
+  static const String selectTime = '시간 선택';
 }
