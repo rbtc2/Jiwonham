@@ -115,10 +115,11 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                         const SizedBox(height: 2),
                         Text(
                           _buildActiveFiltersText(),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
                         ),
                       ],
                     ],
