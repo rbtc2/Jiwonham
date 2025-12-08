@@ -13,26 +13,49 @@ class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() => MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+// Phase 3: State 클래스를 public으로 변경하여 외부에서 접근 가능하게 함
+class MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const ApplicationsScreen(),
-    const CalendarScreen(),
-    const StatisticsScreen(),
-  ];
+  // Phase 3: ApplicationsScreen에 접근하기 위한 GlobalKey
+  final GlobalKey<ApplicationsScreenState> _applicationsScreenKey =
+      GlobalKey<ApplicationsScreenState>();
+
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    // Phase 3: ApplicationsScreen을 GlobalKey와 함께 생성
+    _screens = [
+      const HomeScreen(),
+      ApplicationsScreen(key: _applicationsScreenKey),
+      const CalendarScreen(),
+      const StatisticsScreen(),
+    ];
+  }
+
+  // Phase 3: ApplicationsScreen 새로고침 메서드
+  void refreshApplicationsScreen() {
+    _applicationsScreenKey.currentState?.refresh();
+  }
+
+  // Phase 4: 현재 탭 인덱스 설정 (외부에서 호출 가능)
+  void setCurrentIndex(int index) {
+    if (index >= 0 && index < _screens.length) {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
