@@ -40,6 +40,11 @@ class AppStrings {
   static const String announcementDate = '서류 발표일';
   static const String nextStage = '다음 전형 일정';
   static const String addStage = '일정 추가';
+  static const String stageType = '전형 유형';
+  static const String stageDate = '일정';
+  static const String stageTypeExample = '예: 면접, 최종 면접, 서류 제출';
+  static const String editStage = '수정';
+  static const String deleteStage = '삭제';
   static const String coverLetterQuestions = '자기소개서 문항';
   static const String addQuestion = '문항 추가';
   static const String memo = '기타 메모';
