@@ -26,6 +26,8 @@ class ApplicationDetailScreen extends StatefulWidget {
 class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
   // Phase 1: 실제 Application 데이터 사용
   late Application _application;
+  // 상태 변경 추적 플래그
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -99,8 +101,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
           ),
         );
 
-        // Phase 4: 이전 화면에 변경사항 전달하여 자동 새로고침 유도
-        // (WidgetsBindingObserver가 자동으로 처리하지만, 명시적으로 전달)
+        // 상태 변경 플래그 설정 (뒤로 가기 시 반영)
+        _hasChanges = true;
       } else if (mounted) {
         // 실패 메시지 표시
         ScaffoldMessenger.of(context).showSnackBar(
@@ -142,72 +144,81 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: const Text(AppStrings.applicationDetail),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // Phase 1: 실제 Application 사용
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      AddEditApplicationScreen(application: _application),
-                ),
-              ).then((result) {
-                // Phase 4: 수정 완료 후 화면 새로고침
-                if (result == true && mounted) {
-                  // Application 데이터 다시 로드
-                  _loadApplication();
-                }
-              });
-            },
-            tooltip: AppStrings.edit,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              _showDeleteConfirmDialog(context);
-            },
-            tooltip: AppStrings.delete,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 기본 정보 카드
-            _buildBasicInfoCard(context),
-            const SizedBox(height: 16),
-
-            // 지원 정보 섹션
-            _buildApplicationInfoSection(context),
-            const SizedBox(height: 16),
-
-            // 자기소개서 문항 섹션
-            _buildCoverLetterSection(context),
-            const SizedBox(height: 16),
-
-            // 면접 후기 섹션
-            _buildInterviewReviewSection(context),
-            const SizedBox(height: 16),
-
-            // 메모 섹션
-            _buildMemoSection(context),
-            const SizedBox(height: 16),
-
-            // 상태 변경 섹션
-            _buildStatusSection(context),
-            // 하단 패딩 추가 (스크롤이 끝까지 내려가도록)
-            const SizedBox(height: 100),
+    return PopScope(
+      canPop: !_hasChanges,
+      onPopInvokedWithResult: (didPop, result) {
+        // 뒤로 가기 시 변경사항이 있으면 true 반환하여 이전 화면이 새로고침되도록 함
+        if (!didPop && _hasChanges) {
+          Navigator.of(context).pop(true);
+        }
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: const Text(AppStrings.applicationDetail),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                // Phase 1: 실제 Application 사용
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AddEditApplicationScreen(application: _application),
+                  ),
+                ).then((result) {
+                  // Phase 4: 수정 완료 후 화면 새로고침
+                  if (result == true && mounted) {
+                    // Application 데이터 다시 로드
+                    _loadApplication();
+                  }
+                });
+              },
+              tooltip: AppStrings.edit,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {
+                _showDeleteConfirmDialog(context);
+              },
+              tooltip: AppStrings.delete,
+            ),
           ],
+        ),
+        body: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 기본 정보 카드
+              _buildBasicInfoCard(context),
+              const SizedBox(height: 16),
+
+              // 지원 정보 섹션
+              _buildApplicationInfoSection(context),
+              const SizedBox(height: 16),
+
+              // 자기소개서 문항 섹션
+              _buildCoverLetterSection(context),
+              const SizedBox(height: 16),
+
+              // 면접 후기 섹션
+              _buildInterviewReviewSection(context),
+              const SizedBox(height: 16),
+
+              // 메모 섹션
+              _buildMemoSection(context),
+              const SizedBox(height: 16),
+
+              // 상태 변경 섹션
+              _buildStatusSection(context),
+              // 하단 패딩 추가 (스크롤이 끝까지 내려가도록)
+              const SizedBox(height: 100),
+            ],
+          ),
         ),
       ),
     );
@@ -402,18 +413,26 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  AppStrings.coverLetterQuestions,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    // TODO: 문항 추가
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text(AppStrings.addQuestion),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.coverLetterAnswers,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '문항은 수정 화면에서 관리할 수 있습니다',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -422,11 +441,24 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
-                  child: Text(
-                    '자기소개서 문항이 없습니다',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                  child: Column(
+                    children: [
+                      Text(
+                        AppStrings.noCoverLetterQuestions,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        AppStrings.editQuestionToAdd,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               )
@@ -497,7 +529,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                       index,
                     );
                   },
-                  child: Text(hasAnswer ? '수정하기' : AppStrings.write),
+                  child: Text(
+                    hasAnswer ? AppStrings.editAnswer : AppStrings.writeAnswer,
+                  ),
                 ),
               ],
             ),
@@ -546,11 +580,26 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  AppStrings.interviewReview,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.interviewReview,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '면접 후 기록하는 후기',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () {
@@ -755,17 +804,32 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  AppStrings.memo,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.progressMemo,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '지원 과정 중 빠르게 기록하는 메모',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 TextButton(
                   onPressed: () {
                     _showMemoDialog(context);
                   },
-                  child: const Text(AppStrings.editMemo),
+                  child: const Text(AppStrings.editProgressMemo),
                 ),
               ],
             ),
@@ -801,11 +865,24 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              AppStrings.changeStatus,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppStrings.changeStatus,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '지원 과정의 진행 상황을 추적합니다',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             RadioGroup<ApplicationStatus>(

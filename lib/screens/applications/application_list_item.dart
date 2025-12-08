@@ -10,8 +10,13 @@ import '../application_detail/application_detail_screen.dart';
 
 class ApplicationListItem extends StatelessWidget {
   final Application application;
+  final VoidCallback? onChanged;
 
-  const ApplicationListItem({super.key, required this.application});
+  const ApplicationListItem({
+    super.key,
+    required this.application,
+    this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,14 +25,18 @@ class ApplicationListItem extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) =>
                   ApplicationDetailScreen(application: application),
             ),
           );
+          // 상태 변경 등으로 인해 변경사항이 있으면 콜백 호출
+          if (result == true && onChanged != null) {
+            onChanged!();
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

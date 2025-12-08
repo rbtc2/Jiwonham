@@ -326,7 +326,13 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
       itemCount: filteredApplications.length,
       itemBuilder: (context, index) {
         final app = filteredApplications[index];
-        return ApplicationListItem(application: app);
+        return ApplicationListItem(
+          application: app,
+          onChanged: () {
+            // 상태 변경 시 목록 새로고침
+            refresh();
+          },
+        );
       },
     );
   }

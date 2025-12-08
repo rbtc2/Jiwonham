@@ -444,14 +444,19 @@ class _HomeScreenState extends State<HomeScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) =>
                   ApplicationDetailScreen(application: application),
             ),
           );
+          // 상태 변경 시 홈 화면 새로고침
+          if (result == true) {
+            _loadApplications();
+            _refreshApplicationsScreen();
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -556,8 +561,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
+                      onPressed: () async {
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ApplicationDetailScreen(
@@ -565,6 +570,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         );
+                        // 상태 변경 시 홈 화면 새로고침
+                        if (result == true) {
+                          _loadApplications();
+                          _refreshApplicationsScreen();
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -640,15 +650,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         if (index > 0) const Divider(height: 24),
                         InkWell(
-                          onTap: () {
+                          onTap: () async {
                             final app = schedule['application'] as Application;
-                            Navigator.push(
+                            final result = await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
                                     ApplicationDetailScreen(application: app),
                               ),
                             );
+                            // 상태 변경 시 홈 화면 새로고침
+                            if (result == true) {
+                              _loadApplications();
+                              _refreshApplicationsScreen();
+                            }
                           },
                           child: _buildScheduleItem(
                             context,
