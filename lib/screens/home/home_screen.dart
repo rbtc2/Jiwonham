@@ -11,6 +11,7 @@ import '../../services/storage_service.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 import '../notification_settings/notification_settings_screen.dart';
 import '../application_detail/application_detail_screen.dart';
+import '../urgent_applications/urgent_applications_screen.dart';
 import '../../widgets/d_day_badge.dart';
 
 // Phase 4: StatefulWidget으로 변경하여 새로고침 기능 추가
@@ -367,16 +368,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             TextButton(
               onPressed: () {
-                // Phase 4: 공고 목록 화면으로 이동
-                final mainNavigationState = context
-                    .findAncestorStateOfType<State<StatefulWidget>>();
-                if (mainNavigationState != null &&
-                    mainNavigationState.runtimeType.toString().contains(
-                      'MainNavigationState',
-                    )) {
-                  // ignore: avoid_dynamic_calls
-                  (mainNavigationState as dynamic).setCurrentIndex(1);
-                }
+                // Phase 4: 마감 임박 공고 전용 화면으로 이동
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UrgentApplicationsScreen(),
+                  ),
+                );
               },
               child: const Text(AppStrings.viewAll),
             ),
