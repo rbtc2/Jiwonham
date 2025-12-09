@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
       .where((app) => app.status == ApplicationStatus.passed)
       .length;
 
-  // Phase 6: 마감 임박 공고 (D-3 이내)
+  // Phase 6: 마감 임박 공고 (D-7 이내)
   List<Application> get _urgentApplications {
     return _applications
         .where((app) => app.isUrgent && !app.isDeadlinePassed)

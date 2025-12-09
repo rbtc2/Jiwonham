@@ -166,6 +166,6 @@ class Application {
   // 마감일이 지났는지 확인
   bool get isDeadlinePassed => daysUntilDeadline < 0;
 
-  // 마감 임박 여부 (D-3 이내)
-  bool get isUrgent => daysUntilDeadline >= 0 && daysUntilDeadline <= 3;
+  // 마감 임박 여부 (D-7 이내)
+  bool get isUrgent => daysUntilDeadline >= 0 && daysUntilDeadline <= 7;
 }

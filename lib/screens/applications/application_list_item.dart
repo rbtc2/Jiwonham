@@ -80,25 +80,135 @@ class ApplicationListItem extends StatelessWidget {
             }
           },
           borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // PHASE 7: 선택 모드일 때 체크박스 표시 (애니메이션 추가)
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  child: isSelectionMode
-                      ? GestureDetector(
-                          // 체크박스 클릭 이벤트가 InkWell로 전파되지 않도록 차단
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            // 체크박스 클릭 시 직접 처리 (이벤트 소비)
-                            if (onSelectionChanged != null) {
-                              onSelectionChanged!(!isSelected);
-                            }
-                          },
+          child: Stack(
+            children: [
+              // 내용 영역 (항상 같은 위치 - 체크박스와 관계없이 고정)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 상단: D-day 배지
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [DDayBadge(deadline: application.deadline)],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 회사명
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.business,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            application.companyName,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // 직무명
+                    if (application.position != null &&
+                        application.position!.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.work_outline,
+                            size: 20,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              application.position!,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // 날짜 정보
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 20,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '마감: ${_formatDate(application.deadline)}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                        // 다음 전형 일정이 있으면 표시
+                        if (application.nextStages.isNotEmpty)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.phone_in_talk,
+                                size: 20,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '면접: ${_formatDate(application.nextStages.first.date)}',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 상태 칩
+                    StatusChip(status: application.status),
+                  ],
+                ),
+              ),
+              // 선택 모드일 때 체크박스를 왼쪽에 오버레이로 배치
+              // 텍스트는 항상 같은 위치(16px 패딩)에 유지되므로 밀리지 않음
+              if (isSelectionMode)
+                Positioned(
+                  left: 4,
+                  top: 4,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        // 체크박스 영역 클릭 시 선택/해제
+                        if (onSelectionChanged != null) {
+                          onSelectionChanged!(!isSelected);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: 1.0,
                           child: Checkbox(
                             value: isSelected,
                             onChanged: (value) {
@@ -107,105 +217,15 @@ class ApplicationListItem extends StatelessWidget {
                               }
                             },
                             activeColor: AppColors.primary,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-                if (isSelectionMode) const SizedBox(width: 8),
-                // 나머지 내용
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 상단: D-day 배지
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [DDayBadge(deadline: application.deadline)],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // 회사명
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.business,
-                            size: 20,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              application.companyName,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // 직무명
-                      if (application.position != null &&
-                          application.position!.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.work_outline,
-                              size: 20,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                application.position!,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ),
-                          ],
                         ),
-                        const SizedBox(height: 8),
-                      ],
-
-                      // 날짜 정보
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 20,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '마감: ${_formatDate(application.deadline)}',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppColors.textSecondary),
-                          ),
-                          // 다음 전형 일정이 있으면 표시
-                          if (application.nextStages.isNotEmpty) ...[
-                            const SizedBox(width: 16),
-                            Icon(
-                              Icons.phone_in_talk,
-                              size: 20,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '면접: ${_formatDate(application.nextStages.first.date)}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ],
                       ),
-                      const SizedBox(height: 12),
-
-                      // 상태 칩
-                      StatusChip(status: application.status),
-                    ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
