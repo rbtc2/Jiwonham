@@ -329,7 +329,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
         // Phase 4: 새 공고 추가 버튼 (선택 모드일 때는 숨김)
         floatingActionButton: _isSelectionMode
             ? null
-            : FloatingActionButton.extended(
+            : FloatingActionButton(
                 onPressed: () async {
                   // Phase 4: 새 공고 추가 후 결과 확인
                   final result = await Navigator.push(
@@ -344,9 +344,8 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                     refresh();
                   }
                 },
-                icon: const Icon(Icons.add),
-                label: const Text(AppStrings.addNewApplication),
                 backgroundColor: AppColors.primary,
+                child: const Icon(Icons.add),
               ),
       ),
     );
