@@ -59,10 +59,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
             // 주요 통계
             _buildKeyStatistics(context),
-            const SizedBox(height: 24),
-
-            // 일정 현황
-            _buildScheduleStatus(context),
           ],
         ),
       ),
@@ -367,49 +363,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildStatItem(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScheduleStatus(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppStrings.scheduleStatus,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _buildScheduleItem(context, AppStrings.thisWeekInterview, '2건'),
-            const Divider(),
-            _buildScheduleItem(context, AppStrings.thisWeekAnnouncement, '1건'),
-            const Divider(),
-            _buildScheduleItem(context, AppStrings.thisWeekDeadline, '3건'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScheduleItem(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(

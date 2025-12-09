@@ -56,8 +56,23 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
       );
 
       if (mounted) {
+        // Phase 2: 데이터가 실제로 변경되었는지 확인
+        final hasDataChanged =
+            _application.companyName != updatedApplication.companyName ||
+            _application.position != updatedApplication.position ||
+            _application.applicationLink !=
+                updatedApplication.applicationLink ||
+            _application.deadline != updatedApplication.deadline ||
+            _application.announcementDate !=
+                updatedApplication.announcementDate ||
+            _application.memo != updatedApplication.memo;
+
         setState(() {
           _application = updatedApplication;
+          // Phase 2: 데이터가 변경되었으면 플래그 설정
+          if (hasDataChanged) {
+            _hasChanges = true;
+          }
         });
       }
     } catch (e) {
@@ -155,12 +170,16 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   @override
   Widget build(BuildContext context) {
     return PopScope(
+      // Phase 3: 변경사항이 있으면 자동으로 pop되지 않도록 함
       canPop: !_hasChanges,
       onPopInvokedWithResult: (didPop, result) {
-        // 뒤로 가기 시 변경사항이 있으면 true 반환하여 이전 화면이 새로고침되도록 함
+        // Phase 3: 뒤로 가기 시 변경사항이 있으면 true 반환하여 이전 화면이 새로고침되도록 함
         if (!didPop && _hasChanges) {
+          // 변경사항이 있으면 true를 반환하여 이전 화면이 새로고침되도록 함
+          // 이렇게 하면 ApplicationsScreen에서 result == true를 받아서 refresh() 호출
           Navigator.of(context).pop(true);
         }
+        // didPop이 true이고 _hasChanges가 true인 경우는 canPop이 false였기 때문에 발생하지 않음
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
@@ -178,10 +197,14 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                         AddEditApplicationScreen(application: _application),
                   ),
                 ).then((result) {
-                  // Phase 4: 수정 완료 후 화면 새로고침
+                  // Phase 1: 수정 완료 후 화면 새로고침 및 변경사항 플래그 설정
                   if (result == true && mounted) {
                     // Application 데이터 다시 로드
                     _loadApplication();
+                    // Phase 1: 수정 완료 시 변경사항 플래그 설정
+                    setState(() {
+                      _hasChanges = true;
+                    });
                   }
                 });
               },
