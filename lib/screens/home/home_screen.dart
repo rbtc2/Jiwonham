@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () async {
           // Phase 3: 새 공고 추가 후 결과 확인
           final result = await Navigator.push(
@@ -256,8 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           }
         },
-        icon: const Icon(Icons.add),
-        label: const Text(AppStrings.addNewApplication),
+        child: const Icon(Icons.add),
         backgroundColor: AppColors.primary,
       ),
     );
