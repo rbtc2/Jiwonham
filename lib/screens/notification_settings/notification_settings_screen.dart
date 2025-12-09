@@ -40,29 +40,31 @@ class _NotificationSettingsScreenState
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.notificationSettings)),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 전체 알림 활성화
-            _buildEnableAllNotifications(context),
-            const SizedBox(height: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 전체 알림 활성화
+              _buildEnableAllNotifications(context),
+              const SizedBox(height: 24),
 
-            // 마감일 알림 설정
-            _buildDeadlineNotificationSection(context),
-            const SizedBox(height: 24),
+              // 마감일 알림 설정
+              _buildDeadlineNotificationSection(context),
+              const SizedBox(height: 24),
 
-            // 발표일 알림 설정
-            _buildAnnouncementNotificationSection(context),
-            const SizedBox(height: 24),
+              // 발표일 알림 설정
+              _buildAnnouncementNotificationSection(context),
+              const SizedBox(height: 24),
 
-            // 면접 알림 설정
-            _buildInterviewNotificationSection(context),
-            const SizedBox(height: 24),
+              // 면접 알림 설정
+              _buildInterviewNotificationSection(context),
+              const SizedBox(height: 24),
 
-            // 기본 알림 시간 설정
-            _buildDefaultNotificationTimeSection(context),
-          ],
+              // 기본 알림 시간 설정
+              _buildDefaultNotificationTimeSection(context),
+            ],
+          ),
         ),
       ),
     );
