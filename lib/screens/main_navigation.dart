@@ -24,6 +24,10 @@ class MainNavigationState extends State<MainNavigation> {
   final GlobalKey<ApplicationsScreenState> _applicationsScreenKey =
       GlobalKey<ApplicationsScreenState>();
 
+  // PHASE 3: CalendarScreen에 접근하기 위한 GlobalKey
+  final GlobalKey<CalendarScreenState> _calendarScreenKey =
+      GlobalKey<CalendarScreenState>();
+
   late final List<Widget> _screens;
 
   @override
@@ -33,7 +37,7 @@ class MainNavigationState extends State<MainNavigation> {
     _screens = [
       const HomeScreen(),
       ApplicationsScreen(key: _applicationsScreenKey),
-      const CalendarScreen(),
+      CalendarScreen(key: _calendarScreenKey),
       const StatisticsScreen(),
     ];
   }
@@ -41,6 +45,11 @@ class MainNavigationState extends State<MainNavigation> {
   // Phase 3: ApplicationsScreen 새로고침 메서드
   void refreshApplicationsScreen() {
     _applicationsScreenKey.currentState?.refresh();
+  }
+
+  // PHASE 3: CalendarScreen 새로고침 메서드
+  void refreshCalendarScreen() {
+    _calendarScreenKey.currentState?.refresh();
   }
 
   // Phase 4: 현재 탭 인덱스 설정 (외부에서 호출 가능)
