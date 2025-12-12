@@ -343,32 +343,18 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               ],
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _application.applicationLink != null
-                        ? () {
-                            // Phase 1: 지원서 링크 열기
-                            _openApplicationLink(_application.applicationLink!);
-                          }
-                        : null,
-                    icon: const Icon(Icons.link),
-                    label: const Text(AppStrings.openLink),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {
-                    _showNotificationSettingsDialog(context);
-                  },
-                  icon: const Icon(Icons.notifications_outlined),
-                  tooltip: AppStrings.notificationSettings,
-                ),
-              ],
+            ElevatedButton.icon(
+              onPressed: _application.applicationLink != null
+                  ? () {
+                      // Phase 1: 지원서 링크 열기
+                      _openApplicationLink(_application.applicationLink!);
+                    }
+                  : null,
+              icon: const Icon(Icons.link),
+              label: const Text(AppStrings.openLink),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
             ),
           ],
         ),
@@ -1062,30 +1048,6 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text(AppStrings.delete),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showNotificationSettingsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.notificationSettings),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [Text('알림 설정 기능은 추후 구현됩니다.')],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.confirm),
           ),
         ],
       ),
