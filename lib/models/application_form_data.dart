@@ -1,0 +1,151 @@
+// ApplicationFormData 모델
+// 공고 추가/수정 폼의 모든 상태를 관리하는 클래스
+
+import 'package:flutter/material.dart';
+import 'notification_settings.dart';
+import 'cover_letter_question.dart';
+
+class ApplicationFormData {
+  // 컨트롤러
+  final TextEditingController companyNameController;
+  final TextEditingController applicationLinkController;
+  final TextEditingController positionController;
+  final TextEditingController memoController;
+
+  // 필수 필드
+  DateTime? deadline;
+
+  // 선택 필드
+  DateTime? announcementDate;
+
+  // 다음 전형 일정
+  final List<Map<String, dynamic>> nextStages;
+
+  // 자기소개서 문항
+  final List<CoverLetterQuestion> coverLetterQuestions;
+
+  // 유효성 검사 에러 메시지
+  String? companyNameError;
+  String? applicationLinkError;
+  String? deadlineError;
+
+  // 알림 설정
+  NotificationSettings? deadlineNotificationSettings;
+  NotificationSettings? announcementNotificationSettings;
+
+  // 시간 포함 여부 및 시간 선택
+  bool deadlineIncludeTime;
+  bool announcementDateIncludeTime;
+  TimeOfDay? deadlineTime;
+  TimeOfDay? announcementDateTime;
+
+  // 수정 모드용 ID
+  String? editingApplicationId;
+
+  ApplicationFormData({
+    TextEditingController? companyNameController,
+    TextEditingController? applicationLinkController,
+    TextEditingController? positionController,
+    TextEditingController? memoController,
+    this.deadline,
+    this.announcementDate,
+    List<Map<String, dynamic>>? nextStages,
+    List<CoverLetterQuestion>? coverLetterQuestions,
+    this.companyNameError,
+    this.applicationLinkError,
+    this.deadlineError,
+    this.deadlineNotificationSettings,
+    this.announcementNotificationSettings,
+    this.deadlineIncludeTime = false,
+    this.announcementDateIncludeTime = false,
+    this.deadlineTime,
+    this.announcementDateTime,
+    this.editingApplicationId,
+  })  : companyNameController =
+            companyNameController ?? TextEditingController(),
+        applicationLinkController =
+            applicationLinkController ?? TextEditingController(),
+        positionController = positionController ?? TextEditingController(),
+        memoController = memoController ?? TextEditingController(),
+        nextStages = nextStages ?? [],
+        coverLetterQuestions = coverLetterQuestions ?? [];
+
+  // 컨트롤러들 dispose
+  void dispose() {
+    companyNameController.dispose();
+    applicationLinkController.dispose();
+    positionController.dispose();
+    memoController.dispose();
+  }
+
+  // copyWith 메서드
+  ApplicationFormData copyWith({
+    TextEditingController? companyNameController,
+    TextEditingController? applicationLinkController,
+    TextEditingController? positionController,
+    TextEditingController? memoController,
+    DateTime? deadline,
+    DateTime? Function()? deadlineNull,
+    DateTime? announcementDate,
+    DateTime? Function()? announcementDateNull,
+    List<Map<String, dynamic>>? nextStages,
+    List<CoverLetterQuestion>? coverLetterQuestions,
+    String? companyNameError,
+    String? Function()? companyNameErrorNull,
+    String? applicationLinkError,
+    String? Function()? applicationLinkErrorNull,
+    String? deadlineError,
+    String? Function()? deadlineErrorNull,
+    NotificationSettings? deadlineNotificationSettings,
+    NotificationSettings? Function()? deadlineNotificationSettingsNull,
+    NotificationSettings? announcementNotificationSettings,
+    NotificationSettings? Function()? announcementNotificationSettingsNull,
+    bool? deadlineIncludeTime,
+    bool? announcementDateIncludeTime,
+    TimeOfDay? deadlineTime,
+    TimeOfDay? Function()? deadlineTimeNull,
+    TimeOfDay? announcementDateTime,
+    TimeOfDay? Function()? announcementDateTimeNull,
+    String? editingApplicationId,
+    String? Function()? editingApplicationIdNull,
+  }) {
+    return ApplicationFormData(
+      companyNameController: companyNameController ?? this.companyNameController,
+      applicationLinkController:
+          applicationLinkController ?? this.applicationLinkController,
+      positionController: positionController ?? this.positionController,
+      memoController: memoController ?? this.memoController,
+      deadline: deadline ?? (deadlineNull != null ? null : this.deadline),
+      announcementDate: announcementDate ??
+          (announcementDateNull != null ? null : this.announcementDate),
+      nextStages: nextStages ?? this.nextStages,
+      coverLetterQuestions:
+          coverLetterQuestions ?? this.coverLetterQuestions,
+      companyNameError: companyNameError ??
+          (companyNameErrorNull != null ? null : this.companyNameError),
+      applicationLinkError: applicationLinkError ??
+          (applicationLinkErrorNull != null ? null : this.applicationLinkError),
+      deadlineError: deadlineError ??
+          (deadlineErrorNull != null ? null : this.deadlineError),
+      deadlineNotificationSettings: deadlineNotificationSettings ??
+          (deadlineNotificationSettingsNull != null
+              ? null
+              : this.deadlineNotificationSettings),
+      announcementNotificationSettings: announcementNotificationSettings ??
+          (announcementNotificationSettingsNull != null
+              ? null
+              : this.announcementNotificationSettings),
+      deadlineIncludeTime:
+          deadlineIncludeTime ?? this.deadlineIncludeTime,
+      announcementDateIncludeTime:
+          announcementDateIncludeTime ?? this.announcementDateIncludeTime,
+      deadlineTime: deadlineTime ??
+          (deadlineTimeNull != null ? null : this.deadlineTime),
+      announcementDateTime: announcementDateTime ??
+          (announcementDateTimeNull != null ? null : this.announcementDateTime),
+      editingApplicationId: editingApplicationId ??
+          (editingApplicationIdNull != null ? null : this.editingApplicationId),
+    );
+  }
+}
+
