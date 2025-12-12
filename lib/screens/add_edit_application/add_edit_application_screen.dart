@@ -24,6 +24,7 @@ import '../../widgets/dialogs/edit_question_dialog.dart';
 import '../../widgets/dialogs/delete_question_confirm_dialog.dart';
 import '../../widgets/dialogs/notification_settings_dialog.dart';
 import '../../utils/date_utils.dart' show formatDate;
+import '../../utils/validation.dart';
 
 class AddEditApplicationScreen extends StatefulWidget {
   final Application? application; // Phase 7: 수정 모드용 기존 Application
@@ -946,48 +947,21 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     });
   }
 
-  // Phase 3: URL 형식 검증
-  bool _isValidUrl(String url) {
-    if (url.trim().isEmpty) {
-      return false;
-    }
-
-    // http:// 또는 https://로 시작하는지 확인
-    final urlPattern = RegExp(r'^https?://.+', caseSensitive: false);
-
-    return urlPattern.hasMatch(url.trim());
-  }
-
-  // Phase 3: 필수 필드 유효성 검사
+  // Phase 3: 필수 필드 유효성 검사 - validation.dart로 분리됨
   bool _validateRequiredFields() {
-    bool isValid = true;
+    final result = ApplicationFormValidator.validateRequiredFields(
+      companyName: _companyNameController.text.trim(),
+      applicationLink: _applicationLinkController.text.trim(),
+      deadline: _deadline,
+    );
 
-    // 회사명 검증
-    if (_companyNameController.text.trim().isEmpty) {
-      _companyNameError = '회사명을 입력해주세요.';
-      isValid = false;
-    } else {
-      _companyNameError = null;
-    }
+    setState(() {
+      _companyNameError = result.companyNameError;
+      _applicationLinkError = result.applicationLinkError;
+      _deadlineError = result.deadlineError;
+    });
 
-    // 지원서 링크 검증 (선택 항목이지만 입력한 경우 URL 형식 검증)
-    final linkText = _applicationLinkController.text.trim();
-    if (linkText.isNotEmpty && !_isValidUrl(linkText)) {
-      _applicationLinkError = '올바른 URL 형식을 입력해주세요. (예: https://...)';
-      isValid = false;
-    } else {
-      _applicationLinkError = null;
-    }
-
-    // 마감일 검증
-    if (_deadline == null) {
-      _deadlineError = '서류 마감일을 선택해주세요.';
-      isValid = false;
-    } else {
-      _deadlineError = null;
-    }
-
-    return isValid;
+    return result.isValid;
   }
 
   // Phase 3: 저장 전 유효성 검사 및 저장
