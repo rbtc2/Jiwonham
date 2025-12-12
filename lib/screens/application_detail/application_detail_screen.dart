@@ -1309,34 +1309,97 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     final controller = TextEditingController(text: _application.memo ?? '');
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.editMemo),
-        content: TextField(
-          controller: controller,
-          maxLines: 5,
-          decoration: InputDecoration(
-            hintText: '메모를 입력하세요',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 600,
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 헤더 영역
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      AppStrings.editMemo,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // 입력 영역
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: TextField(
+                    controller: controller,
+                    maxLines: null,
+                    minLines: 15,
+                    textInputAction: TextInputAction.newline,
+                    decoration: InputDecoration(
+                      hintText: '메모를 입력하세요',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.all(16),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                    ),
+                    style: const TextStyle(fontSize: 16),
+                    autofocus: true,
+                  ),
+                ),
+              ),
+              // 액션 버튼 영역
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text(AppStrings.cancel),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        // TODO: 저장 로직
+                        setState(() {
+                          // _memo = controller.text; // 실제로는 상태 관리 필요
+                        });
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      child: const Text(AppStrings.save),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: 저장 로직
-              setState(() {
-                // _memo = controller.text; // 실제로는 상태 관리 필요
-              });
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.save),
-          ),
-        ],
       ),
     );
   }

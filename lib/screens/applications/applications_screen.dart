@@ -1,6 +1,7 @@
 // 공고 목록 화면
 // 모든 공고를 목록 형태로 보여주고, 검색 및 필터 기능 제공
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../constants/app_colors.dart';
@@ -33,6 +34,9 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   // Phase 2: 검색 및 필터 상태
   String _searchQuery = '';
   String? _deadlineFilter;
+  bool _isSearchMode = false;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   // Phase 1: 체크박스 선택 상태 관리
   bool _isSelectionMode = false;
@@ -56,6 +60,8 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     // Phase 3: 앱 생명주기 관찰자 제거
     WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
+    _searchController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -105,25 +111,27 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                     '${_selectedApplicationIds.length}개 선택됨',
                     key: const ValueKey('selection'),
                   )
-                : Column(
-                    key: const ValueKey('normal'),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(AppStrings.applicationsTitle),
-                      if (hasActiveFilters) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          _buildActiveFiltersText(),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                              ),
-                        ),
-                      ],
-                    ],
-                  ),
+                : _isSearchMode
+                    ? _buildSearchBar(context)
+                    : Column(
+                        key: const ValueKey('normal'),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(AppStrings.applicationsTitle),
+                          if (hasActiveFilters) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              _buildActiveFiltersText(),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11,
+                                  ),
+                            ),
+                          ],
+                        ],
+                      ),
           ),
           leading: _isSelectionMode
               ? IconButton(
@@ -137,7 +145,15 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                   },
                   tooltip: '선택 모드 종료',
                 )
-              : null,
+              : _isSearchMode
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        _exitSearchMode();
+                      },
+                      tooltip: '검색 종료',
+                    )
+                  : null,
           actions: _isSelectionMode
               ? [
                   // PHASE 4: 전체 선택/해제 버튼
@@ -190,35 +206,49 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                       tooltip: '삭제',
                     ),
                 ]
-              : [
-                  // Phase 2: 검색 아이콘 (검색어가 있을 때 배지 표시)
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: () {
-                          _showSearchDialog(context);
-                        },
-                        tooltip: AppStrings.search,
-                      ),
+              : _isSearchMode
+                  ? [
+                      // 검색 모드일 때는 검색어가 있으면 초기화 버튼 표시
                       if (_searchQuery.isNotEmpty)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 8,
-                              minHeight: 8,
-                            ),
-                          ),
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _searchQuery = '';
+                            setState(() {});
+                          },
+                          tooltip: '검색어 지우기',
                         ),
-                    ],
-                  ),
+                    ]
+                  : [
+                      // Phase 2: 검색 아이콘 (검색어가 있을 때 배지 표시)
+                      Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.search),
+                            onPressed: () {
+                              _enterSearchMode();
+                            },
+                            tooltip: AppStrings.search,
+                          ),
+                          if (_searchQuery.isNotEmpty)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 8,
+                                  minHeight: 8,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                   // Phase 5: 필터 아이콘 (필터가 적용되었을 때 배지 표시)
                   Stack(
                     children: [
@@ -316,14 +346,55 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                 ],
           bottom: _buildTabBar(context),
         ),
-        body: TabBarView(
-          controller: _tabController,
+        body: Column(
           children: [
-            _buildApplicationList(context, ApplicationStatus.notApplied),
-            _buildApplicationList(context, ApplicationStatus.notApplied),
-            _buildApplicationList(context, ApplicationStatus.inProgress),
-            _buildApplicationList(context, ApplicationStatus.passed),
-            _buildApplicationList(context, ApplicationStatus.rejected),
+            // 검색어 Chip 표시 (검색 모드가 아니고 검색어가 있을 때)
+            if (!_isSearchMode && _searchQuery.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: AppColors.surface,
+                child: Wrap(
+                  spacing: 8,
+                  children: [
+                    Chip(
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.search, size: 16),
+                          const SizedBox(width: 4),
+                          Text(_searchQuery),
+                        ],
+                      ),
+                      onDeleted: () {
+                        setState(() {
+                          _searchQuery = '';
+                          _searchController.clear();
+                        });
+                      },
+                      deleteIcon: const Icon(Icons.close, size: 18),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      labelStyle: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // 탭 내용
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildApplicationList(context, ApplicationStatus.notApplied),
+                  _buildApplicationList(context, ApplicationStatus.notApplied),
+                  _buildApplicationList(context, ApplicationStatus.inProgress),
+                  _buildApplicationList(context, ApplicationStatus.passed),
+                  _buildApplicationList(context, ApplicationStatus.rejected),
+                ],
+              ),
+            ),
           ],
         ),
         // Phase 4: 새 공고 추가 버튼 (선택 모드일 때는 숨김)
@@ -630,6 +701,62 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     return filters.join(' • ');
   }
 
+  // 검색바 위젯
+  Widget _buildSearchBar(BuildContext context) {
+    return TextField(
+      controller: _searchController,
+      autofocus: true,
+      style: TextStyle(
+        fontSize: 16,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : AppColors.textPrimary,
+      ),
+      decoration: InputDecoration(
+        hintText: AppStrings.searchPlaceholder,
+        border: InputBorder.none,
+        hintStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white.withValues(alpha: 0.7)
+              : AppColors.textSecondary.withValues(alpha: 0.6),
+        ),
+      ),
+      onChanged: (value) {
+        _searchDebounce?.cancel();
+        _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            setState(() {
+              _searchQuery = value.trim();
+            });
+          }
+        });
+      },
+      onSubmitted: (value) {
+        setState(() {
+          _searchQuery = value.trim();
+        });
+      },
+    );
+  }
+
+  // 검색 모드 진입
+  void _enterSearchMode() {
+    setState(() {
+      _isSearchMode = true;
+      _searchController.text = _searchQuery;
+    });
+  }
+
+  // 검색 모드 종료
+  void _exitSearchMode() {
+    setState(() {
+      _isSearchMode = false;
+      if (_searchQuery.isEmpty) {
+        _searchController.clear();
+      }
+    });
+  }
+
   // Phase 2: 빈 목록 UI 개선
   Widget _buildEmptyList(BuildContext context, String tabName) {
     final hasFilters =
@@ -671,59 +798,6 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     );
   }
 
-  // Phase 2: 검색 다이얼로그
-  void _showSearchDialog(BuildContext context) {
-    final searchController = TextEditingController(text: _searchQuery);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.search),
-        content: TextField(
-          controller: searchController,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: AppStrings.searchPlaceholder,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            prefixIcon: const Icon(Icons.search),
-          ),
-          onSubmitted: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-            Navigator.pop(context);
-          },
-        ),
-        actions: [
-          if (_searchQuery.isNotEmpty)
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _searchQuery = '';
-                });
-                searchController.clear();
-              },
-              child: const Text('초기화'),
-            ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _searchQuery = searchController.text.trim();
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('검색'),
-          ),
-        ],
-      ),
-    );
-  }
 
   // Phase 2: 필터 다이얼로그
   void _showFilterDialog(BuildContext context) {
