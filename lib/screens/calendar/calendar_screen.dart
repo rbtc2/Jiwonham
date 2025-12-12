@@ -709,7 +709,7 @@ class CalendarScreenState extends State<CalendarScreen>
                 style: TextStyle(color: color, fontWeight: FontWeight.bold),
               )
             : null,
-        onTap: () => _handleEventTap(context, event),
+        onTap: () => _handleEventTap(event),
       ),
     );
   }
@@ -829,7 +829,7 @@ class CalendarScreenState extends State<CalendarScreen>
         : label;
 
     return InkWell(
-      onTap: () => _handleEventTap(context, event),
+      onTap: () => _handleEventTap(event),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -932,20 +932,18 @@ class CalendarScreenState extends State<CalendarScreen>
 
   // PHASE 2: 이벤트 탭 처리 (개선된 에러 처리)
   Future<void> _handleEventTap(
-    BuildContext context,
     Map<String, dynamic> event,
   ) async {
     final applicationId = event['applicationId'] as String?;
 
     if (applicationId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('공고 정보를 찾을 수 없습니다.'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('공고 정보를 찾을 수 없습니다.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
       return;
     }
 
@@ -953,27 +951,26 @@ class CalendarScreenState extends State<CalendarScreen>
       final storageService = StorageService();
       final application = await storageService.getApplicationById(applicationId);
 
-      if (application != null && mounted) {
+      if (application != null) {
+        if (!mounted) return;
         _navigateToApplicationDetail(application);
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('공고 정보를 찾을 수 없습니다.'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('공고 정보를 불러오는 중 오류가 발생했습니다: $e'),
+          const SnackBar(
+            content: Text('공고 정보를 찾을 수 없습니다.'),
             backgroundColor: AppColors.error,
           ),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('공고 정보를 불러오는 중 오류가 발생했습니다: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
