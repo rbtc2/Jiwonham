@@ -4,14 +4,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
-
-enum NotificationTiming {
-  daysBefore7,
-  daysBefore3,
-  daysBefore1,
-  onTheDay,
-  custom,
-}
+import '../../models/notification_timing.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});

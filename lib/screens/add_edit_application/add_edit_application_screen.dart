@@ -10,7 +10,12 @@ import '../../models/notification_settings.dart';
 import '../../models/application.dart';
 import '../../models/next_stage.dart';
 import '../../models/application_status.dart';
+import '../../models/notification_timing.dart';
 import '../../services/storage_service.dart';
+// Phase 1: 폼 필드 위젯 import
+import '../../widgets/form_fields/labeled_text_field.dart';
+import '../../widgets/form_fields/link_text_field.dart';
+import '../../widgets/form_fields/date_time_field.dart';
 
 class AddEditApplicationScreen extends StatefulWidget {
   final Application? application; // Phase 7: 수정 모드용 기존 Application
@@ -185,8 +190,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 회사명 입력
-        _buildTextField(
-          context,
+        LabeledTextField(
           label: AppStrings.companyNameRequired,
           controller: _companyNameController,
           icon: Icons.business,
@@ -203,8 +207,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         const SizedBox(height: 24),
 
         // 직무명 입력
-        _buildTextField(
-          context,
+        LabeledTextField(
           label: AppStrings.position,
           controller: _positionController,
           icon: Icons.work_outline,
@@ -213,20 +216,24 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         const SizedBox(height: 24),
 
         // 지원서 링크 입력
-        _buildLinkField(context),
-        if (_applicationLinkError != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-            child: Text(
-              _applicationLinkError!,
-              style: const TextStyle(color: AppColors.error, fontSize: 12),
-            ),
-          ),
+        LinkTextField(
+          controller: _applicationLinkController,
+          errorText: _applicationLinkError,
+          onChanged: () {
+            if (_applicationLinkError != null) {
+              setState(() {
+                _applicationLinkError = null;
+              });
+            }
+          },
+          onTestLink: (url) async {
+            await _testLink(context);
+          },
+        ),
         const SizedBox(height: 24),
 
         // 서류 마감일 선택
-        _buildDateFieldWithNotification(
-          context,
+        DateTimeField(
           label: AppStrings.deadlineRequired,
           icon: Icons.calendar_today,
           selectedDate: _deadline,
@@ -298,12 +305,12 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
             });
           },
           notificationType: 'deadline',
+          onNotificationSettingsTap: _showNotificationSettingsDialog,
         ),
         const SizedBox(height: 24),
 
         // 서류 발표일 선택
-        _buildDateFieldWithNotification(
-          context,
+        DateTimeField(
           label: AppStrings.announcementDate,
           icon: Icons.campaign,
           selectedDate: _announcementDate,
@@ -375,378 +382,26 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
             });
           },
           notificationType: 'announcement',
+          onNotificationSettingsTap: _showNotificationSettingsDialog,
         ),
       ],
     );
   }
 
-  // 텍스트 입력 필드
-  Widget _buildTextField(
-    BuildContext context, {
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    String? hintText,
-    String? errorText,
-    VoidCallback? onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: hintText,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: AppColors.surface,
-            errorText: errorText,
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.error),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.error, width: 2),
-            ),
-          ),
-          onChanged: (_) {
-            onChanged?.call();
-          },
-        ),
-      ],
-    );
-  }
-
-  // 링크 입력 필드 (링크 테스트 버튼 포함)
-  Widget _buildLinkField(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.link, size: 20, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Text(
-              AppStrings.applicationLink,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _applicationLinkController,
-                decoration: InputDecoration(
-                  hintText: 'https://...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  errorText: _applicationLinkError,
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.error),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.error,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                keyboardType: TextInputType.url,
-                onChanged: (_) {
-                  if (_applicationLinkError != null) {
-                    setState(() {
-                      _applicationLinkError = null;
-                    });
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton(
-              onPressed: () async {
-                await _testLink(context);
-              },
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-              ),
-              child: const Text(AppStrings.testLink),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // 날짜 선택 필드 (알림 설정 포함)
-  Widget _buildDateFieldWithNotification(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    DateTime? selectedDate,
-    String? errorText,
-    NotificationSettings? notificationSettings,
-    required Function(DateTime) onDateSelected,
-    required Function(NotificationSettings?) onNotificationSettingsChanged,
-    required String notificationType,
-    bool includeTime = false,
-    TimeOfDay? selectedTime,
-    Function(bool)? onTimeToggled,
-    Function(TimeOfDay)? onTimeSelected,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // 날짜 선택 필드와 시간 포함 토글
-        Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                    locale: const Locale('ko', 'KR'),
-                  );
-                  if (picked != null) {
-                    onDateSelected(picked);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: errorText != null
-                          ? AppColors.error
-                          : Colors.grey.shade300,
-                      width: errorText != null ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        selectedDate != null
-                            ? includeTime && selectedTime != null
-                                  ? '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')} ${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}'
-                                  : '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')}'
-                            : AppStrings.selectDate,
-                        style: TextStyle(
-                          color: selectedDate != null
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                      Icon(
-                        Icons.calendar_today,
-                        size: 20,
-                        color: errorText != null
-                            ? AppColors.error
-                            : AppColors.textSecondary,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // 시간 포함 토글
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '시간',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Switch(
-                  value: includeTime,
-                  onChanged: onTimeToggled ?? (value) {},
-                ),
-              ],
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              onPressed: () {
-                _showNotificationSettingsDialog(
-                  context,
-                  notificationType,
-                  onNotificationSettingsChanged,
-                );
-              },
-              icon: Icon(
-                _getNotificationIcon(notificationType, notificationSettings),
-                color: _getNotificationColor(
-                  notificationType,
-                  notificationSettings,
-                ),
-              ),
-              tooltip: '알림 설정',
-            ),
-          ],
-        ),
-        if (errorText != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-            child: Text(
-              errorText,
-              style: const TextStyle(color: AppColors.error, fontSize: 12),
-            ),
-          ),
-        // 시간 선택 필드 (토글이 켜져 있을 때만 표시)
-        if (includeTime) ...[
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: () async {
-              final TimeOfDay? picked = await showTimePicker(
-                context: context,
-                initialTime:
-                    selectedTime ?? const TimeOfDay(hour: 0, minute: 0),
-                builder: (context, child) {
-                  return MediaQuery(
-                    data: MediaQuery.of(
-                      context,
-                    ).copyWith(alwaysUse24HourFormat: true),
-                    child: child!,
-                  );
-                },
-              );
-              if (picked != null && onTimeSelected != null) {
-                onTimeSelected(picked);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300, width: 1),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 20,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        selectedTime != null
-                            ? '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}'
-                            : '00:00',
-                        style: TextStyle(
-                          color: selectedTime != null
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Icon(
-                    Icons.arrow_drop_down,
-                    size: 20,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
+  // Phase 1: 폼 필드 빌더 메서드들은 위젯으로 분리됨
+  // - _buildTextField -> LabeledTextField
+  // - _buildLinkField -> LinkTextField
+  // - _buildDateFieldWithNotification -> DateTimeField
 
   // 메모 입력 필드 (여러 줄)
   Widget _buildMemoField(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.note_outlined, size: 20, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.applicationMemo,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '공고에 대한 메모',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _memoController,
-          maxLines: 5,
-          decoration: InputDecoration(
-            hintText: '메모를 입력하세요',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: AppColors.surface,
-          ),
-        ),
-      ],
+    return LabeledTextField(
+      label: AppStrings.applicationMemo,
+      controller: _memoController,
+      icon: Icons.note_outlined,
+      hintText: '메모를 입력하세요',
+      maxLines: 5,
+      subtitle: '공고에 대한 메모',
     );
   }
 
@@ -1594,27 +1249,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     );
   }
 
-  // Phase 4: 알림 아이콘 가져오기
-  IconData _getNotificationIcon(String type, NotificationSettings? settings) {
-    bool isEnabled = false;
-    if (type == 'deadline') {
-      isEnabled = settings?.deadlineNotification ?? false;
-    } else if (type == 'announcement') {
-      isEnabled = settings?.announcementNotification ?? false;
-    }
-    return isEnabled ? Icons.notifications : Icons.notifications_outlined;
-  }
-
-  // Phase 4: 알림 색상 가져오기
-  Color _getNotificationColor(String type, NotificationSettings? settings) {
-    bool isEnabled = false;
-    if (type == 'deadline') {
-      isEnabled = settings?.deadlineNotification ?? false;
-    } else if (type == 'announcement') {
-      isEnabled = settings?.announcementNotification ?? false;
-    }
-    return isEnabled ? AppColors.primary : AppColors.textSecondary;
-  }
+  // Phase 1: 알림 아이콘/색상 메서드는 DateTimeField 위젯으로 이동됨
 
   // Phase 4: 알림 설정 다이얼로그
   void _showNotificationSettingsDialog(

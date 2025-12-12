@@ -1,13 +1,7 @@
 // NotificationSettings 모델
 // 알림 설정 정보를 담는 데이터 모델
 
-enum NotificationTiming {
-  daysBefore7,  // D-7
-  daysBefore3,  // D-3
-  daysBefore1,  // D-1
-  onTheDay,     // 당일
-  custom,       // 사용자 지정
-}
+import 'notification_timing.dart';
 
 class NotificationSettings {
   final bool deadlineNotification;      // 마감일 알림 활성화
