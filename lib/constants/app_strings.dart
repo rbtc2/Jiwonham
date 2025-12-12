@@ -3,7 +3,7 @@
 
 class AppStrings {
   // App
-  static const String appName = '취업 준비 관리';
+  static const String appName = '지원함';
 
   // Home Screen
   static const String homeTitle = '취업 준비 관리';
