@@ -10,12 +10,20 @@ import '../../models/notification_settings.dart';
 import '../../models/application.dart';
 import '../../models/next_stage.dart';
 import '../../models/application_status.dart';
-import '../../models/notification_timing.dart';
 import '../../services/storage_service.dart';
 // Phase 1: 폼 필드 위젯 import
 import '../../widgets/form_fields/labeled_text_field.dart';
 import '../../widgets/form_fields/link_text_field.dart';
 import '../../widgets/form_fields/date_time_field.dart';
+// Phase 2: 다이얼로그 위젯 import
+import '../../widgets/dialogs/add_stage_dialog.dart';
+import '../../widgets/dialogs/edit_stage_dialog.dart';
+import '../../widgets/dialogs/delete_stage_confirm_dialog.dart';
+import '../../widgets/dialogs/add_question_dialog.dart';
+import '../../widgets/dialogs/edit_question_dialog.dart';
+import '../../widgets/dialogs/delete_question_confirm_dialog.dart';
+import '../../widgets/dialogs/notification_settings_dialog.dart';
+import '../../utils/date_utils.dart' show formatDate;
 
 class AddEditApplicationScreen extends StatefulWidget {
   final Application? application; // Phase 7: 수정 모드용 기존 Application
@@ -501,7 +509,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _formatDate(stage['date'] as DateTime),
+                    formatDate(stage['date'] as DateTime),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -596,7 +604,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
                       children: [
                         Text(
                           selectedDate != null
-                              ? _formatDate(selectedDate!)
+                              ? formatDate(selectedDate!)
                               : AppStrings.selectDate,
                           style: TextStyle(
                             color: selectedDate != null
@@ -656,164 +664,39 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     );
   }
 
-  // 일정 수정 다이얼로그
+  // Phase 2: 일정 수정 다이얼로그 - EditStageDialog 위젯으로 분리됨
   void _showEditStageDialog(BuildContext context, int index) {
     final stage = _nextStages[index];
-    final typeController = TextEditingController(text: stage['type'] as String);
-    DateTime? selectedDate = stage['date'] as DateTime;
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('일정 수정'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.stageType,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: typeController,
-                  decoration: InputDecoration(
-                    hintText: AppStrings.stageTypeExample,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  AppStrings.stageDate,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate ?? DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                      locale: const Locale('ko', 'KR'),
-                    );
-                    if (picked != null) {
-                      setDialogState(() {
-                        selectedDate = picked;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          selectedDate != null
-                              ? _formatDate(selectedDate!)
-                              : AppStrings.selectDate,
-                          style: TextStyle(
-                            color: selectedDate != null
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                        const Icon(Icons.calendar_today, size: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (typeController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('전형 유형을 입력해주세요.'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-                if (selectedDate == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('일정을 선택해주세요.'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-
-                setState(() {
-                  _nextStages[index] = {
-                    'type': typeController.text.trim(),
-                    'date': selectedDate!,
-                  };
-                });
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.save),
-            ),
-          ],
-        ),
+      builder: (context) => EditStageDialog(
+        initialType: stage['type'] as String,
+        initialDate: stage['date'] as DateTime,
       ),
-    );
+    ).then((result) {
+      if (result != null && result is Map<String, dynamic>) {
+        setState(() {
+          _nextStages[index] = {
+            'type': result['type'] as String,
+            'date': result['date'] as DateTime,
+          };
+        });
+      }
+    });
   }
 
-  // 일정 삭제 확인 다이얼로그
+  // Phase 2: 일정 삭제 확인 다이얼로그 - DeleteStageConfirmDialog 위젯으로 분리됨
   void _showDeleteStageConfirmDialog(BuildContext context, int index) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('일정 삭제'),
-        content: const Text('이 일정을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _nextStages.removeAt(index);
-              });
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text(AppStrings.delete),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+      builder: (context) => const DeleteStageConfirmDialog(),
+    ).then((result) {
+      if (result == true) {
+        setState(() {
+          _nextStages.removeAt(index);
+        });
+      }
+    });
   }
 
   // 자기소개서 문항 섹션
@@ -977,287 +860,56 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     );
   }
 
-  // Phase 2: 문항 추가 다이얼로그
+  // Phase 2: 문항 추가 다이얼로그 - AddQuestionDialog 위젯으로 분리됨
   void _showAddQuestionDialog(BuildContext context) {
-    final TextEditingController questionController = TextEditingController();
-    final TextEditingController maxLengthController = TextEditingController(
-      text: '500',
-    );
-    bool isValid = true;
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text(AppStrings.addQuestion),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.question,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: questionController,
-                  decoration: InputDecoration(
-                    hintText: '예: 지원 동기를 작성해주세요.',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    errorText:
-                        !isValid && questionController.text.trim().isEmpty
-                        ? '문항을 입력해주세요.'
-                        : null,
-                  ),
-                  maxLines: 3,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      isValid = questionController.text.trim().isNotEmpty;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '${AppStrings.maxCharacters} (${AppStrings.characterCount})',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: maxLengthController,
-                  decoration: InputDecoration(
-                    hintText: '500',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    errorText:
-                        !isValid && maxLengthController.text.trim().isEmpty
-                        ? '최대 글자 수를 입력해주세요.'
-                        : null,
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      isValid = maxLengthController.text.trim().isNotEmpty;
-                    });
-                  },
-                ),
-              ],
+      builder: (context) => const AddQuestionDialog(),
+    ).then((result) {
+      if (result != null && result is Map<String, dynamic>) {
+        setState(() {
+          _coverLetterQuestions.add(
+            CoverLetterQuestion(
+              question: result['question'] as String,
+              maxLength: result['maxLength'] as int,
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final questionText = questionController.text.trim();
-                final maxLengthText = maxLengthController.text.trim();
-
-                if (questionText.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('문항을 입력해주세요.'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-
-                if (maxLengthText.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('최대 글자 수를 입력해주세요.'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-
-                final maxLength = int.tryParse(maxLengthText);
-                if (maxLength == null || maxLength <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('올바른 최대 글자 수를 입력해주세요.'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-
-                setState(() {
-                  _coverLetterQuestions.add(
-                    CoverLetterQuestion(
-                      question: questionText,
-                      maxLength: maxLength,
-                    ),
-                  );
-                });
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.save),
-            ),
-          ],
-        ),
-      ),
-    );
+          );
+        });
+      }
+    });
   }
 
-  // Phase 2: 문항 수정 다이얼로그
+  // Phase 2: 문항 수정 다이얼로그 - EditQuestionDialog 위젯으로 분리됨
   void _showEditQuestionDialog(BuildContext context, int index) {
     final question = _coverLetterQuestions[index];
-    final TextEditingController questionController = TextEditingController(
-      text: question.question,
-    );
-    final TextEditingController maxLengthController = TextEditingController(
-      text: question.maxLength.toString(),
-    );
-    bool isValid = true;
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('문항 수정'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.question,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: questionController,
-                  decoration: InputDecoration(
-                    hintText: '예: 지원 동기를 작성해주세요.',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    errorText:
-                        !isValid && questionController.text.trim().isEmpty
-                        ? '문항을 입력해주세요.'
-                        : null,
-                  ),
-                  maxLines: 3,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      isValid = questionController.text.trim().isNotEmpty;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '${AppStrings.maxCharacters} (${AppStrings.characterCount})',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: maxLengthController,
-                  decoration: InputDecoration(
-                    hintText: '500',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    errorText:
-                        !isValid && maxLengthController.text.trim().isEmpty
-                        ? '최대 글자 수를 입력해주세요.'
-                        : null,
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      isValid = maxLengthController.text.trim().isNotEmpty;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final questionText = questionController.text.trim();
-                final maxLengthText = maxLengthController.text.trim();
-
-                if (questionText.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('문항을 입력해주세요.'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-
-                if (maxLengthText.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('최대 글자 수를 입력해주세요.'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-
-                final maxLength = int.tryParse(maxLengthText);
-                if (maxLength == null || maxLength <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('올바른 최대 글자 수를 입력해주세요.'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-
-                setState(() {
-                  _coverLetterQuestions[index] = CoverLetterQuestion(
-                    question: questionText,
-                    maxLength: maxLength,
-                    answer: question.answer,
-                  );
-                });
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.save),
-            ),
-          ],
-        ),
+      builder: (context) => EditQuestionDialog(
+        initialQuestion: question.question,
+        initialMaxLength: question.maxLength,
       ),
-    );
+    ).then((result) {
+      if (result != null && result is Map<String, dynamic>) {
+        setState(() {
+          _coverLetterQuestions[index] = CoverLetterQuestion(
+            question: result['question'] as String,
+            maxLength: result['maxLength'] as int,
+            answer: question.answer,
+          );
+        });
+      }
+    });
   }
 
   // Phase 1: 알림 아이콘/색상 메서드는 DateTimeField 위젯으로 이동됨
 
-  // Phase 4: 알림 설정 다이얼로그
+  // Phase 2: 알림 설정 다이얼로그 - NotificationSettingsDialog 위젯으로 분리됨
   void _showNotificationSettingsDialog(
     BuildContext context,
     String type,
     Function(NotificationSettings?) onSettingsChanged,
   ) {
-    // 현재 설정 가져오기 또는 기본값
+    // 현재 설정 가져오기
     NotificationSettings? currentSettings;
     if (type == 'deadline') {
       currentSettings = _deadlineNotificationSettings;
@@ -1265,213 +917,33 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       currentSettings = _announcementNotificationSettings;
     }
 
-    bool notificationEnabled = false;
-    NotificationTiming? selectedTiming;
-    int? customHours = 24;
-
-    if (type == 'deadline') {
-      notificationEnabled = currentSettings?.deadlineNotification ?? false;
-      selectedTiming =
-          currentSettings?.deadlineTiming ?? NotificationTiming.daysBefore3;
-      customHours = currentSettings?.customHoursBefore ?? 24;
-    } else if (type == 'announcement') {
-      notificationEnabled = currentSettings?.announcementNotification ?? false;
-      selectedTiming =
-          currentSettings?.announcementTiming ?? NotificationTiming.onTheDay;
-      customHours = currentSettings?.customHoursBefore ?? 24;
-    }
-
-    final TextEditingController customHoursController = TextEditingController(
-      text: customHours.toString(),
-    );
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text(AppStrings.notificationSettings),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 알림 활성화 스위치
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      AppStrings.receiveNotification,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Switch(
-                      value: notificationEnabled,
-                      onChanged: (value) {
-                        setDialogState(() {
-                          notificationEnabled = value;
-                          if (!value) {
-                            selectedTiming = null;
-                          } else {
-                            selectedTiming =
-                                selectedTiming ?? NotificationTiming.onTheDay;
-                          }
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (notificationEnabled) ...[
-                  const Text(
-                    AppStrings.notificationTiming,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  // 알림 시점 선택
-                  RadioGroup<NotificationTiming>(
-                    groupValue: selectedTiming,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedTiming = value;
-                      });
-                    },
-                    child: Column(
-                      children: [
-                        ...NotificationTiming.values.map((timing) {
-                          String label = _getNotificationTimingLabel(timing);
-                          return RadioListTile<NotificationTiming>(
-                            title: Text(label),
-                            value: timing,
-                            contentPadding: EdgeInsets.zero,
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-                  // 사용자 지정 시간 입력
-                  if (selectedTiming == NotificationTiming.custom) ...[
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: customHoursController,
-                      decoration: InputDecoration(
-                        labelText: '알림 시간 (시간 전)',
-                        hintText: '24',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        final hours = int.tryParse(value);
-                        if (hours != null && hours > 0) {
-                          setDialogState(() {
-                            customHours = hours;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final hours = selectedTiming == NotificationTiming.custom
-                    ? int.tryParse(customHoursController.text.trim()) ?? 24
-                    : null;
-
-                NotificationSettings? newSettings;
-                if (notificationEnabled) {
-                  if (type == 'deadline') {
-                    newSettings = NotificationSettings(
-                      deadlineNotification: true,
-                      deadlineTiming: selectedTiming,
-                      customHoursBefore:
-                          selectedTiming == NotificationTiming.custom
-                          ? hours
-                          : null,
-                    );
-                  } else if (type == 'announcement') {
-                    newSettings = NotificationSettings(
-                      announcementNotification: true,
-                      announcementTiming: selectedTiming,
-                      customHoursBefore:
-                          selectedTiming == NotificationTiming.custom
-                          ? hours
-                          : null,
-                    );
-                  }
-                } else {
-                  newSettings = null;
-                }
-
-                onSettingsChanged(newSettings);
-                customHoursController.dispose();
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.save),
-            ),
-          ],
-        ),
+      builder: (context) => NotificationSettingsDialog(
+        notificationType: type,
+        initialSettings: currentSettings,
       ),
-    );
+    ).then((result) {
+      if (result != null) {
+        onSettingsChanged(result as NotificationSettings?);
+      }
+    });
   }
 
-  // Phase 4: 알림 시점 라벨 가져오기
-  String _getNotificationTimingLabel(NotificationTiming timing) {
-    switch (timing) {
-      case NotificationTiming.daysBefore7:
-        return 'D-7 (7일 전)';
-      case NotificationTiming.daysBefore3:
-        return 'D-3 (3일 전)';
-      case NotificationTiming.daysBefore1:
-        return 'D-1 (1일 전)';
-      case NotificationTiming.onTheDay:
-        return '당일';
-      case NotificationTiming.custom:
-        return '사용자 지정';
-    }
-  }
-
-  // Phase 2: 문항 삭제 확인 다이얼로그
+  // Phase 2: 문항 삭제 확인 다이얼로그 - DeleteQuestionConfirmDialog 위젯으로 분리됨
   void _showDeleteQuestionConfirmDialog(BuildContext context, int index) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('문항 삭제'),
-        content: Text(
-          '정말로 이 문항을 삭제하시겠습니까?\n\n"${_coverLetterQuestions[index].question}"',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _coverLetterQuestions.removeAt(index);
-              });
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text(AppStrings.delete),
-          ),
-        ],
+      builder: (context) => DeleteQuestionConfirmDialog(
+        questionText: _coverLetterQuestions[index].question,
       ),
-    );
+    ).then((result) {
+      if (result == true) {
+        setState(() {
+          _coverLetterQuestions.removeAt(index);
+        });
+      }
+    });
   }
 
   // Phase 3: URL 형식 검증
