@@ -724,7 +724,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '공고 전체에 대한 메모 (공고 상세의 진행 중 메모와 별개)',
+                    '공고에 대한 메모',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                       fontSize: 11,

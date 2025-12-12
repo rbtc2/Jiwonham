@@ -889,7 +889,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '지원 과정 중 빠르게 기록하는 메모',
+                        '공고에 대한 메모',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
                           fontSize: 11,

@@ -53,8 +53,8 @@ class AppStrings {
   static const String noCoverLetterQuestions = '자기소개서 문항이 없습니다';
   static const String editQuestionToAdd = '문항을 추가하려면 수정 화면에서 문항을 추가하세요';
   static const String memo = '기타 메모';
-  static const String progressMemo = '진행 중 메모';
-  static const String applicationMemo = '공고 메모';
+  static const String progressMemo = '메모';
+  static const String applicationMemo = '메모';
   static const String editProgressMemo = '메모 편집';
   static const String requiredField = '*';
 
