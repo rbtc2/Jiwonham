@@ -133,12 +133,6 @@ class _NotificationSettingsDialogState
                         title: Text(label),
                         value: timing,
                         contentPadding: EdgeInsets.zero,
-                        groupValue: _selectedTiming,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedTiming = value;
-                          });
-                        },
                       );
                     }),
                   ],
