@@ -152,9 +152,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           bottom: TabBar(
             controller: _tabController,
             tabs: const [
-              Tab(text: '정보'),
-              Tab(text: AppStrings.coverLetterAnswers),
-              Tab(text: AppStrings.interviewReview),
+              Tab(text: '공고 정보'),
+              Tab(text: '서류 정보'),
+              Tab(text: '면접 정보'),
             ],
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
