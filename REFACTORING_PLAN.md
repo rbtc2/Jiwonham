@@ -1,168 +1,241 @@
-# AddEditApplicationScreen 리팩토링 계획
+# ApplicationDetailScreen 리팩토링 계획
 
-## 현재 상태
-- **파일 크기**: 2,072줄
-- **주요 문제점**:
-  - 단일 파일에 너무 많은 책임 (폼 필드, 다이얼로그, 검증, 저장 로직)
-  - 재사용 불가능한 코드
-  - 유지보수 어려움
-  - 테스트 어려움
+## 현재 상태 분석
 
-## Phase별 리팩토링 계획
+### 문제점
+- **단일 파일에 1407줄**: 하나의 파일에 너무 많은 책임이 집중됨
+- **높은 결합도**: UI, 비즈니스 로직, 다이얼로그가 모두 한 클래스에 존재
+- **재사용성 낮음**: 섹션별 위젯들이 private 메서드로만 존재
+- **테스트 어려움**: 모든 로직이 State 클래스에 결합되어 있음
+- **확장성 문제**: 새로운 기능 추가 시 파일이 계속 커질 수 있음
 
-### Phase 1: 폼 필드 위젯 분리 (우선순위: 높음)
-**목표**: 재사용 가능한 폼 필드 위젯 생성
-
-**작업 내용**:
-1. `lib/widgets/form_fields/` 디렉토리 생성
-2. 다음 위젯들 분리:
-   - `LabeledTextField` - 텍스트 입력 필드 (회사명, 직무명, 메모)
-   - `LinkTextField` - 링크 입력 필드 (링크 테스트 버튼 포함)
-   - `DateTimeField` - 날짜/시간 선택 필드 (알림 설정 포함)
-
-**예상 효과**: 약 400줄 감소
-
----
-
-### Phase 2: 다이얼로그 위젯 분리 (우선순위: 높음)
-**목표**: 다이얼로그를 독립적인 위젯으로 분리
-
-**작업 내용**:
-1. `lib/widgets/dialogs/` 디렉토리 생성
-2. 다음 다이얼로그들 분리:
-   - `AddStageDialog` - 일정 추가 다이얼로그
-   - `EditStageDialog` - 일정 수정 다이얼로그
-   - `DeleteStageConfirmDialog` - 일정 삭제 확인 다이얼로그
-   - `AddQuestionDialog` - 문항 추가 다이얼로그
-   - `EditQuestionDialog` - 문항 수정 다이얼로그
-   - `DeleteQuestionConfirmDialog` - 문항 삭제 확인 다이얼로그
-   - `NotificationSettingsDialog` - 알림 설정 다이얼로그
-
-**예상 효과**: 약 600줄 감소
+### 현재 구조
+```
+ApplicationDetailScreen (1407줄)
+├── State 관리 (Application, TabController, _hasChanges)
+├── 비즈니스 로직 (로드, 상태 업데이트, 링크 열기)
+├── UI 빌드 메서드 (3개 탭 + 여러 섹션)
+│   ├── _buildInfoTab
+│   ├── _buildCoverLetterTab
+│   ├── _buildInterviewReviewTab
+│   ├── _buildBasicInfoCard
+│   ├── _buildApplicationInfoSection
+│   ├── _buildMemoSection
+│   ├── _buildStatusSection
+│   ├── _buildCoverLetterSection
+│   ├── _buildInterviewReviewSection
+│   └── 기타 헬퍼 위젯들
+└── 다이얼로그 (4개)
+    ├── _showDeleteConfirmDialog
+    ├── _showCoverLetterDialog
+    ├── _showInterviewReviewDialog
+    └── _showMemoDialog
+```
 
 ---
 
-### Phase 3: 검증 로직 분리 (우선순위: 중간)
-**목표**: 검증 로직을 별도 유틸리티로 분리
+## Phase 1: 다이얼로그 분리 (우선순위: 높음)
 
-**작업 내용**:
-1. `lib/utils/validation.dart` 생성
-2. 다음 함수들 분리:
-   - `validateCompanyName(String? value)` - 회사명 검증
-   - `validateUrl(String? url)` - URL 검증
-   - `validateDeadline(DateTime? deadline)` - 마감일 검증
-   - `ApplicationFormValidator` 클래스 생성 (통합 검증)
+### 목표
+- 다이얼로그를 별도 파일로 분리하여 재사용성과 유지보수성 향상
+- 기존 `lib/widgets/dialogs/` 패턴과 일치시키기
 
-**예상 효과**: 약 100줄 감소, 테스트 용이성 향상
+### 작업 내용
+1. **다이얼로그 파일 생성**
+   - `lib/widgets/dialogs/delete_application_confirm_dialog.dart`
+   - `lib/widgets/dialogs/cover_letter_answer_dialog.dart`
+   - `lib/widgets/dialogs/interview_review_dialog.dart`
+   - `lib/widgets/dialogs/memo_edit_dialog.dart`
 
----
+2. **예상 효과**
+   - 파일 크기: ~1407줄 → ~1000줄 (약 400줄 감소)
+   - 다이얼로그 재사용 가능
+   - 테스트 용이성 향상
 
-### Phase 4: 날짜/시간 선택 위젯 분리 (우선순위: 중간)
-**목표**: 날짜/시간 선택 로직을 재사용 가능한 위젯으로 분리
-
-**작업 내용**:
-1. `lib/widgets/date_time_picker/` 디렉토리 생성
-2. 다음 위젯들 생성:
-   - `DateTimePickerField` - 날짜/시간 선택 필드
-   - `TimeToggleSwitch` - 시간 포함 토글 스위치
-   - `NotificationIconButton` - 알림 설정 아이콘 버튼
-
-**예상 효과**: 약 200줄 감소
-
----
-
-### Phase 5: 알림 설정 관련 로직 분리 (우선순위: 낮음)
-**목표**: 알림 설정 관련 헬퍼 메서드 분리
-
-**작업 내용**:
-1. `lib/utils/notification_helpers.dart` 생성
-2. 다음 함수들 분리:
-   - `getNotificationIcon(String type, NotificationSettings? settings)`
-   - `getNotificationColor(String type, NotificationSettings? settings)`
-   - `getNotificationTimingLabel(NotificationTiming timing)`
-
-**예상 효과**: 약 50줄 감소
+### 구현 예시 구조
+```dart
+// lib/widgets/dialogs/cover_letter_answer_dialog.dart
+class CoverLetterAnswerDialog extends StatefulWidget {
+  final String question;
+  final String initialAnswer;
+  final int maxLength;
+  final Function(String) onSave;
+  
+  // ...
+}
+```
 
 ---
 
-### Phase 6: 섹션별 위젯 분리 (우선순위: 중간)
-**목표**: 큰 섹션들을 독립적인 위젯으로 분리
+## Phase 2: 탭별 위젯 분리 (우선순위: 높음)
 
-**작업 내용**:
-1. `lib/widgets/application_form_sections/` 디렉토리 생성
-2. 다음 위젯들 분리:
-   - `RequiredFieldsSection` - 필수 입력 필드 섹션
-   - `NextStagesSection` - 다음 전형 일정 섹션
-   - `CoverLetterQuestionsSection` - 자기소개서 문항 섹션
-   - `StageItemWidget` - 전형 일정 아이템
-   - `QuestionItemWidget` - 문항 아이템
+### 목표
+- 각 탭의 내용을 독립적인 위젯으로 분리
+- 섹션별 위젯을 재사용 가능한 컴포넌트로 추출
 
-**예상 효과**: 약 500줄 감소
+### 작업 내용
+1. **탭 위젯 생성**
+   - `lib/screens/application_detail/widgets/info_tab.dart`
+   - `lib/screens/application_detail/widgets/cover_letter_tab.dart`
+   - `lib/screens/application_detail/widgets/interview_review_tab.dart`
+
+2. **섹션 위젯 생성**
+   - `lib/screens/application_detail/widgets/basic_info_card.dart`
+   - `lib/screens/application_detail/widgets/application_info_section.dart`
+   - `lib/screens/application_detail/widgets/memo_section.dart`
+   - `lib/screens/application_detail/widgets/status_section.dart`
+   - `lib/screens/application_detail/widgets/cover_letter_section.dart`
+   - `lib/screens/application_detail/widgets/interview_review_section.dart`
+   - `lib/screens/application_detail/widgets/interview_review_item.dart`
+   - `lib/screens/application_detail/widgets/question_item.dart`
+   - `lib/screens/application_detail/widgets/info_row.dart`
+
+3. **예상 효과**
+   - 파일 크기: ~1000줄 → ~300줄 (메인 스크린만)
+   - 각 위젯이 독립적으로 테스트 가능
+   - 재사용성 대폭 향상
+
+### 디렉토리 구조
+```
+lib/screens/application_detail/
+├── application_detail_screen.dart (메인, ~300줄)
+└── widgets/
+    ├── info_tab.dart
+    ├── cover_letter_tab.dart
+    ├── interview_review_tab.dart
+    ├── basic_info_card.dart
+    ├── application_info_section.dart
+    ├── memo_section.dart
+    ├── status_section.dart
+    ├── cover_letter_section.dart
+    ├── interview_review_section.dart
+    ├── interview_review_item.dart
+    ├── question_item.dart
+    └── info_row.dart
+```
 
 ---
 
-### Phase 7: 상태 관리 최적화 (우선순위: 낮음, 선택사항)
-**목표**: 상태 관리를 더 효율적으로 개선
+## Phase 3: 비즈니스 로직 분리 (우선순위: 중간)
 
-**작업 내용**:
-1. Form 데이터를 별도 클래스로 관리 (`ApplicationFormData`)
-2. 또는 Provider/Riverpod 같은 상태 관리 라이브러리 도입 검토
-3. 컨트롤러 관리 최적화
+### 목표
+- 상태 관리와 비즈니스 로직을 ViewModel/Controller로 분리
+- 화면은 UI 렌더링에만 집중
 
-**예상 효과**: 코드 가독성 향상, 상태 관리 명확화
+### 작업 내용
+1. **ViewModel 생성**
+   - `lib/screens/application_detail/application_detail_view_model.dart`
+   - 또는 `lib/viewmodels/application_detail_view_model.dart` (프로젝트 구조에 따라)
+
+2. **책임 분리**
+   - **ViewModel**: 데이터 로드, 상태 업데이트, 변경사항 추적
+   - **Screen**: UI 렌더링, 사용자 입력 처리
+
+3. **예상 효과**
+   - 비즈니스 로직 테스트 용이
+   - UI와 로직의 명확한 분리
+   - 상태 관리 일관성 향상
+
+### ViewModel 구조 예시
+```dart
+class ApplicationDetailViewModel extends ChangeNotifier {
+  Application _application;
+  bool _hasChanges = false;
+  
+  Application get application => _application;
+  bool get hasChanges => _hasChanges;
+  
+  Future<void> loadApplication(String id) async { }
+  Future<void> updateStatus(ApplicationStatus status) async { }
+  Future<void> saveCoverLetterAnswer(int index, String answer) async { }
+  // ...
+}
+```
 
 ---
 
-## 예상 총 효과
+## Phase 4: 유틸리티 및 헬퍼 분리 (우선순위: 낮음)
 
-| Phase | 예상 감소 줄 수 | 누적 감소 |
-|-------|---------------|----------|
-| Phase 1 | 400줄 | 400줄 |
-| Phase 2 | 600줄 | 1,000줄 |
-| Phase 3 | 100줄 | 1,100줄 |
-| Phase 4 | 200줄 | 1,300줄 |
-| Phase 5 | 50줄 | 1,350줄 |
-| Phase 6 | 500줄 | 1,850줄 |
-| **총계** | **1,850줄** | **최종: ~220줄** |
+### 목표
+- 공통 유틸리티 함수들을 별도 파일로 분리
+- 날짜 포맷팅, 링크 처리 등 재사용 가능한 로직 추출
 
-**최종 목표**: 메인 화면 파일을 약 200-300줄로 축소
+### 작업 내용
+1. **유틸리티 함수 분리**
+   - `lib/utils/application_utils.dart` 또는 기존 `date_utils.dart` 확장
+   - `_formatDate` → `formatApplicationDate`
+   - `_openApplicationLink` → `openApplicationLink` (utils 또는 service로)
+
+2. **예상 효과**
+   - 코드 중복 제거
+   - 일관된 날짜 포맷팅
+   - 유틸리티 함수 재사용
 
 ---
 
-## 리팩토링 순서 권장사항
+## Phase 5: 상태 관리 개선 (선택사항, 향후 확장 시)
 
-### 1단계 (즉시 시작 가능)
-- Phase 1: 폼 필드 위젯 분리
-- Phase 2: 다이얼로그 위젯 분리
+### 목표
+- 앱이 더 커질 경우를 대비한 상태 관리 라이브러리 도입 고려
+- Provider, Riverpod, Bloc 등
 
-### 2단계 (1단계 완료 후)
-- Phase 3: 검증 로직 분리
-- Phase 4: 날짜/시간 선택 위젯 분리
+### 고려 사항
+- 현재는 StatefulWidget으로 충분할 수 있음
+- 복잡도가 증가하면 도입 검토
+- 팀의 선호도와 프로젝트 규모 고려
 
-### 3단계 (2단계 완료 후)
-- Phase 6: 섹션별 위젯 분리
-- Phase 5: 알림 설정 관련 로직 분리
+---
 
-### 4단계 (선택사항)
-- Phase 7: 상태 관리 최적화
+## 구현 우선순위 및 예상 시간
+
+| Phase | 우선순위 | 예상 작업 시간 | 예상 효과 |
+|-------|---------|--------------|----------|
+| Phase 1 | 높음 | 2-3시간 | 파일 크기 30% 감소 |
+| Phase 2 | 높음 | 4-6시간 | 파일 크기 80% 감소, 재사용성 향상 |
+| Phase 3 | 중간 | 3-4시간 | 테스트 용이성, 유지보수성 향상 |
+| Phase 4 | 낮음 | 1-2시간 | 코드 품질 향상 |
+| Phase 5 | 선택 | - | 확장성 향상 |
+
+**총 예상 시간**: 10-15시간 (Phase 1-4 기준)
+
+---
+
+## 리팩토링 후 예상 구조
+
+```
+lib/screens/application_detail/
+├── application_detail_screen.dart (~300줄)
+│   └── 탭 구조와 기본 레이아웃만 담당
+├── application_detail_view_model.dart (~200줄)
+│   └── 상태 관리 및 비즈니스 로직
+└── widgets/
+    ├── info_tab.dart (~150줄)
+    ├── cover_letter_tab.dart (~100줄)
+    ├── interview_review_tab.dart (~100줄)
+    └── [섹션 위젯들] (~50-100줄 each)
+
+lib/widgets/dialogs/
+├── delete_application_confirm_dialog.dart
+├── cover_letter_answer_dialog.dart
+├── interview_review_dialog.dart
+└── memo_edit_dialog.dart
+```
+
+---
+
+## 리팩토링 원칙
+
+1. **점진적 리팩토링**: 한 번에 하나의 Phase씩 진행
+2. **기능 유지**: 리팩토링 중에도 기존 기능은 정상 작동해야 함
+3. **테스트**: 각 Phase 완료 후 동작 확인
+4. **일관성**: 기존 프로젝트 패턴과 일치시키기
+5. **문서화**: 변경사항 주석 및 문서 업데이트
 
 ---
 
 ## 주의사항
 
-1. **각 Phase는 독립적으로 테스트 가능해야 함**
-2. **기존 기능이 깨지지 않도록 주의**
-3. **한 번에 하나의 Phase만 진행**
-4. **각 Phase 완료 후 커밋 권장**
-
----
-
-## 리팩토링 후 기대 효과
-
-1. ✅ **가독성 향상**: 메인 파일이 200-300줄로 축소
-2. ✅ **재사용성 향상**: 위젯들을 다른 화면에서도 사용 가능
-3. ✅ **유지보수성 향상**: 각 기능이 독립적인 파일로 분리
-4. ✅ **테스트 용이성**: 각 위젯/로직을 독립적으로 테스트 가능
-5. ✅ **확장성 향상**: 새로운 기능 추가가 용이
-
-
+- 리팩토링 전에 현재 기능이 정상 작동하는지 확인
+- 각 Phase마다 커밋하여 롤백 가능하도록 유지
+- 팀원과 협의 후 진행 (필요시)
+- 성능 저하 없이 구조만 개선하는 것에 집중
