@@ -1,16 +1,19 @@
 // 공고 목록 화면
 // 모든 공고를 목록 형태로 보여주고, 검색 및 필터 기능 제공
 
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
-import '../../models/application.dart';
 import '../../models/application_status.dart';
-import '../../services/storage_service.dart';
+import '../../widgets/dialogs/application_filter_dialog.dart';
+import '../../widgets/dialogs/multi_delete_confirm_dialog.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 import 'application_list_item.dart';
+import 'applications_view_model.dart';
+import 'widgets/application_search_bar.dart';
+import 'widgets/search_query_chip.dart';
+import 'widgets/empty_application_list.dart';
 
 class ApplicationsScreen extends StatefulWidget {
   const ApplicationsScreen({super.key});
@@ -23,28 +26,17 @@ class ApplicationsScreen extends StatefulWidget {
 class ApplicationsScreenState extends State<ApplicationsScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
-  ApplicationStatus? _filterStatus;
-  String _sortBy = AppStrings.sortByDeadline;
+  late ApplicationsViewModel _viewModel;
 
-  // Phase 1: 실제 데이터 관리
-  List<Application> _applications = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  // Phase 2: 검색 및 필터 상태
-  String _searchQuery = '';
-  String? _deadlineFilter;
+  // UI 상태 (ViewModel에 포함되지 않는 UI 전용 상태)
   bool _isSearchMode = false;
   final TextEditingController _searchController = TextEditingController();
-  Timer? _searchDebounce;
-
-  // Phase 1: 체크박스 선택 상태 관리
-  bool _isSelectionMode = false;
-  Set<String> _selectedApplicationIds = {};
 
   @override
   void initState() {
     super.initState();
+    _viewModel = ApplicationsViewModel();
+    _viewModel.addListener(_onViewModelChanged);
     _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       setState(() {});
@@ -52,16 +44,23 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     // Phase 3: 앱 생명주기 관찰자 등록
     WidgetsBinding.instance.addObserver(this);
     // Phase 1: 데이터 로드
-    _loadApplications();
+    _viewModel.loadApplications();
+  }
+
+  void _onViewModelChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
     // Phase 3: 앱 생명주기 관찰자 제거
     WidgetsBinding.instance.removeObserver(this);
+    _viewModel.removeListener(_onViewModelChanged);
+    _viewModel.dispose();
     _tabController.dispose();
     _searchController.dispose();
-    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -70,14 +69,14 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // 앱이 다시 활성화될 때 데이터 새로고침
-      _loadApplications();
+      _viewModel.loadApplications();
     }
   }
 
   // Phase 3: 외부에서 호출 가능한 새로고침 메서드
   void refresh() {
     if (mounted) {
-      _loadApplications();
+      _viewModel.loadApplications();
     }
   }
 
@@ -85,20 +84,17 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   Widget build(BuildContext context) {
     // Phase 5: 검색어나 필터가 있을 때 제목에 표시
     final hasActiveFilters =
-        _searchQuery.isNotEmpty ||
-        _filterStatus != null ||
-        _deadlineFilter != null;
+        _viewModel.searchQuery.isNotEmpty ||
+        _viewModel.filterStatus != null ||
+        _viewModel.deadlineFilter != null;
 
     return PopScope(
       // PHASE 6: 뒤로 가기 버튼으로 선택 모드 종료
-      canPop: !_isSelectionMode,
+      canPop: !_viewModel.isSelectionMode,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && _isSelectionMode) {
+        if (!didPop && _viewModel.isSelectionMode) {
           // 선택 모드일 때 뒤로 가기 시 선택 모드 종료
-          setState(() {
-            _isSelectionMode = false;
-            _selectedApplicationIds.clear();
-          });
+          _viewModel.exitSelectionMode();
         }
       },
       child: Scaffold(
@@ -106,65 +102,68 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
           // PHASE 7: 선택 모드 진입 시 AppBar 애니메이션
           title: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
-            child: _isSelectionMode
+            child: _viewModel.isSelectionMode
                 ? Text(
-                    '${_selectedApplicationIds.length}개 선택됨',
+                    '${_viewModel.selectedCount}개 선택됨',
                     key: const ValueKey('selection'),
                   )
                 : _isSearchMode
-                    ? _buildSearchBar(context)
-                    : Column(
-                        key: const ValueKey('normal'),
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(AppStrings.applicationsTitle),
-                          if (hasActiveFilters) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              _buildActiveFiltersText(),
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 11,
-                                  ),
-                            ),
-                          ],
-                        ],
-                      ),
+                ? ApplicationSearchBar(
+                    initialQuery: _viewModel.searchQuery,
+                    onQueryChanged: (value) {
+                      _viewModel.setSearchQuery(value);
+                    },
+                  )
+                : Column(
+                    key: const ValueKey('normal'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(AppStrings.applicationsTitle),
+                      if (hasActiveFilters) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          _viewModel.buildActiveFiltersText(),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                        ),
+                      ],
+                    ],
+                  ),
           ),
-          leading: _isSelectionMode
+          leading: _viewModel.isSelectionMode
               ? IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () {
                     // PHASE 6: 취소 버튼으로 선택 모드 종료
-                    setState(() {
-                      _isSelectionMode = false;
-                      _selectedApplicationIds.clear();
-                    });
+                    _viewModel.exitSelectionMode();
                   },
                   tooltip: '선택 모드 종료',
                 )
               : _isSearchMode
-                  ? IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () {
-                        _exitSearchMode();
-                      },
-                      tooltip: '검색 종료',
-                    )
-                  : null,
-          actions: _isSelectionMode
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    _exitSearchMode();
+                  },
+                  tooltip: '검색 종료',
+                )
+              : null,
+          actions: _viewModel.isSelectionMode
               ? [
                   // PHASE 4: 전체 선택/해제 버튼
                   Builder(
                     builder: (context) {
-                      final filteredApps = _getFilteredApplications(
+                      final filteredApps = _viewModel.getFilteredApplications(
                         _getCurrentStatus(),
+                        _tabController.index,
                       );
                       final isAllSelected =
                           filteredApps.isNotEmpty &&
-                          _selectedApplicationIds.length == filteredApps.length;
+                          _viewModel.selectedCount == filteredApps.length;
                       final isEmpty = filteredApps.isEmpty;
 
                       return IconButton(
@@ -178,17 +177,13 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                             : () {
                                 // PHASE 4: 전체 선택/해제 시 햅틱 피드백
                                 HapticFeedback.mediumImpact();
-                                setState(() {
-                                  if (isAllSelected) {
-                                    // 전체 해제
-                                    _selectedApplicationIds.clear();
-                                  } else {
-                                    // 전체 선택
-                                    _selectedApplicationIds = filteredApps
-                                        .map((app) => app.id)
-                                        .toSet();
-                                  }
-                                });
+                                if (isAllSelected) {
+                                  // 전체 해제
+                                  _viewModel.deselectAll();
+                                } else {
+                                  // 전체 선택
+                                  _viewModel.selectAll(filteredApps);
+                                }
                               },
                         tooltip: isEmpty
                             ? '선택할 항목이 없습니다'
@@ -197,69 +192,88 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                     },
                   ),
                   // Phase 4: 삭제 버튼
-                  if (_selectedApplicationIds.isNotEmpty)
+                  if (_viewModel.selectedCount > 0)
                     IconButton(
                       icon: const Icon(Icons.delete_outline),
-                      onPressed: () {
-                        _showMultiDeleteConfirmDialog(context);
+                      onPressed: () async {
+                        final confirmed = await MultiDeleteConfirmDialog.show(
+                          context,
+                          _viewModel.selectedCount,
+                        );
+                        if (confirmed == true) {
+                          if (!mounted) return;
+                          final currentContext = context;
+                          if (!mounted) return;
+                          await _deleteSelectedApplications(currentContext);
+                        }
                       },
                       tooltip: '삭제',
                     ),
                 ]
               : _isSearchMode
-                  ? [
-                      // 검색 모드일 때는 검색어가 있으면 초기화 버튼 표시
-                      if (_searchQuery.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _searchQuery = '';
-                            setState(() {});
-                          },
-                          tooltip: '검색어 지우기',
-                        ),
-                    ]
-                  : [
-                      // Phase 2: 검색 아이콘 (검색어가 있을 때 배지 표시)
-                      Stack(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.search),
-                            onPressed: () {
-                              _enterSearchMode();
-                            },
-                            tooltip: AppStrings.search,
-                          ),
-                          if (_searchQuery.isNotEmpty)
-                            Positioned(
-                              right: 8,
-                              top: 8,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 8,
-                                  minHeight: 8,
-                                ),
-                              ),
-                            ),
-                        ],
+              ? [
+                  // 검색 모드일 때는 검색어가 있으면 초기화 버튼 표시
+                  if (_viewModel.searchQuery.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _viewModel.setSearchQuery('');
+                      },
+                      tooltip: '검색어 지우기',
+                    ),
+                ]
+              : [
+                  // Phase 2: 검색 아이콘 (검색어가 있을 때 배지 표시)
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: () {
+                          _enterSearchMode();
+                        },
+                        tooltip: AppStrings.search,
                       ),
+                      if (_viewModel.searchQuery.isNotEmpty)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 8,
+                              minHeight: 8,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                   // Phase 5: 필터 아이콘 (필터가 적용되었을 때 배지 표시)
                   Stack(
                     children: [
                       IconButton(
                         icon: const Icon(Icons.filter_list),
-                        onPressed: () {
-                          _showFilterDialog(context);
+                        onPressed: () async {
+                          final result = await ApplicationFilterDialog.show(
+                            context,
+                            initialStatusFilter: _viewModel.filterStatus,
+                            initialDeadlineFilter: _viewModel.deadlineFilter,
+                          );
+                          if (result != null) {
+                            _viewModel.setFilter(
+                              result['status'] as ApplicationStatus?,
+                              result['deadline'] as String?,
+                            );
+                          }
                         },
                         tooltip: AppStrings.filter,
                       ),
-                      if (_filterStatus != null || _deadlineFilter != null)
+                      if (_viewModel.filterStatus != null ||
+                          _viewModel.deadlineFilter != null)
                         Positioned(
                           right: 8,
                           top: 8,
@@ -280,11 +294,10 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                   // Phase 5: 정렬 메뉴 (현재 정렬 상태 표시)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.sort),
-                    tooltip: '${AppStrings.sortBy}: ${_getSortByText(_sortBy)}',
+                    tooltip:
+                        '${AppStrings.sortBy}: ${_viewModel.getSortByText(_viewModel.sortBy)}',
                     onSelected: (value) {
-                      setState(() {
-                        _sortBy = value;
-                      });
+                      _viewModel.setSortBy(value);
                     },
                     itemBuilder: (context) => [
                       PopupMenuItem(
@@ -292,11 +305,12 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                         child: Row(
                           children: [
                             Icon(
-                              _sortBy == AppStrings.sortByDeadline
+                              _viewModel.sortBy == AppStrings.sortByDeadline
                                   ? Icons.check
                                   : Icons.check_box_outline_blank,
                               size: 20,
-                              color: _sortBy == AppStrings.sortByDeadline
+                              color:
+                                  _viewModel.sortBy == AppStrings.sortByDeadline
                                   ? AppColors.primary
                                   : null,
                             ),
@@ -310,11 +324,11 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                         child: Row(
                           children: [
                             Icon(
-                              _sortBy == AppStrings.sortByDate
+                              _viewModel.sortBy == AppStrings.sortByDate
                                   ? Icons.check
                                   : Icons.check_box_outline_blank,
                               size: 20,
-                              color: _sortBy == AppStrings.sortByDate
+                              color: _viewModel.sortBy == AppStrings.sortByDate
                                   ? AppColors.primary
                                   : null,
                             ),
@@ -328,11 +342,12 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                         child: Row(
                           children: [
                             Icon(
-                              _sortBy == AppStrings.sortByCompany
+                              _viewModel.sortBy == AppStrings.sortByCompany
                                   ? Icons.check
                                   : Icons.check_box_outline_blank,
                               size: 20,
-                              color: _sortBy == AppStrings.sortByCompany
+                              color:
+                                  _viewModel.sortBy == AppStrings.sortByCompany
                                   ? AppColors.primary
                                   : null,
                             ),
@@ -349,38 +364,13 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
         body: Column(
           children: [
             // 검색어 Chip 표시 (검색 모드가 아니고 검색어가 있을 때)
-            if (!_isSearchMode && _searchQuery.isNotEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: AppColors.surface,
-                child: Wrap(
-                  spacing: 8,
-                  children: [
-                    Chip(
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.search, size: 16),
-                          const SizedBox(width: 4),
-                          Text(_searchQuery),
-                        ],
-                      ),
-                      onDeleted: () {
-                        setState(() {
-                          _searchQuery = '';
-                          _searchController.clear();
-                        });
-                      },
-                      deleteIcon: const Icon(Icons.close, size: 18),
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                      labelStyle: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+            if (!_isSearchMode && _viewModel.searchQuery.isNotEmpty)
+              SearchQueryChip(
+                query: _viewModel.searchQuery,
+                onDeleted: () {
+                  _viewModel.setSearchQuery('');
+                  _searchController.clear();
+                },
               ),
             // 탭 내용
             Expanded(
@@ -398,7 +388,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
           ],
         ),
         // Phase 4: 새 공고 추가 버튼 (선택 모드일 때는 숨김)
-        floatingActionButton: _isSelectionMode
+        floatingActionButton: _viewModel.isSelectionMode
             ? null
             : FloatingActionButton(
                 onPressed: () async {
@@ -412,7 +402,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
 
                   // Phase 4: 저장 성공 시 목록 새로고침
                   if (result == true) {
-                    refresh();
+                    _viewModel.loadApplications();
                   }
                 },
                 backgroundColor: AppColors.primary,
@@ -442,12 +432,12 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
 
   Widget _buildApplicationList(BuildContext context, ApplicationStatus status) {
     // Phase 1: 로딩 상태 표시
-    if (_isLoading) {
+    if (_viewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     // Phase 1: 에러 상태 표시
-    if (_errorMessage != null) {
+    if (_viewModel.errorMessage != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -462,7 +452,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage!,
+              _viewModel.errorMessage!,
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -471,7 +461,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                _loadApplications();
+                _viewModel.loadApplications();
               },
               child: const Text('다시 시도'),
             ),
@@ -481,10 +471,23 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     }
 
     // Phase 1: 필터링된 공고 목록 가져오기
-    final filteredApplications = _getFilteredApplications(status);
+    final filteredApplications = _viewModel.getFilteredApplications(
+      status,
+      _tabController.index,
+    );
 
     if (filteredApplications.isEmpty) {
-      return _buildEmptyList(context, _getStatusText(status));
+      final hasFilters =
+          _viewModel.searchQuery.isNotEmpty ||
+          _viewModel.filterStatus != null ||
+          _viewModel.deadlineFilter != null;
+      return EmptyApplicationList(
+        tabName: _viewModel.getStatusText(status),
+        hasFilters: hasFilters,
+        onResetFilters: () {
+          _viewModel.resetFilters();
+        },
+      );
     }
 
     return ListView.builder(
@@ -494,247 +497,28 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
         final app = filteredApplications[index];
         return ApplicationListItem(
           application: app,
-          isSelectionMode: _isSelectionMode,
-          isSelected: _selectedApplicationIds.contains(app.id),
+          isSelectionMode: _viewModel.isSelectionMode,
+          isSelected: _viewModel.selectedApplicationIds.contains(app.id),
           onChanged: () {
             // 상태 변경 시 목록 새로고침
-            refresh();
+            _viewModel.loadApplications();
           },
           onSelectionChanged: (isSelected) {
-            setState(() {
-              if (isSelected) {
-                _selectedApplicationIds.add(app.id);
-                // 첫 번째 선택 시 선택 모드 활성화
-                if (!_isSelectionMode) {
-                  _isSelectionMode = true;
-                }
-              } else {
-                _selectedApplicationIds.remove(app.id);
-                // 모든 선택 해제 시 선택 모드 비활성화
-                if (_selectedApplicationIds.isEmpty) {
-                  _isSelectionMode = false;
-                }
-              }
-            });
+            _viewModel.toggleSelection(app.id);
+            if (isSelected && !_viewModel.isSelectionMode) {
+              // 첫 번째 선택 시 햅틱 피드백
+              HapticFeedback.mediumImpact();
+            }
           },
           onLongPress: () {
             // PHASE 1: 롱프레스 시 선택 모드 활성화 및 첫 항목 선택
-            setState(() {
-              if (!_isSelectionMode) {
-                // 선택 모드 활성화
-                _isSelectionMode = true;
-                // 롱프레스한 항목을 첫 번째로 선택
-                _selectedApplicationIds.add(app.id);
-                // 햅틱 피드백
-                HapticFeedback.mediumImpact();
-              }
-            });
+            if (!_viewModel.isSelectionMode) {
+              _viewModel.toggleSelection(app.id);
+              // 햅틱 피드백
+              HapticFeedback.mediumImpact();
+            }
           },
         );
-      },
-    );
-  }
-
-  // Phase 1: 필터링된 공고 목록 가져오기
-  List<Application> _getFilteredApplications(ApplicationStatus status) {
-    List<Application> filtered = List.from(_applications);
-
-    // Phase 2: 검색 필터 적용
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((app) {
-        final query = _searchQuery.toLowerCase();
-        final companyName = app.companyName.toLowerCase();
-        final position = app.position?.toLowerCase() ?? '';
-        return companyName.contains(query) || position.contains(query);
-      }).toList();
-    }
-
-    // 탭에 따른 상태 필터링
-    if (_tabController.index == 0) {
-      // 전체 탭: 모든 공고 표시
-    } else {
-      // 각 상태별 탭: 해당 상태의 공고만 표시
-      filtered = filtered.where((app) => app.status == status).toList();
-    }
-
-    // 추가 필터 적용 (필터 다이얼로그에서 설정한 필터)
-    if (_filterStatus != null) {
-      filtered = filtered.where((app) => app.status == _filterStatus).toList();
-    }
-
-    // Phase 2: 마감일 필터 적용
-    if (_deadlineFilter != null) {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-
-      filtered = filtered.where((app) {
-        final deadline = app.deadline;
-        final deadlineDate = DateTime(
-          deadline.year,
-          deadline.month,
-          deadline.day,
-        );
-        final daysUntilDeadline = deadlineDate.difference(today).inDays;
-
-        switch (_deadlineFilter) {
-          case AppStrings.deadlineWithin7Days:
-            return daysUntilDeadline >= 0 && daysUntilDeadline <= 7;
-          case AppStrings.deadlineWithin3Days:
-            return daysUntilDeadline >= 0 && daysUntilDeadline <= 3;
-          case AppStrings.deadlinePassed:
-            return daysUntilDeadline < 0;
-          default:
-            return true;
-        }
-      }).toList();
-    }
-
-    // 정렬 적용
-    filtered = _sortApplications(filtered);
-
-    return filtered;
-  }
-
-  // Phase 1: 공고 정렬
-  List<Application> _sortApplications(List<Application> applications) {
-    final sorted = List<Application>.from(applications);
-
-    switch (_sortBy) {
-      case AppStrings.sortByDeadline:
-        sorted.sort((a, b) => a.deadline.compareTo(b.deadline));
-        break;
-      case AppStrings.sortByDate:
-        sorted.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        break;
-      case AppStrings.sortByCompany:
-        sorted.sort((a, b) => a.companyName.compareTo(b.companyName));
-        break;
-    }
-
-    return sorted;
-  }
-
-  // Phase 1: 데이터 로드 메서드
-  Future<void> _loadApplications() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final storageService = StorageService();
-      final applications = await storageService.getAllApplications();
-
-      if (!mounted) return;
-
-      setState(() {
-        _applications = applications;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  String _getStatusText(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.notApplied:
-        return AppStrings.notApplied;
-      case ApplicationStatus.inProgress:
-        return AppStrings.inProgress;
-      case ApplicationStatus.passed:
-        return AppStrings.passed;
-      case ApplicationStatus.rejected:
-        return AppStrings.rejected;
-      default:
-        return AppStrings.all;
-    }
-  }
-
-  // Phase 5: 정렬 옵션 텍스트 가져오기
-  String _getSortByText(String sortBy) {
-    switch (sortBy) {
-      case AppStrings.sortByDeadline:
-        return '마감일순';
-      case AppStrings.sortByDate:
-        return '등록일순';
-      case AppStrings.sortByCompany:
-        return '회사명순';
-      default:
-        return '정렬';
-    }
-  }
-
-  // Phase 5: 활성화된 필터 텍스트 생성
-  String _buildActiveFiltersText() {
-    final List<String> filters = [];
-
-    if (_searchQuery.isNotEmpty) {
-      filters.add('검색: $_searchQuery');
-    }
-    if (_filterStatus != null) {
-      filters.add('상태: ${_getStatusText(_filterStatus!)}');
-    }
-    if (_deadlineFilter != null) {
-      String deadlineText = '';
-      switch (_deadlineFilter) {
-        case AppStrings.deadlineWithin7Days:
-          deadlineText = 'D-7 이내';
-          break;
-        case AppStrings.deadlineWithin3Days:
-          deadlineText = 'D-3 이내';
-          break;
-        case AppStrings.deadlinePassed:
-          deadlineText = '마감됨';
-          break;
-      }
-      if (deadlineText.isNotEmpty) {
-        filters.add('마감일: $deadlineText');
-      }
-    }
-
-    return filters.join(' • ');
-  }
-
-  // 검색바 위젯
-  Widget _buildSearchBar(BuildContext context) {
-    return TextField(
-      controller: _searchController,
-      autofocus: true,
-      style: TextStyle(
-        fontSize: 16,
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white
-            : AppColors.textPrimary,
-      ),
-      decoration: InputDecoration(
-        hintText: AppStrings.searchPlaceholder,
-        border: InputBorder.none,
-        hintStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withValues(alpha: 0.7)
-              : AppColors.textSecondary.withValues(alpha: 0.6),
-        ),
-      ),
-      onChanged: (value) {
-        _searchDebounce?.cancel();
-        _searchDebounce = Timer(const Duration(milliseconds: 300), () {
-          if (mounted) {
-            setState(() {
-              _searchQuery = value.trim();
-            });
-          }
-        });
-      },
-      onSubmitted: (value) {
-        setState(() {
-          _searchQuery = value.trim();
-        });
       },
     );
   }
@@ -743,7 +527,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   void _enterSearchMode() {
     setState(() {
       _isSearchMode = true;
-      _searchController.text = _searchQuery;
+      _searchController.text = _viewModel.searchQuery;
     });
   }
 
@@ -751,175 +535,10 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   void _exitSearchMode() {
     setState(() {
       _isSearchMode = false;
-      if (_searchQuery.isEmpty) {
+      if (_viewModel.searchQuery.isEmpty) {
         _searchController.clear();
       }
     });
-  }
-
-  // Phase 2: 빈 목록 UI 개선
-  Widget _buildEmptyList(BuildContext context, String tabName) {
-    final hasFilters =
-        _searchQuery.isNotEmpty ||
-        _filterStatus != null ||
-        _deadlineFilter != null;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            hasFilters ? Icons.filter_alt_off : Icons.description_outlined,
-            size: 64,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            hasFilters ? '필터 조건에 맞는 공고가 없습니다' : '$tabName 공고가 없습니다',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
-          ),
-          if (hasFilters) ...[
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _searchQuery = '';
-                  _filterStatus = null;
-                  _deadlineFilter = null;
-                });
-              },
-              child: const Text('필터 초기화'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-
-  // Phase 2: 필터 다이얼로그
-  void _showFilterDialog(BuildContext context) {
-    ApplicationStatus? selectedStatus = _filterStatus;
-    String? selectedDeadline = _deadlineFilter;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text(AppStrings.filter),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '상태',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                RadioGroup<ApplicationStatus?>(
-                  groupValue: selectedStatus,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      selectedStatus = value;
-                    });
-                  },
-                  child: Column(
-                    children: [
-                      ...ApplicationStatus.values.map((status) {
-                        return RadioListTile<ApplicationStatus>(
-                          title: Text(_getStatusText(status)),
-                          value: status,
-                          contentPadding: EdgeInsets.zero,
-                        );
-                      }),
-                      RadioListTile<ApplicationStatus?>(
-                        title: const Text('전체'),
-                        value: null,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '마감일',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                RadioGroup<String?>(
-                  groupValue: selectedDeadline,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      selectedDeadline = value;
-                    });
-                  },
-                  child: Column(
-                    children: [
-                      RadioListTile<String?>(
-                        title: const Text('전체'),
-                        value: null,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      RadioListTile<String?>(
-                        title: const Text(AppStrings.deadlineWithin7Days),
-                        value: AppStrings.deadlineWithin7Days,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      RadioListTile<String?>(
-                        title: const Text(AppStrings.deadlineWithin3Days),
-                        value: AppStrings.deadlineWithin3Days,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      RadioListTile<String?>(
-                        title: const Text(AppStrings.deadlinePassed),
-                        value: AppStrings.deadlinePassed,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            // Phase 5: 필터 초기화 버튼 (필터가 적용되어 있을 때만 활성화)
-            if (_filterStatus != null || _deadlineFilter != null)
-              TextButton(
-                onPressed: () {
-                  setDialogState(() {
-                    selectedStatus = null;
-                    selectedDeadline = null;
-                  });
-                },
-                child: const Text(AppStrings.resetFilter),
-              ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _filterStatus = selectedStatus;
-                  _deadlineFilter = selectedDeadline;
-                });
-                Navigator.pop(context);
-              },
-              child: const Text(AppStrings.applyFilter),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   // Phase 1: 현재 탭의 상태 가져오기
@@ -940,59 +559,8 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     }
   }
 
-  // Phase 4: 다중 삭제 확인 다이얼로그
-  // PHASE 5: 다중 삭제 확인 다이얼로그
-  void _showMultiDeleteConfirmDialog(BuildContext context) {
-    final count = _selectedApplicationIds.length;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
-            const SizedBox(width: 8),
-            const Expanded(child: Text(AppStrings.deleteConfirm)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '선택한 $count개의 공고를 삭제하시겠습니까?',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '이 작업은 되돌릴 수 없습니다.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _deleteSelectedApplications();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text(AppStrings.delete),
-          ),
-        ],
-      ),
-    );
-  }
-
   // PHASE 5: 선택된 공고 삭제
-  Future<void> _deleteSelectedApplications() async {
+  Future<void> _deleteSelectedApplications(BuildContext context) async {
     // PHASE 5: 삭제 중 로딩 표시
     if (!mounted) return;
 
@@ -1002,32 +570,14 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    final storageService = StorageService();
-    int successCount = 0;
-    int failCount = 0;
-    final selectedIds = List<String>.from(_selectedApplicationIds);
-
-    for (final id in selectedIds) {
-      final success = await storageService.deleteApplication(id);
-      if (success) {
-        successCount++;
-      } else {
-        failCount++;
-      }
-    }
+    final result = await _viewModel.deleteSelectedApplications();
 
     if (mounted) {
       // 로딩 다이얼로그 닫기
       Navigator.pop(context);
 
-      setState(() {
-        // PHASE 5: 삭제 후 선택 모드 자동 종료
-        _isSelectionMode = false;
-        _selectedApplicationIds.clear();
-      });
-
-      // 목록 새로고침
-      refresh();
+      final successCount = result['success'] as int;
+      final failCount = result['fail'] as int;
 
       // PHASE 5: 삭제 결과 메시지 표시
       if (failCount == 0) {

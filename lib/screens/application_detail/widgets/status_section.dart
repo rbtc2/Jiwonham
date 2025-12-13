@@ -6,7 +6,6 @@ import '../../../constants/app_colors.dart';
 import '../../../constants/app_strings.dart';
 import '../../../models/application.dart';
 import '../../../models/application_status.dart';
-import '../../../widgets/radio_group.dart';
 import '../../../widgets/status_chip.dart';
 
 class StatusSection extends StatelessWidget {

@@ -135,12 +135,16 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 final result = await DeleteApplicationConfirmDialog.show(
                   context,
                 );
-                if (result == true && mounted) {
+                if (result == true) {
+                  if (!mounted) return;
                   // TODO: 삭제 로직
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('공고가 삭제되었습니다.')),
+                    );
+                  }
+                  if (!mounted) return;
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('공고가 삭제되었습니다.')));
                 }
               },
               tooltip: AppStrings.delete,
