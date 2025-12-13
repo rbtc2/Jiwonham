@@ -202,9 +202,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                         );
                         if (confirmed == true) {
                           if (!mounted) return;
-                          final currentContext = context;
-                          if (!mounted) return;
-                          await _deleteSelectedApplications(currentContext);
+                          await _deleteSelectedApplications();
                         }
                       },
                       tooltip: '삭제',
@@ -560,7 +558,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   }
 
   // PHASE 5: 선택된 공고 삭제
-  Future<void> _deleteSelectedApplications(BuildContext context) async {
+  Future<void> _deleteSelectedApplications() async {
     // PHASE 5: 삭제 중 로딩 표시
     if (!mounted) return;
 
@@ -572,41 +570,42 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
 
     final result = await _viewModel.deleteSelectedApplications();
 
-    if (mounted) {
-      // 로딩 다이얼로그 닫기
-      Navigator.pop(context);
+    if (!mounted) return;
+    // 로딩 다이얼로그 닫기
+    Navigator.pop(context);
 
-      final successCount = result['success'] as int;
-      final failCount = result['fail'] as int;
+    final successCount = result['success'] as int;
+    final failCount = result['fail'] as int;
 
-      // PHASE 5: 삭제 결과 메시지 표시
-      if (failCount == 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$successCount개의 공고가 삭제되었습니다.'),
-            backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 2),
-            action: SnackBarAction(
-              label: '확인',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
+    // PHASE 5: 삭제 결과 메시지 표시
+    if (failCount == 0) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$successCount개의 공고가 삭제되었습니다.'),
+          backgroundColor: AppColors.success,
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: '확인',
+            textColor: Colors.white,
+            onPressed: () {},
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$successCount개 삭제 성공, $failCount개 삭제 실패'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: '확인',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
+        ),
+      );
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$successCount개 삭제 성공, $failCount개 삭제 실패'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: '확인',
+            textColor: Colors.white,
+            onPressed: () {},
           ),
-        );
-      }
+        ),
+      );
     }
   }
 }
