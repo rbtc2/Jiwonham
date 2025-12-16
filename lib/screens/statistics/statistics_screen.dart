@@ -72,6 +72,14 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   List<Application> _filteredApplications = [];
   bool _isLoading = true;
 
+  // Phase 7: 성능 최적화 - 통계 계산 결과 캐싱
+  int? _cachedTotalApplications;
+  int? _cachedNotApplied;
+  int? _cachedInProgress;
+  int? _cachedPassed;
+  int? _cachedRejected;
+  String? _cachedFilterKey; // 필터 변경 감지용 키
+
   @override
   void initState() {
     super.initState();
@@ -241,20 +249,60 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     }
   }
 
-  // Phase 2: 상태별 통계 계산
-  int get _totalApplications => _filteredApplications.length;
-  int get _notApplied => _filteredApplications
-      .where((app) => app.status == ApplicationStatus.notApplied)
-      .length;
-  int get _inProgress => _filteredApplications
-      .where((app) => app.status == ApplicationStatus.inProgress)
-      .length;
-  int get _passed => _filteredApplications
-      .where((app) => app.status == ApplicationStatus.passed)
-      .length;
-  int get _rejected => _filteredApplications
-      .where((app) => app.status == ApplicationStatus.rejected)
-      .length;
+  // Phase 7: 필터 키 생성 (캐시 무효화 감지용)
+  String _getFilterKey() {
+    return '${_selectedPeriod}_${_customStartDate?.millisecondsSinceEpoch}_${_customEndDate?.millisecondsSinceEpoch}_${_filteredApplications.length}';
+  }
+
+  // Phase 7: 통계 계산 결과 캐싱 및 갱신
+  void _updateCachedStatistics() {
+    final currentFilterKey = _getFilterKey();
+    if (_cachedFilterKey == currentFilterKey &&
+        _cachedTotalApplications != null) {
+      return; // 캐시가 유효하면 재계산하지 않음
+    }
+
+    _cachedTotalApplications = _filteredApplications.length;
+    _cachedNotApplied = _filteredApplications
+        .where((app) => app.status == ApplicationStatus.notApplied)
+        .length;
+    _cachedInProgress = _filteredApplications
+        .where((app) => app.status == ApplicationStatus.inProgress)
+        .length;
+    _cachedPassed = _filteredApplications
+        .where((app) => app.status == ApplicationStatus.passed)
+        .length;
+    _cachedRejected = _filteredApplications
+        .where((app) => app.status == ApplicationStatus.rejected)
+        .length;
+    _cachedFilterKey = currentFilterKey;
+  }
+
+  // Phase 2, 7: 상태별 통계 계산 (캐싱된 값 사용)
+  int get _totalApplications {
+    _updateCachedStatistics();
+    return _cachedTotalApplications ?? 0;
+  }
+
+  int get _notApplied {
+    _updateCachedStatistics();
+    return _cachedNotApplied ?? 0;
+  }
+
+  int get _inProgress {
+    _updateCachedStatistics();
+    return _cachedInProgress ?? 0;
+  }
+
+  int get _passed {
+    _updateCachedStatistics();
+    return _cachedPassed ?? 0;
+  }
+
+  int get _rejected {
+    _updateCachedStatistics();
+    return _cachedRejected ?? 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2148,6 +2196,45 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   }
 
   Widget _buildKeyStatistics(BuildContext context) {
+    // Phase 6: 실제 데이터 계산
+    // 평균 지원 기간 계산 (생성일부터 현재까지의 평균 일수)
+    final now = DateTime.now();
+    final applicationsWithPeriod = _filteredApplications
+        .where((app) => app.createdAt.isBefore(now))
+        .toList();
+    final averagePeriod = applicationsWithPeriod.isEmpty
+        ? 0
+        : (applicationsWithPeriod
+                      .map((app) => now.difference(app.createdAt).inDays)
+                      .fold(0, (sum, days) => sum + days) /
+                  applicationsWithPeriod.length)
+              .round();
+
+    // 가장 많이 지원한 직무 계산
+    final positionCounts = <String, int>{};
+    for (final app in _filteredApplications) {
+      if (app.position != null && app.position!.isNotEmpty) {
+        final position = app.position!;
+        positionCounts[position] = (positionCounts[position] ?? 0) + 1;
+      }
+    }
+    final mostAppliedPosition = positionCounts.isEmpty
+        ? '없음'
+        : positionCounts.entries
+              .reduce((a, b) => a.value > b.value ? a : b)
+              .key;
+    final mostAppliedPositionCount = positionCounts.isEmpty
+        ? 0
+        : positionCounts[mostAppliedPosition] ?? 0;
+
+    // 진행 중인 공고 수 (이미 계산된 _inProgress 사용)
+    final inProgressCount = _inProgress;
+
+    // 마감 임박 공고 수 (D-7 이내)
+    final urgentCount = _filteredApplications
+        .where((app) => app.isUrgent)
+        .length;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -2161,13 +2248,31 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildStatItem(context, AppStrings.averageApplicationPeriod, '15일'),
+            _buildStatItem(
+              context,
+              AppStrings.averageApplicationPeriod,
+              averagePeriod > 0 ? '$averagePeriod일' : '데이터 없음',
+            ),
             const Divider(),
-            _buildStatItem(context, AppStrings.mostAppliedPosition, '개발자 (5건)'),
+            _buildStatItem(
+              context,
+              AppStrings.mostAppliedPosition,
+              mostAppliedPositionCount > 0
+                  ? '$mostAppliedPosition ($mostAppliedPositionCount건)'
+                  : '데이터 없음',
+            ),
             const Divider(),
-            _buildStatItem(context, AppStrings.inProgressApplications, '5건'),
+            _buildStatItem(
+              context,
+              AppStrings.inProgressApplications,
+              '$inProgressCount건',
+            ),
             const Divider(),
-            _buildStatItem(context, AppStrings.urgentApplicationsCount, '3건'),
+            _buildStatItem(
+              context,
+              AppStrings.urgentApplicationsCount,
+              '$urgentCount건',
+            ),
           ],
         ),
       ),
@@ -2408,7 +2513,11 @@ class PieChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
+    if (oldDelegate is! PieChartPainter) return true;
+    return oldDelegate.data != data || oldDelegate.total != total;
+  }
 }
 
 // 선 그래프 페인터
@@ -2416,7 +2525,8 @@ class LineChartPainter extends CustomPainter {
   final List<double> data;
   final double maxValue;
 
-  LineChartPainter(this.data) : maxValue = data.reduce((a, b) => a > b ? a : b);
+  LineChartPainter(this.data)
+    : maxValue = data.isEmpty ? 0 : data.reduce((a, b) => a > b ? a : b);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2453,7 +2563,11 @@ class LineChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
+    if (oldDelegate is! LineChartPainter) return true;
+    return oldDelegate.data != data || oldDelegate.maxValue != maxValue;
+  }
 }
 
 // Phase 3: 그리드 라인 페인터
@@ -2486,7 +2600,13 @@ class GridLinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
+    if (oldDelegate is! GridLinePainter) return true;
+    return oldDelegate.maxValue != maxValue ||
+        oldDelegate.maxHeight != maxHeight ||
+        oldDelegate.entryCount != entryCount;
+  }
 }
 
 // Phase 3: 월별 선 그래프 페인터
@@ -2538,7 +2658,14 @@ class MonthlyLineChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
+    if (oldDelegate is! MonthlyLineChartPainter) return true;
+    return oldDelegate.data != data ||
+        oldDelegate.maxValue != maxValue ||
+        oldDelegate.maxHeight != maxHeight ||
+        oldDelegate.entryCount != entryCount;
+  }
 }
 
 // Phase 3: 영역 차트 페인터
@@ -2609,7 +2736,14 @@ class AreaChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
+    if (oldDelegate is! AreaChartPainter) return true;
+    return oldDelegate.data != data ||
+        oldDelegate.maxValue != maxValue ||
+        oldDelegate.maxHeight != maxHeight ||
+        oldDelegate.entryCount != entryCount;
+  }
 }
 
 // Phase 4: 상태별 선 그래프 페인터
@@ -2663,7 +2797,15 @@ class StatusLineChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
+    if (oldDelegate is! StatusLineChartPainter) return true;
+    return oldDelegate.data != data ||
+        oldDelegate.maxValue != maxValue ||
+        oldDelegate.maxHeight != maxHeight ||
+        oldDelegate.entryCount != entryCount ||
+        oldDelegate.color != color;
+  }
 }
 
 // Phase 4: 상태별 영역 차트 페인터
@@ -2736,7 +2878,15 @@ class StatusAreaChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
+    if (oldDelegate is! StatusAreaChartPainter) return true;
+    return oldDelegate.data != data ||
+        oldDelegate.maxValue != maxValue ||
+        oldDelegate.maxHeight != maxHeight ||
+        oldDelegate.entryCount != entryCount ||
+        oldDelegate.color != color;
+  }
 }
 
 // Phase 4: 스택 영역 차트 페인터 (누적 모드)
@@ -2824,5 +2974,13 @@ class StackedAreaChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
+    if (oldDelegate is! StackedAreaChartPainter) return true;
+    // Map 비교는 복잡하므로 간단히 entryCount와 maxValue만 비교
+    return oldDelegate.maxValue != maxValue ||
+        oldDelegate.maxHeight != maxHeight ||
+        oldDelegate.entryCount != entryCount ||
+        oldDelegate.statusData.length != statusData.length;
+  }
 }
