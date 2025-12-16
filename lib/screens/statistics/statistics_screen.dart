@@ -7,29 +7,13 @@ import '../../constants/app_strings.dart';
 import '../../models/application.dart';
 import '../../models/application_status.dart';
 import '../../services/storage_service.dart';
-
-enum PeriodType { all, thisMonth, last3Months, last6Months, thisYear, custom }
-
-// Phase 1: 월별 추이 표시 기간 타입
-enum MonthlyDisplayPeriod {
-  last3Months,
-  last6Months,
-  last12Months,
-  thisYear,
-  all,
-}
-
-// Phase 2: 월별 추이 데이터 기준 타입
-enum MonthlyDataCriteria { createdAt, deadline }
-
-// Phase 3: 차트 타입
-enum ChartType { bar, line, area }
-
-// Phase 4: 상태별 추이 표시 모드
-enum StatusDisplayMode { all, byStatus }
-
-// Phase 4: 누적/비교 모드
-enum ChartMode { comparison, cumulative }
+// Phase 9-1: 타입 및 Enum 분리
+import 'models/period_type.dart';
+import 'models/monthly_display_period.dart';
+import 'models/monthly_data_criteria.dart';
+import 'models/chart_type.dart';
+import 'models/status_display_mode.dart';
+import 'models/chart_mode.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
