@@ -1,5 +1,5 @@
 // 캘린더 화면
-// 월간/주간/일간 뷰로 일정을 확인할 수 있는 화면
+// 월간/주간 뷰로 일정을 확인할 수 있는 화면
 
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
@@ -10,11 +10,10 @@ import '../application_detail/application_detail_screen.dart';
 import 'calendar_view_model.dart';
 import 'widgets/calendar_legend.dart';
 import 'widgets/calendar_schedule_list.dart';
-import 'widgets/daily_calendar_view.dart';
 import 'widgets/monthly_calendar_view.dart';
 import 'widgets/weekly_calendar_view.dart';
 
-enum CalendarView { monthly, weekly, daily }
+enum CalendarView { monthly, weekly }
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -198,7 +197,6 @@ class CalendarScreenState extends State<CalendarScreen>
         children: [
           _buildViewButton(context, AppStrings.monthly, CalendarView.monthly),
           _buildViewButton(context, AppStrings.weekly, CalendarView.weekly),
-          _buildViewButton(context, AppStrings.daily, CalendarView.daily),
         ],
       ),
     );
@@ -256,13 +254,6 @@ class CalendarScreenState extends State<CalendarScreen>
           },
           isSameDay: _viewModel.isSameDay,
           getEventsForDate: _viewModel.getEventsForDate,
-        );
-      case CalendarView.daily:
-        return DailyCalendarView(
-          selectedDate: _selectedDate,
-          events: _viewModel.getEventsForDate(_selectedDate),
-          getEventTitle: _viewModel.getEventTitle,
-          onEventTap: (event) => _handleEventTap(event),
         );
     }
   }
