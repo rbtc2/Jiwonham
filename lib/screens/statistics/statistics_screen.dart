@@ -14,6 +14,15 @@ import 'models/monthly_data_criteria.dart';
 import 'models/chart_type.dart';
 import 'models/status_display_mode.dart';
 import 'models/chart_mode.dart';
+// Phase 9-2: CustomPainter 클래스 분리
+import 'painters/pie_chart_painter.dart';
+import 'painters/line_chart_painter.dart';
+import 'painters/grid_line_painter.dart';
+import 'painters/monthly_line_chart_painter.dart';
+import 'painters/area_chart_painter.dart';
+import 'painters/status_line_chart_painter.dart';
+import 'painters/status_area_chart_painter.dart';
+import 'painters/stacked_area_chart_painter.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -299,10 +308,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             label: '기간 선택 버튼. 현재 선택된 기간을 변경할 수 있습니다.',
             button: true,
             child: TextButton(
-              onPressed: () {
-                _showPeriodSelectionDialog(context);
-              },
-              child: const Text(AppStrings.periodSelection),
+            onPressed: () {
+              _showPeriodSelectionDialog(context);
+            },
+            child: const Text(AppStrings.periodSelection),
             ),
           ),
         ],
@@ -467,9 +476,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                   label:
                       '전체 현황 원형 차트. ${data.map((item) => '${item['label']}: ${item['value']}건').join(', ')}',
                   child: SizedBox(
-                    width: 150,
-                    height: 150,
-                    child: CustomPaint(painter: PieChartPainter(data)),
+                  width: 150,
+                  height: 150,
+                  child: CustomPaint(painter: PieChartPainter(data)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -501,9 +510,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                             Semantics(
                               label: '${item['label']}: ${item['value']}건',
                               child: Text(
-                                '${item['value']}',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              '${item['value']}',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -720,12 +729,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             // Phase 1: 헤더와 표시 기간 선택 UI
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppStrings.monthlyTrend,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          children: [
+            Text(
+              AppStrings.monthlyTrend,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 // Phase 1, 2, 3, 4: 표시 기간, 데이터 기준, 차트 타입, 상태별 모드 선택
                 Row(
@@ -1089,7 +1098,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       ? "선 그래프"
                       : "영역 차트"}. ${monthlyData.entries.map((e) => '${e.key}: ${e.value}건').join(', ')}',
               child: SizedBox(
-                height: chartHeight,
+              height: chartHeight,
                 child:
                     _statusDisplayMode == StatusDisplayMode.byStatus &&
                         _monthlyDataByStatus != null
@@ -1213,15 +1222,15 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     double maxBarHeight,
   ) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: monthlyData.entries.map((entry) {
         final height = maxValue > 0
             ? (entry.value / maxValue) * maxBarHeight
             : 0.0;
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
             // Phase 3: 애니메이션 및 툴팁 추가
             TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 800),
@@ -1247,29 +1256,29 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                         cursor: SystemMouseCursors.click,
                         child: Container(
                           // Phase 8: 터치 영역 최적화 (최소 48x48)
-                          width: 40,
+                        width: 40,
                           height: animatedHeight > 0 ? animatedHeight : 48,
                           constraints: const BoxConstraints(
                             minWidth: 40,
                             minHeight: 48,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(4),
-                              topRight: Radius.circular(4),
-                            ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(4),
+                            topRight: Radius.circular(4),
                           ),
+                        ),
                           child: animatedHeight > 20
                               ? Center(
-                                  child: Text(
-                                    '${entry.value}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                          child: Text(
+                            '${entry.value}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                                 )
                               : null,
                         ),
@@ -1278,13 +1287,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                   ),
                 );
               },
-            ),
-            const SizedBox(height: 8),
+                      ),
+                      const SizedBox(height: 8),
             // Phase 8: 접근성 개선 - 월 레이블에 시맨틱 추가
             Semantics(
               label: '${entry.key}월',
               child: Text(
-                entry.key,
+                        entry.key,
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -1468,10 +1477,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        ),
+                  );
+                }).toList(),
+              ),
+            ),
         // Phase 5: 영역 차트 포인트 클릭 영역
         ...entries.asMap().entries.map((entry) {
           final index = entry.key;
@@ -2262,28 +2271,28 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     return Semantics(
       label: '$label 합격률: $rate, $count',
       child: Column(
-        children: [
-          Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+      children: [
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          rate,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
           ),
-          const SizedBox(height: 4),
-          Text(
-            rate,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-          Text(
-            count,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-          ),
-        ],
+        ),
+        Text(
+          count,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+        ),
+      ],
       ),
     );
   }
@@ -2377,18 +2386,18 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     return Semantics(
       label: '$label: $value',
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: Theme.of(context).textTheme.bodyMedium),
-            Text(
-              value,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ],
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
         ),
       ),
     );
@@ -2560,524 +2569,5 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         ),
       ),
     );
-  }
-}
-
-// 원형 차트 페인터
-class PieChartPainter extends CustomPainter {
-  final List<Map<String, dynamic>> data;
-  final double total;
-
-  PieChartPainter(this.data)
-    : total = data.fold(
-        0.0,
-        (sum, item) => sum + (item['value'] as int).toDouble(),
-      );
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 10;
-
-    double startAngle = -90 * (3.14159 / 180); // -90도부터 시작
-
-    for (var item in data) {
-      final value = (item['value'] as int).toDouble();
-      final sweepAngle = (value / total) * 2 * 3.14159;
-      final color = item['color'] as Color;
-
-      final paint = Paint()
-        ..color = color
-        ..style = PaintingStyle.fill;
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        true,
-        paint,
-      );
-
-      startAngle += sweepAngle;
-    }
-
-    // 중앙 원 (도넛 차트 효과)
-    final centerPaint = Paint()
-      ..color = AppColors.background
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(center, radius * 0.6, centerPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
-    if (oldDelegate is! PieChartPainter) return true;
-    return oldDelegate.data != data || oldDelegate.total != total;
-  }
-}
-
-// 선 그래프 페인터
-class LineChartPainter extends CustomPainter {
-  final List<double> data;
-  final double maxValue;
-
-  LineChartPainter(this.data)
-    : maxValue = data.isEmpty ? 0 : data.reduce((a, b) => a > b ? a : b);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
-
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    final pointPaint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final stepX = size.width / (data.length - 1);
-    final stepY = size.height / maxValue;
-
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = size.height - (data[i] * stepY);
-
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-
-      // 점 그리기
-      canvas.drawCircle(Offset(x, y), 4, pointPaint);
-    }
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
-    if (oldDelegate is! LineChartPainter) return true;
-    return oldDelegate.data != data || oldDelegate.maxValue != maxValue;
-  }
-}
-
-// Phase 3: 그리드 라인 페인터
-class GridLinePainter extends CustomPainter {
-  final double maxValue;
-  final double maxHeight;
-  final int entryCount;
-
-  GridLinePainter({
-    required this.maxValue,
-    required this.maxHeight,
-    required this.entryCount,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (maxValue == 0) return;
-
-    final gridPaint = Paint()
-      ..color = AppColors.textSecondary.withValues(alpha: 0.2)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    // Phase 3: Y축 눈금 (최대 5개)
-    final gridLines = 5;
-    for (int i = 0; i <= gridLines; i++) {
-      final y = (maxHeight / gridLines) * i;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
-    if (oldDelegate is! GridLinePainter) return true;
-    return oldDelegate.maxValue != maxValue ||
-        oldDelegate.maxHeight != maxHeight ||
-        oldDelegate.entryCount != entryCount;
-  }
-}
-
-// Phase 3: 월별 선 그래프 페인터
-class MonthlyLineChartPainter extends CustomPainter {
-  final List<double> data;
-  final double maxValue;
-  final double maxHeight;
-  final int entryCount;
-
-  MonthlyLineChartPainter({
-    required this.data,
-    required this.maxValue,
-    required this.maxHeight,
-    required this.entryCount,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty || maxValue == 0) return;
-
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final pointPaint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final stepX = size.width / (data.length - 1);
-    final stepY = maxHeight / maxValue;
-
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = maxHeight - (data[i] * stepY);
-
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-
-      // Phase 3: 점 그리기
-      canvas.drawCircle(Offset(x, y), 5, pointPaint);
-    }
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
-    if (oldDelegate is! MonthlyLineChartPainter) return true;
-    return oldDelegate.data != data ||
-        oldDelegate.maxValue != maxValue ||
-        oldDelegate.maxHeight != maxHeight ||
-        oldDelegate.entryCount != entryCount;
-  }
-}
-
-// Phase 3: 영역 차트 페인터
-class AreaChartPainter extends CustomPainter {
-  final List<double> data;
-  final double maxValue;
-  final double maxHeight;
-  final int entryCount;
-
-  AreaChartPainter({
-    required this.data,
-    required this.maxValue,
-    required this.maxHeight,
-    required this.entryCount,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty || maxValue == 0) return;
-
-    final areaPaint = Paint()
-      ..color = AppColors.primary.withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
-
-    final linePaint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    final pointPaint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final stepX = size.width / (data.length - 1);
-    final stepY = maxHeight / maxValue;
-
-    // Phase 3: 영역 경로 생성
-    path.moveTo(0, maxHeight);
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = maxHeight - (data[i] * stepY);
-      path.lineTo(x, y);
-    }
-    path.lineTo(size.width, maxHeight);
-    path.close();
-
-    // Phase 3: 영역 그리기
-    canvas.drawPath(path, areaPaint);
-
-    // Phase 3: 선 그리기
-    final linePath = Path();
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = maxHeight - (data[i] * stepY);
-
-      if (i == 0) {
-        linePath.moveTo(x, y);
-      } else {
-        linePath.lineTo(x, y);
-      }
-
-      // Phase 3: 점 그리기
-      canvas.drawCircle(Offset(x, y), 4, pointPaint);
-    }
-
-    canvas.drawPath(linePath, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
-    if (oldDelegate is! AreaChartPainter) return true;
-    return oldDelegate.data != data ||
-        oldDelegate.maxValue != maxValue ||
-        oldDelegate.maxHeight != maxHeight ||
-        oldDelegate.entryCount != entryCount;
-  }
-}
-
-// Phase 4: 상태별 선 그래프 페인터
-class StatusLineChartPainter extends CustomPainter {
-  final List<double> data;
-  final double maxValue;
-  final double maxHeight;
-  final int entryCount;
-  final Color color;
-
-  StatusLineChartPainter({
-    required this.data,
-    required this.maxValue,
-    required this.maxHeight,
-    required this.entryCount,
-    required this.color,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty || maxValue == 0) return;
-
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final pointPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final stepX = size.width / (data.length - 1);
-    final stepY = maxHeight / maxValue;
-
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = maxHeight - (data[i] * stepY);
-
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-
-      // Phase 4: 점 그리기
-      canvas.drawCircle(Offset(x, y), 5, pointPaint);
-    }
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
-    if (oldDelegate is! StatusLineChartPainter) return true;
-    return oldDelegate.data != data ||
-        oldDelegate.maxValue != maxValue ||
-        oldDelegate.maxHeight != maxHeight ||
-        oldDelegate.entryCount != entryCount ||
-        oldDelegate.color != color;
-  }
-}
-
-// Phase 4: 상태별 영역 차트 페인터
-class StatusAreaChartPainter extends CustomPainter {
-  final List<double> data;
-  final double maxValue;
-  final double maxHeight;
-  final int entryCount;
-  final Color color;
-
-  StatusAreaChartPainter({
-    required this.data,
-    required this.maxValue,
-    required this.maxHeight,
-    required this.entryCount,
-    required this.color,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty || maxValue == 0) return;
-
-    final areaPaint = Paint()
-      ..color = color.withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
-
-    final linePaint = Paint()
-      ..color = color
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    final pointPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final stepX = size.width / (data.length - 1);
-    final stepY = maxHeight / maxValue;
-
-    // Phase 4: 영역 경로 생성
-    path.moveTo(0, maxHeight);
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = maxHeight - (data[i] * stepY);
-      path.lineTo(x, y);
-    }
-    path.lineTo(size.width, maxHeight);
-    path.close();
-
-    // Phase 4: 영역 그리기
-    canvas.drawPath(path, areaPaint);
-
-    // Phase 4: 선 그리기
-    final linePath = Path();
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = maxHeight - (data[i] * stepY);
-
-      if (i == 0) {
-        linePath.moveTo(x, y);
-      } else {
-        linePath.lineTo(x, y);
-      }
-
-      // Phase 4: 점 그리기
-      canvas.drawCircle(Offset(x, y), 4, pointPaint);
-    }
-
-    canvas.drawPath(linePath, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
-    if (oldDelegate is! StatusAreaChartPainter) return true;
-    return oldDelegate.data != data ||
-        oldDelegate.maxValue != maxValue ||
-        oldDelegate.maxHeight != maxHeight ||
-        oldDelegate.entryCount != entryCount ||
-        oldDelegate.color != color;
-  }
-}
-
-// Phase 4: 스택 영역 차트 페인터 (누적 모드)
-class StackedAreaChartPainter extends CustomPainter {
-  final Map<ApplicationStatus, List<double>> statusData;
-  final double maxValue;
-  final double maxHeight;
-  final int entryCount;
-  final Color Function(ApplicationStatus) getStatusColor;
-
-  StackedAreaChartPainter({
-    required this.statusData,
-    required this.maxValue,
-    required this.maxHeight,
-    required this.entryCount,
-    required this.getStatusColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (statusData.isEmpty || maxValue == 0) return;
-
-    final stepX = size.width / (entryCount - 1);
-    final stepY = maxHeight / maxValue;
-
-    // Phase 4: 누적 데이터 계산
-    final cumulativeData = <ApplicationStatus, List<double>>{};
-
-    for (final statusEntry in statusData.entries) {
-      final status = statusEntry.key;
-      final data = statusEntry.value;
-      double cumulativeSum = 0;
-      cumulativeData[status] = data.map((value) {
-        cumulativeSum += value;
-        return cumulativeSum;
-      }).toList();
-    }
-
-    // Phase 4: 아래에서부터 스택 영역 그리기
-    double previousY = maxHeight;
-    for (final statusEntry in statusData.entries.toList().reversed) {
-      final status = statusEntry.key;
-      final data = statusEntry.value;
-      final cumulative = cumulativeData[status]!;
-
-      final areaPaint = Paint()
-        ..color = getStatusColor(status).withValues(alpha: 0.4)
-        ..style = PaintingStyle.fill;
-
-      final linePaint = Paint()
-        ..color = getStatusColor(status)
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
-
-      final path = Path();
-      path.moveTo(0, previousY);
-
-      for (int i = 0; i < data.length; i++) {
-        final x = i * stepX;
-        final y = maxHeight - (cumulative[i] * stepY);
-        path.lineTo(x, y);
-      }
-
-      path.lineTo(size.width, previousY);
-      path.close();
-
-      canvas.drawPath(path, areaPaint);
-
-      // Phase 4: 상단 선 그리기
-      final linePath = Path();
-      for (int i = 0; i < data.length; i++) {
-        final x = i * stepX;
-        final y = maxHeight - (cumulative[i] * stepY);
-
-        if (i == 0) {
-          linePath.moveTo(x, y);
-        } else {
-          linePath.lineTo(x, y);
-        }
-      }
-      canvas.drawPath(linePath, linePaint);
-
-      previousY = maxHeight - (cumulative.last * stepY);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Phase 7: 성능 최적화 - 데이터가 변경된 경우에만 재그리기
-    if (oldDelegate is! StackedAreaChartPainter) return true;
-    // Map 비교는 복잡하므로 간단히 entryCount와 maxValue만 비교
-    return oldDelegate.maxValue != maxValue ||
-        oldDelegate.maxHeight != maxHeight ||
-        oldDelegate.entryCount != entryCount ||
-        oldDelegate.statusData.length != statusData.length;
   }
 }
