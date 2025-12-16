@@ -10,7 +10,9 @@ import '../../widgets/status_chip.dart';
 import '../../models/application.dart';
 import '../../models/application_status.dart';
 import '../../models/interview_review.dart';
+import '../../models/notification_settings.dart';
 import '../../services/storage_service.dart';
+import '../../widgets/dialogs/notification_settings_dialog.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 
 class ApplicationDetailScreen extends StatefulWidget {
@@ -1330,5 +1332,90 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
         ],
       ),
     );
+  }
+
+  void _showNotificationSettingsDialog(BuildContext context) {
+    // 현재 마감일 알림 설정 가져오기
+    NotificationSettings? currentSettings;
+    if (_application.notificationSettings.deadlineNotification) {
+      currentSettings = NotificationSettings(
+        deadlineNotification: true,
+        deadlineTiming: _application.notificationSettings.deadlineTiming,
+        customHoursBefore: _application.notificationSettings.customHoursBefore,
+      );
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => NotificationSettingsDialog(
+        notificationType: 'deadline',
+        initialSettings: currentSettings,
+      ),
+    ).then((result) async {
+      if (result != null && mounted) {
+        // 알림 설정 업데이트
+        final updatedSettings = _application.notificationSettings.copyWith(
+          deadlineNotification: (result as NotificationSettings).deadlineNotification,
+          deadlineTiming: result.deadlineTiming,
+          customHoursBefore: result.customHoursBefore,
+        );
+
+        final updatedApplication = _application.copyWith(
+          notificationSettings: updatedSettings,
+          updatedAt: DateTime.now(),
+        );
+
+        try {
+          final storageService = StorageService();
+          final success = await storageService.saveApplication(updatedApplication);
+
+          if (!mounted) return;
+
+          if (success) {
+            if (!mounted) return;
+            setState(() {
+              _application = updatedApplication;
+            });
+            _hasChanges = true;
+            
+            if (!mounted) return;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('알림 설정이 저장되었습니다.'),
+                  backgroundColor: AppColors.success,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            });
+          } else {
+            if (!mounted) return;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('알림 설정 저장에 실패했습니다.'),
+                  backgroundColor: AppColors.error,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            });
+          }
+        } catch (e) {
+          if (!mounted) return;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('오류가 발생했습니다: $e'),
+                backgroundColor: AppColors.error,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          });
+        }
+      }
+    });
   }
 }
