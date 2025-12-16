@@ -15,14 +15,16 @@ import 'models/chart_type.dart';
 import 'models/status_display_mode.dart';
 import 'models/chart_mode.dart';
 // Phase 9-2: CustomPainter 클래스 분리
-import 'painters/pie_chart_painter.dart';
-import 'painters/line_chart_painter.dart';
 import 'painters/grid_line_painter.dart';
 import 'painters/monthly_line_chart_painter.dart';
 import 'painters/area_chart_painter.dart';
 import 'painters/status_line_chart_painter.dart';
 import 'painters/status_area_chart_painter.dart';
 import 'painters/stacked_area_chart_painter.dart';
+// Phase 9-3: 위젯 분리
+import 'widgets/overall_statistics_card.dart';
+import 'widgets/pass_rate_card.dart';
+import 'widgets/key_statistics_card.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -308,10 +310,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             label: '기간 선택 버튼. 현재 선택된 기간을 변경할 수 있습니다.',
             button: true,
             child: TextButton(
-            onPressed: () {
-              _showPeriodSelectionDialog(context);
-            },
-            child: const Text(AppStrings.periodSelection),
+              onPressed: () {
+                _showPeriodSelectionDialog(context);
+              },
+              child: const Text(AppStrings.periodSelection),
             ),
           ),
         ],
@@ -325,7 +327,14 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             Semantics(
               label: '전체 현황 통계',
               header: true,
-              child: _buildOverallStatistics(context),
+              child: OverallStatisticsCard(
+                isLoading: _isLoading,
+                total: _totalApplications,
+                notApplied: _notApplied,
+                inProgress: _inProgress,
+                passed: _passed,
+                rejected: _rejected,
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -346,205 +355,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             Semantics(
               label: '주요 통계 정보',
               header: true,
-              child: _buildKeyStatistics(context),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOverallStatistics(BuildContext context) {
-    // Phase 4: 로딩 상태 처리
-    if (_isLoading) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppStrings.overallStatus,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              // Phase 8: 접근성 개선 - 로딩 상태 시맨틱 레이블
-              Semantics(
-                label: '데이터를 불러오는 중입니다',
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Phase 2: 실제 데이터 사용
-    final total = _totalApplications;
-    final data = [
-      {
-        'label': AppStrings.notApplied,
-        'value': _notApplied,
-        'color': AppColors.textSecondary,
-      },
-      {
-        'label': AppStrings.inProgress,
-        'value': _inProgress,
-        'color': AppColors.warning,
-      },
-      {
-        'label': AppStrings.passed,
-        'value': _passed,
-        'color': AppColors.success,
-      },
-      {
-        'label': AppStrings.rejected,
-        'value': _rejected,
-        'color': AppColors.error,
-      },
-    ];
-
-    // Phase 4: 빈 상태 처리
-    if (total == 0) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppStrings.overallStatus,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              // Phase 8: 접근성 개선 - 빈 상태 메시지에 시맨틱 레이블
-              Semantics(
-                label: '데이터가 없습니다',
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.bar_chart_outlined,
-                          size: 48,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          '데이터가 없습니다',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppStrings.overallStatus,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                // Phase 8: 원형 차트 (접근성 개선 - 시맨틱 레이블 추가)
-                Semantics(
-                  label:
-                      '전체 현황 원형 차트. ${data.map((item) => '${item['label']}: ${item['value']}건').join(', ')}',
-                  child: SizedBox(
-                  width: 150,
-                  height: 150,
-                  child: CustomPaint(painter: PieChartPainter(data)),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // 범례
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: data.map((item) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: item['color'] as Color,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                item['label'] as String,
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ),
-                            // Phase 8: 접근성 개선 - 통계 값에 시맨틱 레이블
-                            Semantics(
-                              label: '${item['label']}: ${item['value']}건',
-                              child: Text(
-                              '${item['value']}',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '전체 지원: ',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  Text(
-                    '$total건',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
+              child: KeyStatisticsCard(
+                filteredApplications: _filteredApplications,
+                inProgress: _inProgress,
               ),
             ),
           ],
@@ -729,12 +542,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             // Phase 1: 헤더와 표시 기간 선택 UI
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              AppStrings.monthlyTrend,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              children: [
+                Text(
+                  AppStrings.monthlyTrend,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 // Phase 1, 2, 3, 4: 표시 기간, 데이터 기준, 차트 타입, 상태별 모드 선택
                 Row(
@@ -1098,7 +911,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       ? "선 그래프"
                       : "영역 차트"}. ${monthlyData.entries.map((e) => '${e.key}: ${e.value}건').join(', ')}',
               child: SizedBox(
-              height: chartHeight,
+                height: chartHeight,
                 child:
                     _statusDisplayMode == StatusDisplayMode.byStatus &&
                         _monthlyDataByStatus != null
@@ -1222,15 +1035,15 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     double maxBarHeight,
   ) {
     return Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: monthlyData.entries.map((entry) {
         final height = maxValue > 0
             ? (entry.value / maxValue) * maxBarHeight
             : 0.0;
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
             // Phase 3: 애니메이션 및 툴팁 추가
             TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 800),
@@ -1256,29 +1069,29 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                         cursor: SystemMouseCursors.click,
                         child: Container(
                           // Phase 8: 터치 영역 최적화 (최소 48x48)
-                        width: 40,
+                          width: 40,
                           height: animatedHeight > 0 ? animatedHeight : 48,
                           constraints: const BoxConstraints(
                             minWidth: 40,
                             minHeight: 48,
                           ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(4),
-                            topRight: Radius.circular(4),
-                          ),
-                        ),
-                          child: animatedHeight > 20
-                              ? Center(
-                          child: Text(
-                            '${entry.value}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
                             ),
                           ),
+                          child: animatedHeight > 20
+                              ? Center(
+                                  child: Text(
+                                    '${entry.value}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 )
                               : null,
                         ),
@@ -1287,13 +1100,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                   ),
                 );
               },
-                      ),
-                      const SizedBox(height: 8),
+            ),
+            const SizedBox(height: 8),
             // Phase 8: 접근성 개선 - 월 레이블에 시맨틱 추가
             Semantics(
               label: '${entry.key}월',
               child: Text(
-                        entry.key,
+                entry.key,
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -1477,10 +1290,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     ),
                   ),
                 ),
-                  );
-                }).toList(),
-              ),
-            ),
+              );
+            }).toList(),
+          ),
+        ),
         // Phase 5: 영역 차트 포인트 클릭 영역
         ...entries.asMap().entries.map((entry) {
           final index = entry.key;
@@ -2189,11 +2002,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   }
 
   Widget _buildPassRate(BuildContext context) {
-    // Phase 2: 실제 데이터 사용
-    final overallRate = _totalApplications > 0
-        ? ((_passed / _totalApplications) * 100).toStringAsFixed(1)
-        : '0.0';
-
     // Phase 3: 이번 달 합격률 계산
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);
@@ -2208,198 +2016,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         .where((app) => app.status == ApplicationStatus.passed)
         .length;
     final thisMonthTotal = thisMonthApps.length;
-    final thisMonthRate = thisMonthTotal > 0
-        ? ((thisMonthPassed / thisMonthTotal) * 100).toStringAsFixed(1)
-        : '0.0';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppStrings.passRate,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildPassRateItem(
-                  context,
-                  AppStrings.overall,
-                  '$overallRate%',
-                  '$_passed/$_totalApplications',
-                ),
-                _buildPassRateItem(
-                  context,
-                  AppStrings.thisMonth,
-                  '$thisMonthRate%',
-                  '$thisMonthPassed/$thisMonthTotal',
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // 합격률 추이 그래프 (간단한 선 그래프)
-            Container(
-              height: 100,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: CustomPaint(
-                painter: LineChartPainter([16.7, 20.0, 18.5, 19.2]),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPassRateItem(
-    BuildContext context,
-    String label,
-    String rate,
-    String count,
-  ) {
-    // Phase 8: 접근성 개선 - 합격률 항목에 시맨틱 레이블
-    return Semantics(
-      label: '$label 합격률: $rate, $count',
-      child: Column(
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          rate,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
-        ),
-        Text(
-          count,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-        ),
-      ],
-      ),
-    );
-  }
-
-  Widget _buildKeyStatistics(BuildContext context) {
-    // Phase 6: 실제 데이터 계산
-    // 평균 지원 기간 계산 (생성일부터 현재까지의 평균 일수)
-    final now = DateTime.now();
-    final applicationsWithPeriod = _filteredApplications
-        .where((app) => app.createdAt.isBefore(now))
-        .toList();
-    final averagePeriod = applicationsWithPeriod.isEmpty
-        ? 0
-        : (applicationsWithPeriod
-                      .map((app) => now.difference(app.createdAt).inDays)
-                      .fold(0, (sum, days) => sum + days) /
-                  applicationsWithPeriod.length)
-              .round();
-
-    // 가장 많이 지원한 직무 계산
-    final positionCounts = <String, int>{};
-    for (final app in _filteredApplications) {
-      if (app.position != null && app.position!.isNotEmpty) {
-        final position = app.position!;
-        positionCounts[position] = (positionCounts[position] ?? 0) + 1;
-      }
-    }
-    final mostAppliedPosition = positionCounts.isEmpty
-        ? '없음'
-        : positionCounts.entries
-              .reduce((a, b) => a.value > b.value ? a : b)
-              .key;
-    final mostAppliedPositionCount = positionCounts.isEmpty
-        ? 0
-        : positionCounts[mostAppliedPosition] ?? 0;
-
-    // 진행 중인 공고 수 (이미 계산된 _inProgress 사용)
-    final inProgressCount = _inProgress;
-
-    // 마감 임박 공고 수 (D-7 이내)
-    final urgentCount = _filteredApplications
-        .where((app) => app.isUrgent)
-        .length;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppStrings.keyStatistics,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _buildStatItem(
-              context,
-              AppStrings.averageApplicationPeriod,
-              averagePeriod > 0 ? '$averagePeriod일' : '데이터 없음',
-            ),
-            const Divider(),
-            _buildStatItem(
-              context,
-              AppStrings.mostAppliedPosition,
-              mostAppliedPositionCount > 0
-                  ? '$mostAppliedPosition ($mostAppliedPositionCount건)'
-                  : '데이터 없음',
-            ),
-            const Divider(),
-            _buildStatItem(
-              context,
-              AppStrings.inProgressApplications,
-              '$inProgressCount건',
-            ),
-            const Divider(),
-            _buildStatItem(
-              context,
-              AppStrings.urgentApplicationsCount,
-              '$urgentCount건',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(BuildContext context, String label, String value) {
-    // Phase 8: 접근성 개선 - 통계 항목에 시맨틱 레이블
-    return Semantics(
-      label: '$label: $value',
-      child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-        ],
-        ),
-      ),
+    return PassRateCard(
+      total: _totalApplications,
+      passed: _passed,
+      thisMonthTotal: thisMonthTotal,
+      thisMonthPassed: thisMonthPassed,
     );
   }
 
