@@ -27,6 +27,9 @@ import 'widgets/pass_rate_card.dart';
 import 'widgets/key_statistics_card.dart';
 // Phase 9-4: 헬퍼 함수 분리
 import 'utils/statistics_helpers.dart';
+// Phase 9-5: 다이얼로그 분리
+import 'widgets/monthly_detail_dialog.dart';
+import 'widgets/status_monthly_detail_dialog.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -907,10 +910,11 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     child: GestureDetector(
                       onTap: () {
                         // Phase 5: 상세 정보 다이얼로그 표시
-                        _showMonthlyDetailDialog(
+                        showMonthlyDetailDialog(
                           context,
                           entry.key,
                           entry.value,
+                          _monthlyDataByStatus,
                         );
                       },
                       child: MouseRegion(
@@ -1009,7 +1013,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               return GestureDetector(
                 onTap: () {
                   // Phase 5: 상세 정보 다이얼로그 표시
-                  _showMonthlyDetailDialog(context, entry.key, entry.value);
+                  showMonthlyDetailDialog(
+                    context,
+                    entry.key,
+                    entry.value,
+                    _monthlyDataByStatus,
+                  );
                 },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
@@ -1052,7 +1061,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             top: y - 15,
             child: GestureDetector(
               onTap: () {
-                _showMonthlyDetailDialog(context, monthKey, value);
+                showMonthlyDetailDialog(
+                  context,
+                  monthKey,
+                  value,
+                  _monthlyDataByStatus,
+                );
               },
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
@@ -1115,7 +1129,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               return GestureDetector(
                 onTap: () {
                   // Phase 5: 상세 정보 다이얼로그 표시
-                  _showMonthlyDetailDialog(context, entry.key, entry.value);
+                  showMonthlyDetailDialog(
+                    context,
+                    entry.key,
+                    entry.value,
+                    _monthlyDataByStatus,
+                  );
                 },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
@@ -1158,7 +1177,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             top: y - 15,
             child: GestureDetector(
               onTap: () {
-                _showMonthlyDetailDialog(context, monthKey, value);
+                showMonthlyDetailDialog(
+                  context,
+                  monthKey,
+                  value,
+                  _monthlyDataByStatus,
+                );
               },
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
@@ -1296,15 +1320,16 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       left: 0,
                       right: 0,
                       child: GestureDetector(
-                        onTap: () {
-                          // Phase 5: 상태별 상세 정보 다이얼로그 표시
-                          _showStatusMonthlyDetailDialog(
-                            context,
-                            monthKey,
-                            status,
-                            value.toInt(),
-                          );
-                        },
+              onTap: () {
+                // Phase 5: 상태별 상세 정보 다이얼로그 표시
+                showStatusMonthlyDetailDialog(
+                  context,
+                  monthKey,
+                  status,
+                  value.toInt(),
+                  _monthlyDataByStatus,
+                );
+              },
                         child: MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: TweenAnimationBuilder<double>(
@@ -1360,15 +1385,16 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
                     return Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          // Phase 5: 상태별 상세 정보 다이얼로그 표시
-                          _showStatusMonthlyDetailDialog(
-                            context,
-                            monthKey,
-                            status,
-                            value.toInt(),
-                          );
-                        },
+              onTap: () {
+                // Phase 5: 상태별 상세 정보 다이얼로그 표시
+                showStatusMonthlyDetailDialog(
+                  context,
+                  monthKey,
+                  status,
+                  value.toInt(),
+                  _monthlyDataByStatus,
+                );
+              },
                         child: MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: TweenAnimationBuilder<double>(
@@ -1669,185 +1695,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 
-  // Phase 5: 월별 상세 정보 다이얼로그 표시
-  void _showMonthlyDetailDialog(
-    BuildContext context,
-    String monthKey,
-    int totalCount,
-  ) {
-    // Phase 5: 해당 월의 상태별 데이터 가져오기
-    final statusData = _monthlyDataByStatus?[monthKey];
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(monthKey),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Phase 5: 전체 건수
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '전체 지원:',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    Text(
-                      '$totalCount건',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Phase 5: 상태별 상세 정보
-              if (statusData != null && statusData.isNotEmpty) ...[
-                const Divider(),
-                ...statusData.entries.map((entry) {
-                  final status = entry.key;
-                  final count = entry.value;
-                  if (count == 0) return const SizedBox.shrink();
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: getStatusColor(status),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              getStatusText(status),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '$count건',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('닫기'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Phase 5: 상태별 월별 상세 정보 다이얼로그 표시
-  void _showStatusMonthlyDetailDialog(
-    BuildContext context,
-    String monthKey,
-    ApplicationStatus status,
-    int count,
-  ) {
-    // Phase 5: 해당 월의 전체 상태별 데이터 가져오기
-    final statusData = _monthlyDataByStatus?[monthKey];
-    final totalCount =
-        statusData?.values.fold(0, (sum, count) => sum + count) ?? 0;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('$monthKey - ${getStatusText(status)}'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Phase 5: 선택한 상태의 건수
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: getStatusColor(status),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          getStatusText(status),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '$count건',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: getStatusColor(status),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Phase 5: 전체 건수 및 비율
-              if (totalCount > 0) ...[
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '전체 대비:',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      Text(
-                        '${((count / totalCount) * 100).toStringAsFixed(1)}%',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('닫기'),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildPassRate(BuildContext context) {
     // Phase 3: 이번 달 합격률 계산
