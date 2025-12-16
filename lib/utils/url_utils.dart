@@ -40,3 +40,4 @@ Future<void> openUrlOrThrow(String urlString) async {
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
+

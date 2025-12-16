@@ -314,3 +314,4 @@ class ApplicationDetailViewModel extends ChangeNotifier {
   }
 }
 
+

@@ -49,3 +49,4 @@ class SearchQueryChip extends StatelessWidget {
   }
 }
 
+
