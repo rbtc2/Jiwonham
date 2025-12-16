@@ -315,10 +315,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             label: '기간 선택 버튼. 현재 선택된 기간을 변경할 수 있습니다.',
             button: true,
             child: TextButton(
-            onPressed: () {
-              _showPeriodSelectionDialog(context);
-            },
-            child: const Text(AppStrings.periodSelection),
+              onPressed: () {
+                _showPeriodSelectionDialog(context);
+              },
+              child: const Text(AppStrings.periodSelection),
             ),
           ),
         ],
@@ -449,9 +449,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                         const SizedBox(height: 16),
                         Text(
                           '데이터가 없습니다',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -481,11 +480,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               children: [
                 // Phase 8: 원형 차트 (접근성 개선 - 시맨틱 레이블 추가)
                 Semantics(
-                  label: '전체 현황 원형 차트. ${data.map((item) => '${item['label']}: ${item['value']}건').join(', ')}',
+                  label:
+                      '전체 현황 원형 차트. ${data.map((item) => '${item['label']}: ${item['value']}건').join(', ')}',
                   child: SizedBox(
-                  width: 150,
-                  height: 150,
-                  child: CustomPaint(painter: PieChartPainter(data)),
+                    width: 150,
+                    height: 150,
+                    child: CustomPaint(painter: PieChartPainter(data)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -517,9 +517,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                             Semantics(
                               label: '${item['label']}: ${item['value']}건',
                               child: Text(
-                              '${item['value']}',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
+                                '${item['value']}',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -736,12 +736,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             // Phase 1: 헤더와 표시 기간 선택 UI
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              AppStrings.monthlyTrend,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              children: [
+                Text(
+                  AppStrings.monthlyTrend,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 // Phase 1, 2, 3, 4: 표시 기간, 데이터 기준, 차트 타입, 상태별 모드 선택
                 Row(
@@ -758,110 +758,118 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                           _statusDisplayMode == StatusDisplayMode.byStatus
                               ? Icons.layers
                               : Icons.layers_outlined,
-                          color: _statusDisplayMode == StatusDisplayMode.byStatus
+                          color:
+                              _statusDisplayMode == StatusDisplayMode.byStatus
                               ? AppColors.primary
                               : AppColors.textSecondary,
                         ),
-                        tooltip: _statusDisplayMode == StatusDisplayMode.byStatus
+                        tooltip:
+                            _statusDisplayMode == StatusDisplayMode.byStatus
                             ? '전체 보기'
                             : '상태별 보기',
                         onPressed: () {
-                        setState(() {
-                          _statusDisplayMode =
-                              _statusDisplayMode == StatusDisplayMode.byStatus
-                              ? StatusDisplayMode.all
-                              : StatusDisplayMode.byStatus;
-                          // 상태별 모드로 전환 시 모든 상태 선택
-                          if (_statusDisplayMode ==
-                              StatusDisplayMode.byStatus) {
-                            _selectedStatuses = Set.from(
-                              ApplicationStatus.values,
-                            );
-                          }
-                        });
-                      },
+                          setState(() {
+                            _statusDisplayMode =
+                                _statusDisplayMode == StatusDisplayMode.byStatus
+                                ? StatusDisplayMode.all
+                                : StatusDisplayMode.byStatus;
+                            // 상태별 모드로 전환 시 모든 상태 선택
+                            if (_statusDisplayMode ==
+                                StatusDisplayMode.byStatus) {
+                              _selectedStatuses = Set.from(
+                                ApplicationStatus.values,
+                              );
+                            }
+                          });
+                        },
                       ),
                     ),
                     const SizedBox(width: 4),
                     // Phase 3, 8: 차트 타입 선택 버튼 (접근성 개선)
                     Semantics(
-                      label: '차트 타입 선택. 현재: ${_chartType == ChartType.bar ? "바 차트" : _chartType == ChartType.line ? "선 그래프" : "영역 차트"}',
+                      label:
+                          '차트 타입 선택. 현재: ${_chartType == ChartType.bar
+                              ? "바 차트"
+                              : _chartType == ChartType.line
+                              ? "선 그래프"
+                              : "영역 차트"}',
                       button: true,
                       child: PopupMenuButton<ChartType>(
-                      initialValue: _chartType,
-                      onSelected: (value) {
-                        setState(() {
-                          _chartType = value;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                        initialValue: _chartType,
+                        onSelected: (value) {
+                          setState(() {
+                            _chartType = value;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.primary),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _chartType == ChartType.bar
+                                    ? Icons.bar_chart
+                                    : _chartType == ChartType.line
+                                    ? Icons.show_chart
+                                    : Icons.area_chart,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                            ],
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.primary),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _chartType == ChartType.bar
-                                  ? Icons.bar_chart
-                                  : _chartType == ChartType.line
-                                  ? Icons.show_chart
-                                  : Icons.area_chart,
-                              size: 16,
-                              color: AppColors.primary,
+                        itemBuilder: (context) => [
+                          PopupMenuItem<ChartType>(
+                            value: ChartType.bar,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.bar_chart, size: 20),
+                                SizedBox(width: 8),
+                                Text('바 차트'),
+                              ],
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              size: 16,
-                              color: AppColors.primary,
+                          ),
+                          PopupMenuItem<ChartType>(
+                            value: ChartType.line,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.show_chart, size: 20),
+                                SizedBox(width: 8),
+                                Text('선 그래프'),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          PopupMenuItem<ChartType>(
+                            value: ChartType.area,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.area_chart, size: 20),
+                                SizedBox(width: 8),
+                                Text('영역 차트'),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      itemBuilder: (context) => [
-                        PopupMenuItem<ChartType>(
-                          value: ChartType.bar,
-                          child: const Row(
-                            children: [
-                              Icon(Icons.bar_chart, size: 20),
-                              SizedBox(width: 8),
-                              Text('바 차트'),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem<ChartType>(
-                          value: ChartType.line,
-                          child: const Row(
-                            children: [
-                              Icon(Icons.show_chart, size: 20),
-                              SizedBox(width: 8),
-                              Text('선 그래프'),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem<ChartType>(
-                          value: ChartType.area,
-                          child: const Row(
-                            children: [
-                              Icon(Icons.area_chart, size: 20),
-                              SizedBox(width: 8),
-                              Text('영역 차트'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                     ),
                     const SizedBox(width: 8),
                     // Phase 2, 8: 데이터 기준 선택 버튼 (접근성 개선)
                     Semantics(
-                      label: '데이터 기준 선택. 현재: ${_monthlyDataCriteria == MonthlyDataCriteria.createdAt ? "생성일" : "마감일"}',
+                      label:
+                          '데이터 기준 선택. 현재: ${_monthlyDataCriteria == MonthlyDataCriteria.createdAt ? "생성일" : "마감일"}',
                       button: true,
                       child: PopupMenuButton<MonthlyDataCriteria>(
                         initialValue: _monthlyDataCriteria,
@@ -871,71 +879,72 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                           });
                         },
                         child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.primary),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _monthlyDataCriteria ==
+                                        MonthlyDataCriteria.createdAt
+                                    ? Icons.add_circle_outline
+                                    : Icons.event_outlined,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _monthlyDataCriteria ==
+                                        MonthlyDataCriteria.createdAt
+                                    ? '생성일'
+                                    : '마감일',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: AppColors.primary),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                            ],
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.primary),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _monthlyDataCriteria ==
-                                      MonthlyDataCriteria.createdAt
-                                  ? Icons.add_circle_outline
-                                  : Icons.event_outlined,
-                              size: 16,
-                              color: AppColors.primary,
+                        itemBuilder: (context) => [
+                          PopupMenuItem<MonthlyDataCriteria>(
+                            value: MonthlyDataCriteria.createdAt,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.add_circle_outline, size: 20),
+                                SizedBox(width: 8),
+                                Text('생성일 기준'),
+                              ],
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _monthlyDataCriteria ==
-                                      MonthlyDataCriteria.createdAt
-                                  ? '생성일'
-                                  : '마감일',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.primary),
+                          ),
+                          PopupMenuItem<MonthlyDataCriteria>(
+                            value: MonthlyDataCriteria.deadline,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.event_outlined, size: 20),
+                                SizedBox(width: 8),
+                                Text('마감일 기준'),
+                              ],
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              size: 16,
-                              color: AppColors.primary,
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      itemBuilder: (context) => [
-                        PopupMenuItem<MonthlyDataCriteria>(
-                          value: MonthlyDataCriteria.createdAt,
-                          child: const Row(
-                            children: [
-                              Icon(Icons.add_circle_outline, size: 20),
-                              SizedBox(width: 8),
-                              Text('생성일 기준'),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem<MonthlyDataCriteria>(
-                          value: MonthlyDataCriteria.deadline,
-                          child: const Row(
-                            children: [
-                              Icon(Icons.event_outlined, size: 20),
-                              SizedBox(width: 8),
-                              Text('마감일 기준'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                     ),
                     const SizedBox(width: 8),
                     // Phase 1, 8: 표시 기간 선택 드롭다운 (접근성 개선)
                     Semantics(
-                      label: '표시 기간 선택. 현재: ${_getMonthlyDisplayPeriodText(_monthlyDisplayPeriod)}',
+                      label:
+                          '표시 기간 선택. 현재: ${_getMonthlyDisplayPeriodText(_monthlyDisplayPeriod)}',
                       button: true,
                       child: PopupMenuButton<MonthlyDisplayPeriod>(
                         initialValue: _monthlyDisplayPeriod,
@@ -945,56 +954,56 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                           });
                         },
                         child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.primary),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _getMonthlyDisplayPeriodText(
-                                _monthlyDisplayPeriod,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.primary),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _getMonthlyDisplayPeriodText(
+                                  _monthlyDisplayPeriod,
+                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: AppColors.primary),
                               ),
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.primary),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              size: 16,
-                              color: AppColors.primary,
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                            ],
+                          ),
                         ),
+                        itemBuilder: (context) => [
+                          PopupMenuItem<MonthlyDisplayPeriod>(
+                            value: MonthlyDisplayPeriod.last3Months,
+                            child: Text(AppStrings.last3Months),
+                          ),
+                          PopupMenuItem<MonthlyDisplayPeriod>(
+                            value: MonthlyDisplayPeriod.last6Months,
+                            child: Text(AppStrings.last6Months),
+                          ),
+                          PopupMenuItem<MonthlyDisplayPeriod>(
+                            value: MonthlyDisplayPeriod.last12Months,
+                            child: const Text('지난 12개월'),
+                          ),
+                          PopupMenuItem<MonthlyDisplayPeriod>(
+                            value: MonthlyDisplayPeriod.thisYear,
+                            child: Text(AppStrings.thisYear),
+                          ),
+                          PopupMenuItem<MonthlyDisplayPeriod>(
+                            value: MonthlyDisplayPeriod.all,
+                            child: Text(AppStrings.allPeriod),
+                          ),
+                        ],
                       ),
-                      itemBuilder: (context) => [
-                        PopupMenuItem<MonthlyDisplayPeriod>(
-                          value: MonthlyDisplayPeriod.last3Months,
-                          child: Text(AppStrings.last3Months),
-                        ),
-                        PopupMenuItem<MonthlyDisplayPeriod>(
-                          value: MonthlyDisplayPeriod.last6Months,
-                          child: Text(AppStrings.last6Months),
-                        ),
-                        PopupMenuItem<MonthlyDisplayPeriod>(
-                          value: MonthlyDisplayPeriod.last12Months,
-                          child: const Text('지난 12개월'),
-                        ),
-                        PopupMenuItem<MonthlyDisplayPeriod>(
-                          value: MonthlyDisplayPeriod.thisYear,
-                          child: Text(AppStrings.thisYear),
-                        ),
-                        PopupMenuItem<MonthlyDisplayPeriod>(
-                          value: MonthlyDisplayPeriod.all,
-                          child: Text(AppStrings.allPeriod),
-                        ),
-                      ],
-                    ),
                     ),
                   ],
                 ),
@@ -1012,7 +1021,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       // Phase 4, 8: 누적/비교 모드 선택 (접근성 개선)
                       Expanded(
                         child: Semantics(
-                          label: '차트 모드 선택. 현재: ${_chartMode == ChartMode.comparison ? "비교 모드" : "누적 모드"}',
+                          label:
+                              '차트 모드 선택. 현재: ${_chartMode == ChartMode.comparison ? "비교 모드" : "누적 모드"}',
                           child: SegmentedButton<ChartMode>(
                             segments: const [
                               ButtonSegment<ChartMode>(
@@ -1046,35 +1056,36 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                           _selectedStatuses.contains(status);
                       // Phase 8: 접근성 개선 - 상태 필터에 시맨틱 레이블
                       return Semantics(
-                        label: '${_getStatusText(status)} 상태 필터. ${isSelected ? "선택됨" : "선택 안 됨"}',
+                        label:
+                            '${_getStatusText(status)} 상태 필터. ${isSelected ? "선택됨" : "선택 안 됨"}',
                         button: true,
                         child: FilterChip(
                           label: Text(_getStatusText(status)),
                           selected: isSelected,
                           onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedStatuses.add(status);
-                            } else {
-                              _selectedStatuses.remove(status);
-                            }
-                            // 전체 선택 해제 시 전체 표시
-                            if (_selectedStatuses.isEmpty) {
-                              _selectedStatuses = Set.from(
-                                ApplicationStatus.values,
-                              );
-                            }
-                          });
-                        },
-                        selectedColor: _getStatusColor(
-                          status,
-                        ).withValues(alpha: 0.2),
-                        checkmarkColor: _getStatusColor(status),
-                        avatar: CircleAvatar(
-                          backgroundColor: _getStatusColor(status),
-                          radius: 8,
+                            setState(() {
+                              if (selected) {
+                                _selectedStatuses.add(status);
+                              } else {
+                                _selectedStatuses.remove(status);
+                              }
+                              // 전체 선택 해제 시 전체 표시
+                              if (_selectedStatuses.isEmpty) {
+                                _selectedStatuses = Set.from(
+                                  ApplicationStatus.values,
+                                );
+                              }
+                            });
+                          },
+                          selectedColor: _getStatusColor(
+                            status,
+                          ).withValues(alpha: 0.2),
+                          checkmarkColor: _getStatusColor(status),
+                          avatar: CircleAvatar(
+                            backgroundColor: _getStatusColor(status),
+                            radius: 8,
+                          ),
                         ),
-                      ),
                       );
                     }).toList(),
                   ),
@@ -1087,9 +1098,14 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               ),
             // Phase 3, 4, 8: 차트 타입 및 상태별 모드에 따라 다른 차트 표시 (접근성 개선)
             Semantics(
-              label: '월별 지원 추이 ${_chartType == ChartType.bar ? "바 차트" : _chartType == ChartType.line ? "선 그래프" : "영역 차트"}. ${monthlyData.entries.map((e) => '${e.key}: ${e.value}건').join(', ')}',
+              label:
+                  '월별 지원 추이 ${_chartType == ChartType.bar
+                      ? "바 차트"
+                      : _chartType == ChartType.line
+                      ? "선 그래프"
+                      : "영역 차트"}. ${monthlyData.entries.map((e) => '${e.key}: ${e.value}건').join(', ')}',
               child: SizedBox(
-              height: chartHeight,
+                height: chartHeight,
                 child:
                     _statusDisplayMode == StatusDisplayMode.byStatus &&
                         _monthlyDataByStatus != null
@@ -1213,15 +1229,15 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     double maxBarHeight,
   ) {
     return Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: monthlyData.entries.map((entry) {
         final height = maxValue > 0
             ? (entry.value / maxValue) * maxBarHeight
             : 0.0;
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
             // Phase 3: 애니메이션 및 툴팁 추가
             TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 800),
@@ -1237,41 +1253,45 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     child: GestureDetector(
                       onTap: () {
                         // Phase 5: 상세 정보 다이얼로그 표시
-                        _showMonthlyDetailDialog(context, entry.key, entry.value);
+                        _showMonthlyDetailDialog(
+                          context,
+                          entry.key,
+                          entry.value,
+                        );
                       },
                       child: MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: Container(
                           // Phase 8: 터치 영역 최적화 (최소 48x48)
-                        width: 40,
+                          width: 40,
                           height: animatedHeight > 0 ? animatedHeight : 48,
                           constraints: const BoxConstraints(
                             minWidth: 40,
                             minHeight: 48,
                           ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(4),
-                            topRight: Radius.circular(4),
-                          ),
-                        ),
-                        child: animatedHeight > 20
-                            ? Center(
-                          child: Text(
-                            '${entry.value}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
                             ),
                           ),
-                              )
-                            : null,
+                          child: animatedHeight > 20
+                              ? Center(
+                                  child: Text(
+                                    '${entry.value}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
+                      ),
                     ),
                   ),
-                ),
                 );
               },
             ),
@@ -1464,10 +1484,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     ),
                   ),
                 ),
-                  );
-                }).toList(),
-              ),
-            ),
+              );
+            }).toList(),
+          ),
+        ),
         // Phase 5: 영역 차트 포인트 클릭 영역
         ...entries.asMap().entries.map((entry) {
           final index = entry.key;
@@ -1924,7 +1944,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
     // Phase 8: 접근성 개선 - 트렌드 분석에 시맨틱 레이블
     return Semantics(
-      label: '트렌드 분석. ${trends.entries.map((e) => '${_getStatusText(e.key)}: ${e.value['text']}').join(', ')}',
+      label:
+          '트렌드 분석. ${trends.entries.map((e) => '${_getStatusText(e.key)}: ${e.value['text']}').join(', ')}',
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -1944,52 +1965,52 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-          ...trends.entries.map((entry) {
-            final status = entry.key;
-            final trend = entry.value;
+            ...trends.entries.map((entry) {
+              final status = entry.key;
+              final trend = entry.value;
 
-            // Phase 8: 접근성 개선 - 각 트렌드 항목에 시맨틱 레이블
-            return Semantics(
-              label: '${_getStatusText(status)}: ${trend['text']}',
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(status),
-                        shape: BoxShape.circle,
+              // Phase 8: 접근성 개선 - 각 트렌드 항목에 시맨틱 레이블
+              return Semantics(
+                label: '${_getStatusText(status)}: ${trend['text']}',
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(status),
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _getStatusText(status),
-                        style: Theme.of(context).textTheme.bodySmall,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _getStatusText(status),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ),
-                    ),
-                    Icon(
-                      trend['icon'] as IconData,
-                      size: 16,
-                      color: trend['color'] as Color,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      trend['text'] as String,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      Icon(
+                        trend['icon'] as IconData,
+                        size: 16,
                         color: trend['color'] as Color,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        trend['text'] as String,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: trend['color'] as Color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
-        ],
-      ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -2257,28 +2278,28 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     return Semantics(
       label: '$label 합격률: $rate, $count',
       child: Column(
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          rate,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+        children: [
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
-        ),
-        Text(
-          count,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            rate,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          Text(
+            count,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
       ),
     );
   }
@@ -2372,18 +2393,18 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     return Semantics(
       label: '$label: $value',
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-        ],
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
       ),
     );
