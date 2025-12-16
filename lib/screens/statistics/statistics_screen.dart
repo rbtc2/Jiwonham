@@ -1320,16 +1320,16 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       left: 0,
                       right: 0,
                       child: GestureDetector(
-              onTap: () {
-                // Phase 5: 상태별 상세 정보 다이얼로그 표시
-                showStatusMonthlyDetailDialog(
-                  context,
-                  monthKey,
-                  status,
-                  value.toInt(),
-                  _monthlyDataByStatus,
-                );
-              },
+                        onTap: () {
+                          // Phase 5: 상태별 상세 정보 다이얼로그 표시
+                          showStatusMonthlyDetailDialog(
+                            context,
+                            monthKey,
+                            status,
+                            value.toInt(),
+                            _monthlyDataByStatus,
+                          );
+                        },
                         child: MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: TweenAnimationBuilder<double>(
@@ -1385,16 +1385,16 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
                     return Expanded(
                       child: GestureDetector(
-              onTap: () {
-                // Phase 5: 상태별 상세 정보 다이얼로그 표시
-                showStatusMonthlyDetailDialog(
-                  context,
-                  monthKey,
-                  status,
-                  value.toInt(),
-                  _monthlyDataByStatus,
-                );
-              },
+                        onTap: () {
+                          // Phase 5: 상태별 상세 정보 다이얼로그 표시
+                          showStatusMonthlyDetailDialog(
+                            context,
+                            monthKey,
+                            status,
+                            value.toInt(),
+                            _monthlyDataByStatus,
+                          );
+                        },
                         child: MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: TweenAnimationBuilder<double>(
@@ -1694,7 +1694,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       ),
     );
   }
-
 
   Widget _buildPassRate(BuildContext context) {
     // Phase 3: 이번 달 합격률 계산
