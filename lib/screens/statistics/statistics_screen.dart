@@ -25,6 +25,8 @@ import 'painters/stacked_area_chart_painter.dart';
 import 'widgets/overall_statistics_card.dart';
 import 'widgets/pass_rate_card.dart';
 import 'widgets/key_statistics_card.dart';
+// Phase 9-4: 헬퍼 함수 분리
+import 'utils/statistics_helpers.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -68,12 +70,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   bool _isLoading = true;
 
   // Phase 7: 성능 최적화 - 통계 계산 결과 캐싱
-  int? _cachedTotalApplications;
-  int? _cachedNotApplied;
-  int? _cachedInProgress;
-  int? _cachedPassed;
-  int? _cachedRejected;
-  String? _cachedFilterKey; // 필터 변경 감지용 키
+  final StatisticsCache _statisticsCache = StatisticsCache();
 
   @override
   void initState() {
@@ -133,76 +130,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   // Phase 3: 기간 필터링 적용
   void _applyPeriodFilter() {
-    final now = DateTime.now();
-    List<Application> filtered = List.from(_allApplications);
-
-    switch (_selectedPeriod) {
-      case PeriodType.thisMonth:
-        final startOfMonth = DateTime(now.year, now.month, 1);
-        filtered = filtered
-            .where(
-              (app) =>
-                  app.createdAt.isAfter(startOfMonth) ||
-                  app.createdAt.isAtSameMomentAs(startOfMonth),
-            )
-            .toList();
-        break;
-      case PeriodType.last3Months:
-        final threeMonthsAgo = now.subtract(const Duration(days: 90));
-        filtered = filtered
-            .where(
-              (app) =>
-                  app.createdAt.isAfter(threeMonthsAgo) ||
-                  app.createdAt.isAtSameMomentAs(threeMonthsAgo),
-            )
-            .toList();
-        break;
-      case PeriodType.last6Months:
-        final sixMonthsAgo = now.subtract(const Duration(days: 180));
-        filtered = filtered
-            .where(
-              (app) =>
-                  app.createdAt.isAfter(sixMonthsAgo) ||
-                  app.createdAt.isAtSameMomentAs(sixMonthsAgo),
-            )
-            .toList();
-        break;
-      case PeriodType.thisYear:
-        final startOfYear = DateTime(now.year, 1, 1);
-        filtered = filtered
-            .where(
-              (app) =>
-                  app.createdAt.isAfter(startOfYear) ||
-                  app.createdAt.isAtSameMomentAs(startOfYear),
-            )
-            .toList();
-        break;
-      case PeriodType.custom:
-        if (_customStartDate != null && _customEndDate != null) {
-          // 종료일의 끝 시간까지 포함하기 위해 23:59:59로 설정
-          final endDate = DateTime(
-            _customEndDate!.year,
-            _customEndDate!.month,
-            _customEndDate!.day,
-            23,
-            59,
-            59,
-          );
-          filtered = filtered
-              .where(
-                (app) =>
-                    (app.createdAt.isAfter(_customStartDate!) ||
-                        app.createdAt.isAtSameMomentAs(_customStartDate!)) &&
-                    (app.createdAt.isBefore(endDate) ||
-                        app.createdAt.isAtSameMomentAs(endDate)),
-              )
-              .toList();
-        }
-        break;
-      case PeriodType.all:
-        // 전체 기간 - 필터링 없음
-        break;
-    }
+    final filtered = applyPeriodFilter(
+      _allApplications,
+      _selectedPeriod,
+      _customStartDate,
+      _customEndDate,
+    );
 
     setState(() {
       _filteredApplications = filtered;
@@ -214,89 +147,50 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   // Phase 1: 기간 필터에 따라 월별 표시 기간 자동 조정
   void _adjustMonthlyDisplayPeriod() {
-    MonthlyDisplayPeriod? suggestedPeriod;
-
-    switch (_selectedPeriod) {
-      case PeriodType.thisMonth:
-        suggestedPeriod = MonthlyDisplayPeriod.last3Months;
-        break;
-      case PeriodType.last3Months:
-        suggestedPeriod = MonthlyDisplayPeriod.last3Months;
-        break;
-      case PeriodType.last6Months:
-        suggestedPeriod = MonthlyDisplayPeriod.last6Months;
-        break;
-      case PeriodType.thisYear:
-        suggestedPeriod = MonthlyDisplayPeriod.thisYear;
-        break;
-      case PeriodType.all:
-        suggestedPeriod = MonthlyDisplayPeriod.all;
-        break;
-      case PeriodType.custom:
-        // 사용자 지정 기간은 현재 설정 유지
-        break;
-    }
+    final suggestedPeriod = adjustMonthlyDisplayPeriod(_selectedPeriod);
 
     if (suggestedPeriod != null && _monthlyDisplayPeriod != suggestedPeriod) {
       setState(() {
-        _monthlyDisplayPeriod = suggestedPeriod!;
+        _monthlyDisplayPeriod = suggestedPeriod;
       });
     }
   }
 
-  // Phase 7: 필터 키 생성 (캐시 무효화 감지용)
-  String _getFilterKey() {
-    return '${_selectedPeriod}_${_customStartDate?.millisecondsSinceEpoch}_${_customEndDate?.millisecondsSinceEpoch}_${_filteredApplications.length}';
-  }
-
   // Phase 7: 통계 계산 결과 캐싱 및 갱신
   void _updateCachedStatistics() {
-    final currentFilterKey = _getFilterKey();
-    if (_cachedFilterKey == currentFilterKey &&
-        _cachedTotalApplications != null) {
-      return; // 캐시가 유효하면 재계산하지 않음
-    }
-
-    _cachedTotalApplications = _filteredApplications.length;
-    _cachedNotApplied = _filteredApplications
-        .where((app) => app.status == ApplicationStatus.notApplied)
-        .length;
-    _cachedInProgress = _filteredApplications
-        .where((app) => app.status == ApplicationStatus.inProgress)
-        .length;
-    _cachedPassed = _filteredApplications
-        .where((app) => app.status == ApplicationStatus.passed)
-        .length;
-    _cachedRejected = _filteredApplications
-        .where((app) => app.status == ApplicationStatus.rejected)
-        .length;
-    _cachedFilterKey = currentFilterKey;
+    final currentFilterKey = getFilterKey(
+      _selectedPeriod,
+      _customStartDate,
+      _customEndDate,
+      _filteredApplications.length,
+    );
+    _statisticsCache.update(_filteredApplications, currentFilterKey);
   }
 
   // Phase 2, 7: 상태별 통계 계산 (캐싱된 값 사용)
   int get _totalApplications {
     _updateCachedStatistics();
-    return _cachedTotalApplications ?? 0;
+    return _statisticsCache.totalApplications ?? 0;
   }
 
   int get _notApplied {
     _updateCachedStatistics();
-    return _cachedNotApplied ?? 0;
+    return _statisticsCache.notApplied ?? 0;
   }
 
   int get _inProgress {
     _updateCachedStatistics();
-    return _cachedInProgress ?? 0;
+    return _statisticsCache.inProgress ?? 0;
   }
 
   int get _passed {
     _updateCachedStatistics();
-    return _cachedPassed ?? 0;
+    return _statisticsCache.passed ?? 0;
   }
 
   int get _rejected {
     _updateCachedStatistics();
-    return _cachedRejected ?? 0;
+    return _statisticsCache.rejected ?? 0;
   }
 
   @override
@@ -750,7 +644,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     // Phase 1, 8: 표시 기간 선택 드롭다운 (접근성 개선)
                     Semantics(
                       label:
-                          '표시 기간 선택. 현재: ${_getMonthlyDisplayPeriodText(_monthlyDisplayPeriod)}',
+                          '표시 기간 선택. 현재: ${getMonthlyDisplayPeriodText(_monthlyDisplayPeriod)}',
                       button: true,
                       child: PopupMenuButton<MonthlyDisplayPeriod>(
                         initialValue: _monthlyDisplayPeriod,
@@ -772,7 +666,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                _getMonthlyDisplayPeriodText(
+                                getMonthlyDisplayPeriodText(
                                   _monthlyDisplayPeriod,
                                 ),
                                 style: Theme.of(context).textTheme.bodySmall
@@ -863,10 +757,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       // Phase 8: 접근성 개선 - 상태 필터에 시맨틱 레이블
                       return Semantics(
                         label:
-                            '${_getStatusText(status)} 상태 필터. ${isSelected ? "선택됨" : "선택 안 됨"}',
+                            '${getStatusText(status)} 상태 필터. ${isSelected ? "선택됨" : "선택 안 됨"}',
                         button: true,
                         child: FilterChip(
-                          label: Text(_getStatusText(status)),
+                          label: Text(getStatusText(status)),
                           selected: isSelected,
                           onSelected: (selected) {
                             setState(() {
@@ -883,12 +777,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                               }
                             });
                           },
-                          selectedColor: _getStatusColor(
+                          selectedColor: getStatusColor(
                             status,
                           ).withValues(alpha: 0.2),
-                          checkmarkColor: _getStatusColor(status),
+                          checkmarkColor: getStatusColor(status),
                           avatar: CircleAvatar(
-                            backgroundColor: _getStatusColor(status),
+                            backgroundColor: getStatusColor(status),
                             radius: 8,
                           ),
                         ),
@@ -940,52 +834,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   }
 
   // Phase 1: 월별 표시 기간 텍스트 변환
-  String _getMonthlyDisplayPeriodText(MonthlyDisplayPeriod period) {
-    switch (period) {
-      case MonthlyDisplayPeriod.last3Months:
-        return AppStrings.last3Months;
-      case MonthlyDisplayPeriod.last6Months:
-        return AppStrings.last6Months;
-      case MonthlyDisplayPeriod.last12Months:
-        return '지난 12개월';
-      case MonthlyDisplayPeriod.thisYear:
-        return AppStrings.thisYear;
-      case MonthlyDisplayPeriod.all:
-        return AppStrings.allPeriod;
-    }
-  }
-
-  // Phase 4: 상태 텍스트 변환
-  String _getStatusText(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.notApplied:
-        return AppStrings.notApplied;
-      case ApplicationStatus.applied:
-        return '지원완료';
-      case ApplicationStatus.inProgress:
-        return AppStrings.inProgress;
-      case ApplicationStatus.passed:
-        return AppStrings.passed;
-      case ApplicationStatus.rejected:
-        return AppStrings.rejected;
-    }
-  }
-
-  // Phase 4: 상태 색상 가져오기
-  Color _getStatusColor(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.notApplied:
-        return AppColors.textSecondary;
-      case ApplicationStatus.applied:
-        return AppColors.info;
-      case ApplicationStatus.inProgress:
-        return AppColors.warning;
-      case ApplicationStatus.passed:
-        return AppColors.success;
-      case ApplicationStatus.rejected:
-        return AppColors.error;
-    }
-  }
 
   // Phase 3: 차트 타입에 따라 차트 빌드
   Widget _buildChart(
@@ -1467,7 +1315,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                               return Container(
                                 height: animatedHeight,
                                 decoration: BoxDecoration(
-                                  color: _getStatusColor(status),
+                                  color: getStatusColor(status),
                                   borderRadius: index == entries.length - 1
                                       ? const BorderRadius.only(
                                           topLeft: Radius.circular(4),
@@ -1534,7 +1382,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                                   horizontal: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _getStatusColor(status),
+                                  color: getStatusColor(status),
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(2),
                                     topRight: Radius.circular(2),
@@ -1593,7 +1441,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               maxValue: maxValue,
               maxHeight: maxBarHeight,
               entryCount: entries.length,
-              color: _getStatusColor(status),
+              color: getStatusColor(status),
             ),
           );
         }),
@@ -1650,7 +1498,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               maxValue: maxValue,
               maxHeight: maxBarHeight,
               entryCount: entries.length,
-              getStatusColor: _getStatusColor,
+              getStatusColor: getStatusColor,
             ),
           )
         else
@@ -1664,7 +1512,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 maxValue: maxValue,
                 maxHeight: maxBarHeight,
                 entryCount: entries.length,
-                color: _getStatusColor(status),
+                color: getStatusColor(status),
               ),
             );
           }),
@@ -1751,7 +1599,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     // Phase 8: 접근성 개선 - 트렌드 분석에 시맨틱 레이블
     return Semantics(
       label:
-          '트렌드 분석. ${trends.entries.map((e) => '${_getStatusText(e.key)}: ${e.value['text']}').join(', ')}',
+          '트렌드 분석. ${trends.entries.map((e) => '${getStatusText(e.key)}: ${e.value['text']}').join(', ')}',
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -1777,7 +1625,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
               // Phase 8: 접근성 개선 - 각 트렌드 항목에 시맨틱 레이블
               return Semantics(
-                label: '${_getStatusText(status)}: ${trend['text']}',
+                label: '${getStatusText(status)}: ${trend['text']}',
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
@@ -1786,14 +1634,14 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                         width: 12,
                         height: 12,
                         decoration: BoxDecoration(
-                          color: _getStatusColor(status),
+                          color: getStatusColor(status),
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _getStatusText(status),
+                          getStatusText(status),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
@@ -1878,13 +1726,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                               width: 12,
                               height: 12,
                               decoration: BoxDecoration(
-                                color: _getStatusColor(status),
+                                color: getStatusColor(status),
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _getStatusText(status),
+                              getStatusText(status),
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -1927,7 +1775,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('$monthKey - ${_getStatusText(status)}'),
+        title: Text('$monthKey - ${getStatusText(status)}'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1945,13 +1793,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                           width: 16,
                           height: 16,
                           decoration: BoxDecoration(
-                            color: _getStatusColor(status),
+                            color: getStatusColor(status),
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _getStatusText(status),
+                          getStatusText(status),
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ],
@@ -1960,7 +1808,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       '$count건',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: _getStatusColor(status),
+                        color: getStatusColor(status),
                       ),
                     ),
                   ],
