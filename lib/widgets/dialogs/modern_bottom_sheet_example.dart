@@ -7,7 +7,7 @@ import '../../constants/app_strings.dart';
 import 'modern_bottom_sheet.dart';
 
 /// 사용 예시 1: 간단한 텍스트 입력
-class Example1_SimpleTextInput {
+class Example1SimpleTextInput {
   static Future<void> showExample(BuildContext context) {
     final controller = TextEditingController();
     final focusNode = FocusNode();
@@ -48,7 +48,7 @@ class Example1_SimpleTextInput {
 }
 
 /// 사용 예시 2: 커스텀 콘텐츠
-class Example2_CustomContent {
+class Example2CustomContent {
   static Future<void> showExample(BuildContext context) {
     return ModernBottomSheet.showCustom(
       context: context,
@@ -74,7 +74,7 @@ class Example2_CustomContent {
 }
 
 /// 사용 예시 3: 확인 다이얼로그
-class Example3_ConfirmDialog {
+class Example3ConfirmDialog {
   static Future<bool?> showExample(BuildContext context) {
     return ModernBottomSheet.showConfirm(
       context: context,
@@ -89,7 +89,7 @@ class Example3_ConfirmDialog {
 }
 
 /// 사용 예시 4: 직접 위젯 사용
-class Example4_DirectWidget {
+class Example4DirectWidget {
   static Future<void> showExample(BuildContext context) {
     return showModalBottomSheet(
       context: context,

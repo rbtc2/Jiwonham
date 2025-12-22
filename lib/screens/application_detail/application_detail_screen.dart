@@ -240,24 +240,26 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   void _showDeleteConfirmDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text(AppStrings.deleteConfirm),
         content: const Text(AppStrings.deleteConfirmMessage),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
             },
             child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
             onPressed: () {
               // TODO: 삭제 로직
-              Navigator.pop(context);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('공고가 삭제되었습니다.')));
+              Navigator.pop(dialogContext);
+              if (mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('공고가 삭제되었습니다.')));
+                Navigator.pop(context);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text(AppStrings.delete),
