@@ -652,9 +652,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           children: [
             Text(
               AppStrings.interviewPreparation,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             // 면접 질문 준비
@@ -681,9 +681,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           children: [
             Text(
               AppStrings.interviewQuestionsPrep,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
               onPressed: () {
@@ -704,7 +704,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -749,9 +753,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               Expanded(
                 child: Text(
                   question.question,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
               Row(
@@ -760,7 +764,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                   IconButton(
                     icon: const Icon(Icons.edit, size: 18),
                     onPressed: () {
-                      _showEditInterviewQuestionDialog(context, question, index);
+                      _showEditInterviewQuestionDialog(
+                        context,
+                        question,
+                        index,
+                      );
                     },
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -803,9 +811,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                     const SizedBox(width: 8),
                     Text(
                       AppStrings.editInterviewAnswer,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.primary,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: AppColors.primary),
                     ),
                   ],
                 ),
@@ -835,9 +843,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           children: [
             Text(
               AppStrings.interviewChecklist,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
               onPressed: () {
@@ -858,7 +866,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -937,9 +949,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           children: [
             Text(
               AppStrings.interviewSchedule,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             TextButton(
               onPressed: () {
@@ -963,7 +975,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -989,7 +1005,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 if (_application.interviewSchedule?.date != null) ...[
                   Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         _formatDate(_application.interviewSchedule!.date!),
@@ -1003,7 +1023,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                     _application.interviewSchedule!.location!.isNotEmpty) ...[
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
+                      Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -1722,37 +1746,173 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   // 면접 질문 추가 다이얼로그
   void _showAddInterviewQuestionDialog(BuildContext context) {
     final questionController = TextEditingController();
-    showDialog(
+    final focusNode = FocusNode();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.addInterviewPrepQuestion),
-        content: TextField(
-          controller: questionController,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: '예상 면접 질문을 입력하세요',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 드래그 핸들
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // 제목
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.help_outline,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        AppStrings.addInterviewPrepQuestion,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // 입력 필드
+                TextField(
+                  controller: questionController,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  maxLines: null,
+                  minLines: 6,
+                  textInputAction: TextInputAction.newline,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  decoration: InputDecoration(
+                    hintText:
+                        '예상 면접 질문을 입력하세요\n\n예: "자기소개를 해주세요"\n예: "이 회사를 지원한 이유는 무엇인가요?"',
+                    hintStyle: TextStyle(
+                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                      height: 1.5,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // 버튼
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.cancel,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (questionController.text.trim().isNotEmpty) {
+                            _addInterviewQuestion(
+                              questionController.text.trim(),
+                            );
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          AppStrings.save,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
+                ),
+              ],
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (questionController.text.trim().isNotEmpty) {
-                _addInterviewQuestion(questionController.text.trim());
-                Navigator.pop(context);
-              }
-            },
-            child: const Text(AppStrings.save),
-          ),
-        ],
       ),
-    );
+    ).then((_) {
+      focusNode.dispose();
+    });
   }
 
   // 면접 질문 수정 다이얼로그
@@ -1762,37 +1922,174 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     int index,
   ) {
     final questionController = TextEditingController(text: question.question);
-    showDialog(
+    final focusNode = FocusNode();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.editInterviewPrepQuestion),
-        content: TextField(
-          controller: questionController,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: '예상 면접 질문을 입력하세요',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 드래그 핸들
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // 제목
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        AppStrings.editInterviewPrepQuestion,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // 입력 필드
+                TextField(
+                  controller: questionController,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  maxLines: null,
+                  minLines: 6,
+                  textInputAction: TextInputAction.newline,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  decoration: InputDecoration(
+                    hintText:
+                        '예상 면접 질문을 입력하세요\n\n예: "자기소개를 해주세요"\n예: "이 회사를 지원한 이유는 무엇인가요?"',
+                    hintStyle: TextStyle(
+                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                      height: 1.5,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // 버튼
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.cancel,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (questionController.text.trim().isNotEmpty) {
+                            _updateInterviewQuestion(
+                              index,
+                              questionController.text.trim(),
+                            );
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          AppStrings.save,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
+                ),
+              ],
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (questionController.text.trim().isNotEmpty) {
-                _updateInterviewQuestion(index, questionController.text.trim());
-                Navigator.pop(context);
-              }
-            },
-            child: const Text(AppStrings.save),
-          ),
-        ],
       ),
-    );
+    ).then((_) {
+      focusNode.dispose();
+    });
   }
 
   // 면접 답변 작성/수정 다이얼로그
@@ -1802,73 +2099,343 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     int index,
   ) {
     final answerController = TextEditingController(text: question.answer ?? '');
-    showDialog(
+    final focusNode = FocusNode();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(question.question),
-        content: SingleChildScrollView(
-          child: TextField(
-            controller: answerController,
-            maxLines: 10,
-            decoration: InputDecoration(
-              hintText: '답변을 입력하세요',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 드래그 핸들
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // 제목
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.edit_note,
+                        color: AppColors.success,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        question.question,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // 입력 필드
+                TextField(
+                  controller: answerController,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  maxLines: null,
+                  minLines: 10,
+                  textInputAction: TextInputAction.newline,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  decoration: InputDecoration(
+                    hintText: '답변을 입력하세요\n\n면접에서 말할 답변을 미리 작성해보세요.',
+                    hintStyle: TextStyle(
+                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                      height: 1.5,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // 버튼
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.cancel,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _updateInterviewAnswer(
+                            index,
+                            answerController.text.trim(),
+                          );
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          AppStrings.save,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
+                ),
+              ],
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _updateInterviewAnswer(index, answerController.text.trim());
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.save),
-          ),
-        ],
       ),
-    );
+    ).then((_) {
+      focusNode.dispose();
+    });
   }
 
   // 체크리스트 항목 추가 다이얼로그
   void _showAddChecklistItemDialog(BuildContext context) {
     final itemController = TextEditingController();
-    showDialog(
+    final focusNode = FocusNode();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.addChecklistItem),
-        content: TextField(
-          controller: itemController,
-          maxLines: 2,
-          decoration: InputDecoration(
-            hintText: '체크리스트 항목을 입력하세요',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 드래그 핸들
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // 제목
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.checklist,
+                        color: AppColors.success,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        AppStrings.addChecklistItem,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // 입력 필드
+                TextField(
+                  controller: itemController,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  maxLines: null,
+                  minLines: 4,
+                  textInputAction: TextInputAction.newline,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  decoration: InputDecoration(
+                    hintText:
+                        '체크리스트 항목을 입력하세요\n\n예: "이력서 3부 준비"\n예: "포트폴리오 출력"',
+                    hintStyle: TextStyle(
+                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                      height: 1.5,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // 버튼
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.cancel,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (itemController.text.trim().isNotEmpty) {
+                            _addChecklistItem(itemController.text.trim());
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          AppStrings.save,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
+                ),
+              ],
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (itemController.text.trim().isNotEmpty) {
-                _addChecklistItem(itemController.text.trim());
-                Navigator.pop(context);
-              }
-            },
-            child: const Text(AppStrings.save),
-          ),
-        ],
       ),
-    );
+    ).then((_) {
+      focusNode.dispose();
+    });
   }
 
   // 체크리스트 항목 수정 다이얼로그
@@ -1878,37 +2445,174 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     int index,
   ) {
     final itemController = TextEditingController(text: item.item);
-    showDialog(
+    final focusNode = FocusNode();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.editChecklistItem),
-        content: TextField(
-          controller: itemController,
-          maxLines: 2,
-          decoration: InputDecoration(
-            hintText: '체크리스트 항목을 입력하세요',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 드래그 핸들
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // 제목
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        color: AppColors.success,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        AppStrings.editChecklistItem,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // 입력 필드
+                TextField(
+                  controller: itemController,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  maxLines: null,
+                  minLines: 4,
+                  textInputAction: TextInputAction.newline,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  decoration: InputDecoration(
+                    hintText:
+                        '체크리스트 항목을 입력하세요\n\n예: "이력서 3부 준비"\n예: "포트폴리오 출력"',
+                    hintStyle: TextStyle(
+                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                      height: 1.5,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // 버튼
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.cancel,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (itemController.text.trim().isNotEmpty) {
+                            _updateChecklistItem(
+                              index,
+                              itemController.text.trim(),
+                            );
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          AppStrings.save,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
+                ),
+              ],
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (itemController.text.trim().isNotEmpty) {
-                _updateChecklistItem(index, itemController.text.trim());
-                Navigator.pop(context);
-              }
-            },
-            child: const Text(AppStrings.save),
-          ),
-        ],
       ),
-    );
+    ).then((_) {
+      focusNode.dispose();
+    });
   }
 
   // 면접 일정 설정 다이얼로그
@@ -1945,7 +2649,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: _application.interviewSchedule?.date ?? DateTime.now(),
+                    initialDate:
+                        _application.interviewSchedule?.date ?? DateTime.now(),
                     firstDate: DateTime.now(),
                     lastDate: DateTime.now().add(const Duration(days: 365)),
                     locale: const Locale('ko', 'KR'),
@@ -2018,38 +2723,38 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
       question: question,
     );
     final updatedQuestions = [..._application.interviewQuestions, newQuestion];
-    await _updateApplication(
-      interviewQuestions: updatedQuestions,
-    );
+    await _updateApplication(interviewQuestions: updatedQuestions);
   }
 
   // 면접 질문 수정
   Future<void> _updateInterviewQuestion(int index, String question) async {
-    final updatedQuestions = List<InterviewQuestion>.from(_application.interviewQuestions);
-    updatedQuestions[index] = updatedQuestions[index].copyWith(question: question);
-    await _updateApplication(
-      interviewQuestions: updatedQuestions,
+    final updatedQuestions = List<InterviewQuestion>.from(
+      _application.interviewQuestions,
     );
+    updatedQuestions[index] = updatedQuestions[index].copyWith(
+      question: question,
+    );
+    await _updateApplication(interviewQuestions: updatedQuestions);
   }
 
   // 면접 질문 삭제
   Future<void> _deleteInterviewQuestion(int index) async {
-    final updatedQuestions = List<InterviewQuestion>.from(_application.interviewQuestions);
-    updatedQuestions.removeAt(index);
-    await _updateApplication(
-      interviewQuestions: updatedQuestions,
+    final updatedQuestions = List<InterviewQuestion>.from(
+      _application.interviewQuestions,
     );
+    updatedQuestions.removeAt(index);
+    await _updateApplication(interviewQuestions: updatedQuestions);
   }
 
   // 면접 답변 업데이트
   Future<void> _updateInterviewAnswer(int index, String answer) async {
-    final updatedQuestions = List<InterviewQuestion>.from(_application.interviewQuestions);
+    final updatedQuestions = List<InterviewQuestion>.from(
+      _application.interviewQuestions,
+    );
     updatedQuestions[index] = updatedQuestions[index].copyWith(
       answer: answer.isEmpty ? null : answer,
     );
-    await _updateApplication(
-      interviewQuestions: updatedQuestions,
-    );
+    await _updateApplication(interviewQuestions: updatedQuestions);
   }
 
   // 체크리스트 항목 추가
@@ -2059,36 +2764,36 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
       item: item,
     );
     final updatedChecklist = [..._application.interviewChecklist, newItem];
-    await _updateApplication(
-      interviewChecklist: updatedChecklist,
-    );
+    await _updateApplication(interviewChecklist: updatedChecklist);
   }
 
   // 체크리스트 항목 수정
   Future<void> _updateChecklistItem(int index, String item) async {
-    final updatedChecklist = List<InterviewChecklist>.from(_application.interviewChecklist);
-    updatedChecklist[index] = updatedChecklist[index].copyWith(item: item);
-    await _updateApplication(
-      interviewChecklist: updatedChecklist,
+    final updatedChecklist = List<InterviewChecklist>.from(
+      _application.interviewChecklist,
     );
+    updatedChecklist[index] = updatedChecklist[index].copyWith(item: item);
+    await _updateApplication(interviewChecklist: updatedChecklist);
   }
 
   // 체크리스트 항목 삭제
   Future<void> _deleteChecklistItem(int index) async {
-    final updatedChecklist = List<InterviewChecklist>.from(_application.interviewChecklist);
-    updatedChecklist.removeAt(index);
-    await _updateApplication(
-      interviewChecklist: updatedChecklist,
+    final updatedChecklist = List<InterviewChecklist>.from(
+      _application.interviewChecklist,
     );
+    updatedChecklist.removeAt(index);
+    await _updateApplication(interviewChecklist: updatedChecklist);
   }
 
   // 체크리스트 항목 토글
   Future<void> _toggleChecklistItem(int index, bool isChecked) async {
-    final updatedChecklist = List<InterviewChecklist>.from(_application.interviewChecklist);
-    updatedChecklist[index] = updatedChecklist[index].copyWith(isChecked: isChecked);
-    await _updateApplication(
-      interviewChecklist: updatedChecklist,
+    final updatedChecklist = List<InterviewChecklist>.from(
+      _application.interviewChecklist,
     );
+    updatedChecklist[index] = updatedChecklist[index].copyWith(
+      isChecked: isChecked,
+    );
+    await _updateApplication(interviewChecklist: updatedChecklist);
   }
 
   // 면접 일정 업데이트
@@ -2096,13 +2801,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     DateTime? date,
     String? location,
   }) async {
-    final schedule = InterviewSchedule(
-      date: date,
-      location: location,
-    );
-    await _updateApplication(
-      interviewSchedule: schedule,
-    );
+    final schedule = InterviewSchedule(date: date, location: location);
+    await _updateApplication(interviewSchedule: schedule);
   }
 
   // Application 업데이트 헬퍼
@@ -2170,7 +2870,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
       if (result != null && mounted) {
         // 알림 설정 업데이트
         final updatedSettings = _application.notificationSettings.copyWith(
-          deadlineNotification: (result as NotificationSettings).deadlineNotification,
+          deadlineNotification:
+              (result as NotificationSettings).deadlineNotification,
           deadlineTiming: result.deadlineTiming,
           customHoursBefore: result.customHoursBefore,
         );
@@ -2182,7 +2883,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
 
         try {
           final storageService = StorageService();
-          final success = await storageService.saveApplication(updatedApplication);
+          final success = await storageService.saveApplication(
+            updatedApplication,
+          );
 
           if (!mounted) return;
 
@@ -2192,7 +2895,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               _application = updatedApplication;
             });
             _hasChanges = true;
-            
+
             if (!mounted) return;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
