@@ -376,3 +376,4 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
 
 
 
+

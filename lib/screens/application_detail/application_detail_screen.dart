@@ -2,6 +2,7 @@
 // 선택한 공고의 모든 정보를 보여주는 화면
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
@@ -12,11 +13,10 @@ import '../../models/application_status.dart';
 import '../../models/interview_review.dart';
 import '../../models/interview_question.dart';
 import '../../models/interview_checklist.dart';
-import '../../models/interview_schedule.dart';
 import '../../models/notification_settings.dart';
-import '../../services/storage_service.dart';
 import '../../widgets/dialogs/notification_settings_dialog.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
+import 'application_detail_view_model.dart';
 
 class ApplicationDetailScreen extends StatefulWidget {
   final Application application;
@@ -30,17 +30,12 @@ class ApplicationDetailScreen extends StatefulWidget {
 
 class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     with SingleTickerProviderStateMixin {
-  // Phase 1: 실제 Application 데이터 사용
-  late Application _application;
-  // 상태 변경 추적 플래그
-  bool _hasChanges = false;
   // 탭 컨트롤러
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _application = widget.application;
     _tabController = TabController(length: 3, vsync: this);
   }
 
@@ -48,26 +43,6 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  // Phase 1: Application 데이터 다시 로드
-  Future<void> _loadApplication() async {
-    try {
-      final storageService = StorageService();
-      final applications = await storageService.getAllApplications();
-      final updatedApplication = applications.firstWhere(
-        (app) => app.id == _application.id,
-        orElse: () => _application,
-      );
-
-      if (mounted) {
-        setState(() {
-          _application = updatedApplication;
-        });
-      }
-    } catch (e) {
-      // 에러 발생 시 기존 데이터 유지
-    }
   }
 
   // Phase 1: 지원서 링크 열기
@@ -90,145 +65,88 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     }
   }
 
-  // Phase 2: 상태 변경 메서드
-  Future<void> _updateApplicationStatus(ApplicationStatus newStatus) async {
-    // 상태 변경 전에 로딩 표시 (선택사항)
-    final updatedApplication = _application.copyWith(
-      status: newStatus,
-      updatedAt: DateTime.now(),
-    );
-
-    try {
-      final storageService = StorageService();
-      final success = await storageService.saveApplication(updatedApplication);
-
-      if (success && mounted) {
-        setState(() {
-          _application = updatedApplication;
-        });
-
-        // 성공 메시지 표시
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('상태가 "${_getStatusText(newStatus)}"로 변경되었습니다.'),
-            backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // 상태 변경 플래그 설정 (뒤로 가기 시 반영)
-        _hasChanges = true;
-      } else if (mounted) {
-        // 실패 메시지 표시
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('상태 변경에 실패했습니다.'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  // Phase 2: 상태 텍스트 가져오기
-  String _getStatusText(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.notApplied:
-        return AppStrings.notAppliedStatus;
-      case ApplicationStatus.applied:
-        return AppStrings.appliedStatus;
-      case ApplicationStatus.inProgress:
-        return AppStrings.inProgressStatus;
-      case ApplicationStatus.passed:
-        return AppStrings.passedStatus;
-      case ApplicationStatus.rejected:
-        return AppStrings.rejectedStatus;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_hasChanges,
-      onPopInvokedWithResult: (didPop, result) {
-        // 뒤로 가기 시 변경사항이 있으면 true 반환하여 이전 화면이 새로고침되도록 함
-        if (!didPop && _hasChanges) {
-          Navigator.of(context).pop(true);
-        }
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        appBar: AppBar(
-          title: const Text(AppStrings.applicationDetail),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () {
-                // Phase 1: 실제 Application 사용
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        AddEditApplicationScreen(application: _application),
+    return ChangeNotifierProvider(
+      create: (_) =>
+          ApplicationDetailViewModel(application: widget.application),
+      child: Consumer<ApplicationDetailViewModel>(
+        builder: (context, viewModel, _) {
+          return PopScope(
+            canPop: !viewModel.hasChanges,
+            onPopInvokedWithResult: (didPop, result) {
+              // 뒤로 가기 시 변경사항이 있으면 true 반환하여 이전 화면이 새로고침되도록 함
+              if (!didPop && viewModel.hasChanges) {
+                Navigator.of(context).pop(true);
+              }
+            },
+            child: Scaffold(
+              resizeToAvoidBottomInset: true,
+              appBar: AppBar(
+                title: const Text(AppStrings.applicationDetail),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddEditApplicationScreen(
+                            application: viewModel.application,
+                          ),
+                        ),
+                      ).then((result) {
+                        // 수정 완료 후 화면 새로고침
+                        if (result == true && mounted) {
+                          viewModel.loadApplication();
+                        }
+                      });
+                    },
+                    tooltip: AppStrings.edit,
                   ),
-                ).then((result) {
-                  // Phase 4: 수정 완료 후 화면 새로고침
-                  if (result == true && mounted) {
-                    // Application 데이터 다시 로드
-                    _loadApplication();
-                  }
-                });
-              },
-              tooltip: AppStrings.edit,
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () {
+                      _showDeleteConfirmDialog(context);
+                    },
+                    tooltip: AppStrings.delete,
+                  ),
+                ],
+                bottom: TabBar(
+                  controller: _tabController,
+                  tabs: const [
+                    Tab(text: '정보'),
+                    Tab(text: '서류 단계'),
+                    Tab(text: '면접 단계'),
+                  ],
+                  labelColor: AppColors.primary,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  indicatorColor: AppColors.primary,
+                ),
+              ),
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  // 정보 탭: 기본 정보, 지원 정보, 메모, 상태 변경
+                  _buildInfoTab(context, viewModel),
+                  // 자기소개서 탭
+                  _buildCoverLetterTab(context, viewModel),
+                  // 면접 후기 탭
+                  _buildInterviewReviewTab(context, viewModel),
+                ],
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () {
-                _showDeleteConfirmDialog(context);
-              },
-              tooltip: AppStrings.delete,
-            ),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(text: '정보'),
-              Tab(text: '서류 단계'),
-              Tab(text: '면접 단계'),
-            ],
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
-          ),
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            // 정보 탭: 기본 정보, 지원 정보, 메모, 상태 변경
-            _buildInfoTab(context),
-            // 자기소개서 탭
-            _buildCoverLetterTab(context),
-            // 면접 후기 탭
-            _buildInterviewReviewTab(context),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   // 정보 탭 빌드
-  Widget _buildInfoTab(BuildContext context) {
+  Widget _buildInfoTab(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
@@ -237,19 +155,19 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 기본 정보 카드
-          _buildBasicInfoCard(context),
+          _buildBasicInfoCard(context, viewModel),
           const SizedBox(height: 16),
 
           // 지원 정보 섹션
-          _buildApplicationInfoSection(context),
+          _buildApplicationInfoSection(context, viewModel),
           const SizedBox(height: 16),
 
           // 메모 섹션
-          _buildMemoSection(context),
+          _buildMemoSection(context, viewModel),
           const SizedBox(height: 16),
 
           // 상태 변경 섹션
-          _buildStatusSection(context),
+          _buildStatusSection(context, viewModel),
           // 하단 패딩 추가 (스크롤이 끝까지 내려가도록)
           const SizedBox(height: 100),
         ],
@@ -258,7 +176,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 자기소개서 탭 빌드
-  Widget _buildCoverLetterTab(BuildContext context) {
+  Widget _buildCoverLetterTab(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
@@ -267,7 +188,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 자기소개서 문항 섹션
-          _buildCoverLetterSection(context),
+          _buildCoverLetterSection(context, viewModel),
           // 하단 패딩 추가
           const SizedBox(height: 100),
         ],
@@ -276,7 +197,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 면접 후기 탭 빌드
-  Widget _buildInterviewReviewTab(BuildContext context) {
+  Widget _buildInterviewReviewTab(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
@@ -285,10 +209,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 면접 준비 섹션
-          _buildInterviewPreparationSection(context),
+          _buildInterviewPreparationSection(context, viewModel),
           const SizedBox(height: 16),
           // 면접 후기 섹션
-          _buildInterviewReviewSection(context),
+          _buildInterviewReviewSection(context, viewModel),
           // 하단 패딩 추가
           const SizedBox(height: 100),
         ],
@@ -296,7 +220,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     );
   }
 
-  Widget _buildBasicInfoCard(BuildContext context) {
+  Widget _buildBasicInfoCard(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -310,21 +237,21 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _application.companyName,
+                        viewModel.application.companyName,
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
-                      if (_application.position != null &&
-                          _application.position!.isNotEmpty)
+                      if (viewModel.application.position != null &&
+                          viewModel.application.position!.isNotEmpty)
                         Text(
-                          _application.position!,
+                          viewModel.application.position!,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                     ],
                   ),
                 ),
-                DDayBadge(deadline: _application.deadline),
+                DDayBadge(deadline: viewModel.application.deadline),
               ],
             ),
             const SizedBox(height: 16),
@@ -332,10 +259,12 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _application.applicationLink != null
+                    onPressed: viewModel.application.applicationLink != null
                         ? () {
-                            // Phase 1: 지원서 링크 열기
-                            _openApplicationLink(_application.applicationLink!);
+                            // 지원서 링크 열기
+                            _openApplicationLink(
+                              viewModel.application.applicationLink!,
+                            );
                           }
                         : null,
                     icon: const Icon(Icons.link),
@@ -348,7 +277,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: () {
-                    _showNotificationSettingsDialog(context);
+                    _showNotificationSettingsDialog(context, viewModel);
                   },
                   icon: const Icon(Icons.notifications_outlined),
                   tooltip: AppStrings.notificationSettings,
@@ -361,7 +290,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     );
   }
 
-  Widget _buildApplicationInfoSection(BuildContext context) {
+  Widget _buildApplicationInfoSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -379,22 +311,22 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               context,
               Icons.calendar_today,
               '서류 마감일',
-              _formatDate(_application.deadline),
-              'D-${_application.daysUntilDeadline}',
+              _formatDate(viewModel.application.deadline),
+              'D-${viewModel.application.daysUntilDeadline}',
             ),
-            if (_application.announcementDate != null) ...[
+            if (viewModel.application.announcementDate != null) ...[
               const Divider(height: 24),
               _buildInfoRow(
                 context,
                 Icons.campaign,
                 '서류 발표일',
-                _formatDate(_application.announcementDate!),
+                _formatDate(viewModel.application.announcementDate!),
                 null,
               ),
             ],
-            if (_application.nextStages.isNotEmpty) ...[
+            if (viewModel.application.nextStages.isNotEmpty) ...[
               const Divider(height: 24),
-              ..._application.nextStages.map((stage) {
+              ...viewModel.application.nextStages.map((stage) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: _buildInfoRow(
@@ -475,7 +407,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     );
   }
 
-  Widget _buildCoverLetterSection(BuildContext context) {
+  Widget _buildCoverLetterSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -509,7 +444,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               ],
             ),
             const SizedBox(height: 16),
-            if (_application.coverLetterQuestions.isEmpty)
+            if (viewModel.application.coverLetterQuestions.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
@@ -535,27 +470,31 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 ),
               )
             else
-              ...List.generate(_application.coverLetterQuestions.length, (
-                index,
-              ) {
-                final question = _application.coverLetterQuestions[index];
-                final hasAnswer = question.hasAnswer;
-                return Column(
-                  children: [
-                    _buildQuestionItem(
-                      context,
-                      question.question,
-                      question.answer ?? '',
-                      question.maxLength,
-                      question.answerLength,
-                      hasAnswer,
-                      index,
-                    ),
-                    if (index < _application.coverLetterQuestions.length - 1)
-                      const Divider(height: 16),
-                  ],
-                );
-              }),
+              ...List.generate(
+                viewModel.application.coverLetterQuestions.length,
+                (index) {
+                  final question =
+                      viewModel.application.coverLetterQuestions[index];
+                  final hasAnswer = question.hasAnswer;
+                  return Column(
+                    children: [
+                      _buildQuestionItem(
+                        context,
+                        question.question,
+                        question.answer ?? '',
+                        question.maxLength,
+                        question.answerLength,
+                        hasAnswer,
+                        index,
+                        viewModel,
+                      ),
+                      if (index <
+                          viewModel.application.coverLetterQuestions.length - 1)
+                        const Divider(height: 16),
+                    ],
+                  );
+                },
+              ),
           ],
         ),
       ),
@@ -570,10 +509,18 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     int currentLength,
     bool hasAnswer,
     int index,
+    ApplicationDetailViewModel viewModel,
   ) {
     return InkWell(
       onTap: () {
-        _showCoverLetterDialog(context, question, answer, maxLength, index);
+        _showCoverLetterDialog(
+          context,
+          question,
+          answer,
+          maxLength,
+          index,
+          viewModel,
+        );
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -599,6 +546,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                       answer,
                       maxLength,
                       index,
+                      viewModel,
                     );
                   },
                   child: Text(
@@ -643,7 +591,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 면접 준비 섹션 빌드
-  Widget _buildInterviewPreparationSection(BuildContext context) {
+  Widget _buildInterviewPreparationSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -658,13 +609,13 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
             const SizedBox(height: 16),
             // 면접 질문 준비
-            _buildInterviewQuestionsSection(context),
+            _buildInterviewQuestionsSection(context, viewModel),
             const SizedBox(height: 16),
             // 체크리스트
-            _buildInterviewChecklistSection(context),
+            _buildInterviewChecklistSection(context, viewModel),
             const SizedBox(height: 16),
             // 면접 일정 정보
-            _buildInterviewScheduleSection(context),
+            _buildInterviewScheduleSection(context, viewModel),
           ],
         ),
       ),
@@ -672,7 +623,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 면접 질문 준비 섹션
-  Widget _buildInterviewQuestionsSection(BuildContext context) {
+  Widget _buildInterviewQuestionsSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -687,7 +641,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
             TextButton.icon(
               onPressed: () {
-                _showAddInterviewQuestionDialog(context);
+                _showAddInterviewQuestionDialog(context, viewModel);
               },
               icon: const Icon(Icons.add, size: 18),
               label: Text(AppStrings.addInterviewPrepQuestion),
@@ -695,7 +649,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           ],
         ),
         const SizedBox(height: 8),
-        if (_application.interviewQuestions.isEmpty)
+        if (viewModel.application.interviewQuestions.isEmpty)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -722,9 +676,16 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
           )
         else
-          ...List.generate(_application.interviewQuestions.length, (index) {
-            final question = _application.interviewQuestions[index];
-            return _buildInterviewQuestionItem(context, question, index);
+          ...List.generate(viewModel.application.interviewQuestions.length, (
+            index,
+          ) {
+            final question = viewModel.application.interviewQuestions[index];
+            return _buildInterviewQuestionItem(
+              context,
+              question,
+              index,
+              viewModel,
+            );
           }),
       ],
     );
@@ -735,6 +696,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     BuildContext context,
     InterviewQuestion question,
     int index,
+    ApplicationDetailViewModel viewModel,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -768,6 +730,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                         context,
                         question,
                         index,
+                        viewModel,
                       );
                     },
                     padding: EdgeInsets.zero,
@@ -775,8 +738,29 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 18),
-                    onPressed: () {
-                      _deleteInterviewQuestion(index);
+                    onPressed: () async {
+                      final success = await viewModel.deleteInterviewQuestion(
+                        index,
+                      );
+                      if (success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('면접 질문이 삭제되었습니다.'),
+                            backgroundColor: AppColors.success,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      } else if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              viewModel.errorMessage ?? '삭제에 실패했습니다.',
+                            ),
+                            backgroundColor: AppColors.error,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
                     },
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -790,7 +774,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             const SizedBox(height: 8),
             InkWell(
               onTap: () {
-                _showInterviewAnswerDialog(context, question, index);
+                _showInterviewAnswerDialog(context, question, index, viewModel);
               },
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -823,7 +807,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             const SizedBox(height: 4),
             TextButton(
               onPressed: () {
-                _showInterviewAnswerDialog(context, question, index);
+                _showInterviewAnswerDialog(context, question, index, viewModel);
               },
               child: Text(AppStrings.writeInterviewAnswer),
             ),
@@ -834,7 +818,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 체크리스트 섹션
-  Widget _buildInterviewChecklistSection(BuildContext context) {
+  Widget _buildInterviewChecklistSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -849,7 +836,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
             TextButton.icon(
               onPressed: () {
-                _showAddChecklistItemDialog(context);
+                _showAddChecklistItemDialog(context, viewModel);
               },
               icon: const Icon(Icons.add, size: 18),
               label: Text(AppStrings.addChecklistItem),
@@ -857,7 +844,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           ],
         ),
         const SizedBox(height: 8),
-        if (_application.interviewChecklist.isEmpty)
+        if (viewModel.application.interviewChecklist.isEmpty)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -884,9 +871,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
           )
         else
-          ...List.generate(_application.interviewChecklist.length, (index) {
-            final item = _application.interviewChecklist[index];
-            return _buildChecklistItem(context, item, index);
+          ...List.generate(viewModel.application.interviewChecklist.length, (
+            index,
+          ) {
+            final item = viewModel.application.interviewChecklist[index];
+            return _buildChecklistItem(context, item, index, viewModel);
           }),
       ],
     );
@@ -897,6 +886,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     BuildContext context,
     InterviewChecklist item,
     int index,
+    ApplicationDetailViewModel viewModel,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -904,8 +894,20 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
         children: [
           Checkbox(
             value: item.isChecked,
-            onChanged: (value) {
-              _toggleChecklistItem(index, value ?? false);
+            onChanged: (value) async {
+              final success = await viewModel.toggleChecklistItem(
+                index,
+                value ?? false,
+              );
+              if (!success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(viewModel.errorMessage ?? '업데이트에 실패했습니다.'),
+                    backgroundColor: AppColors.error,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
             },
           ),
           Expanded(
@@ -920,15 +922,32 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           IconButton(
             icon: const Icon(Icons.edit, size: 18),
             onPressed: () {
-              _showEditChecklistItemDialog(context, item, index);
+              _showEditChecklistItemDialog(context, item, index, viewModel);
             },
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 18),
-            onPressed: () {
-              _deleteChecklistItem(index);
+            onPressed: () async {
+              final success = await viewModel.deleteChecklistItem(index);
+              if (success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('체크리스트 항목이 삭제되었습니다.'),
+                    backgroundColor: AppColors.success,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(viewModel.errorMessage ?? '삭제에 실패했습니다.'),
+                    backgroundColor: AppColors.error,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
             },
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -940,7 +959,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 면접 일정 정보 섹션
-  Widget _buildInterviewScheduleSection(BuildContext context) {
+  Widget _buildInterviewScheduleSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -955,10 +977,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
             TextButton(
               onPressed: () {
-                _showInterviewScheduleDialog(context);
+                _showInterviewScheduleDialog(context, viewModel);
               },
               child: Text(
-                _application.interviewSchedule?.hasSchedule == true
+                viewModel.application.interviewSchedule?.hasSchedule == true
                     ? '수정'
                     : '설정',
               ),
@@ -966,7 +988,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           ],
         ),
         const SizedBox(height: 8),
-        if (_application.interviewSchedule?.hasSchedule != true)
+        if (viewModel.application.interviewSchedule?.hasSchedule != true)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1002,7 +1024,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_application.interviewSchedule?.date != null) ...[
+                if (viewModel.application.interviewSchedule?.date != null) ...[
                   Row(
                     children: [
                       Icon(
@@ -1012,15 +1034,21 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _formatDate(_application.interviewSchedule!.date!),
+                        _formatDate(
+                          viewModel.application.interviewSchedule!.date!,
+                        ),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                 ],
-                if (_application.interviewSchedule?.location != null &&
-                    _application.interviewSchedule!.location!.isNotEmpty) ...[
+                if (viewModel.application.interviewSchedule?.location != null &&
+                    viewModel
+                        .application
+                        .interviewSchedule!
+                        .location!
+                        .isNotEmpty) ...[
                   Row(
                     children: [
                       Icon(
@@ -1031,7 +1059,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _application.interviewSchedule!.location!,
+                          viewModel.application.interviewSchedule!.location!,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
@@ -1045,7 +1073,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     );
   }
 
-  Widget _buildInterviewReviewSection(BuildContext context) {
+  Widget _buildInterviewReviewSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1078,7 +1109,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    _showInterviewReviewDialog(context);
+                    _showInterviewReviewDialog(context, viewModel);
                   },
                   icon: const Icon(Icons.add),
                   label: const Text(AppStrings.writeInterviewReview),
@@ -1086,7 +1117,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               ],
             ),
             const SizedBox(height: 8),
-            if (_application.interviewReviews.isEmpty)
+            if (viewModel.application.interviewReviews.isEmpty)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -1109,9 +1140,16 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 ),
               )
             else
-              ...List.generate(_application.interviewReviews.length, (index) {
-                final review = _application.interviewReviews[index];
-                return _buildInterviewReviewItem(context, review, index);
+              ...List.generate(viewModel.application.interviewReviews.length, (
+                index,
+              ) {
+                final review = viewModel.application.interviewReviews[index];
+                return _buildInterviewReviewItem(
+                  context,
+                  review,
+                  index,
+                  viewModel,
+                );
               }),
           ],
         ),
@@ -1123,6 +1161,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     BuildContext context,
     dynamic review, // Phase 1: 임시로 dynamic 사용 (InterviewReview 또는 Map)
     int index,
+    ApplicationDetailViewModel viewModel,
   ) {
     // Phase 1: InterviewReview 객체인지 Map인지 확인
     final date = review is InterviewReview
@@ -1250,6 +1289,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 onPressed: () {
                   _showInterviewReviewDialog(
                     context,
+                    viewModel,
                     review: review,
                     index: index,
                   );
@@ -1257,8 +1297,25 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 child: const Text('수정'),
               ),
               TextButton(
-                onPressed: () {
-                  // TODO: 삭제 로직
+                onPressed: () async {
+                  final success = await viewModel.deleteInterviewReview(index);
+                  if (success && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('면접 후기가 삭제되었습니다.'),
+                        backgroundColor: AppColors.success,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(viewModel.errorMessage ?? '삭제에 실패했습니다.'),
+                        backgroundColor: AppColors.error,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
                 },
                 child: Text('삭제', style: TextStyle(color: AppColors.error)),
               ),
@@ -1269,7 +1326,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     );
   }
 
-  Widget _buildMemoSection(BuildContext context) {
+  Widget _buildMemoSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1302,7 +1362,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 ),
                 TextButton(
                   onPressed: () {
-                    _showMemoDialog(context);
+                    _showMemoDialog(context, viewModel);
                   },
                   child: const Text(AppStrings.editProgressMemo),
                 ),
@@ -1316,12 +1376,14 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                _application.memo != null && _application.memo!.isNotEmpty
-                    ? _application.memo!
+                viewModel.application.memo != null &&
+                        viewModel.application.memo!.isNotEmpty
+                    ? viewModel.application.memo!
                     : AppStrings.noMemo,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color:
-                      _application.memo != null && _application.memo!.isNotEmpty
+                      viewModel.application.memo != null &&
+                          viewModel.application.memo!.isNotEmpty
                       ? AppColors.textPrimary
                       : AppColors.textSecondary,
                 ),
@@ -1333,7 +1395,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     );
   }
 
-  Widget _buildStatusSection(BuildContext context) {
+  Widget _buildStatusSection(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1361,11 +1426,29 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             ),
             const SizedBox(height: 16),
             RadioGroup<ApplicationStatus>(
-              groupValue: _application.status,
-              onChanged: (value) {
+              groupValue: viewModel.application.status,
+              onChanged: (value) async {
                 if (value != null) {
-                  // Phase 2: 상태 변경 시 저장 (다음 Phase에서 구현)
-                  _updateApplicationStatus(value);
+                  final statusText = await viewModel.updateStatus(value);
+                  if (statusText != null && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('상태가 "$statusText"로 변경되었습니다.'),
+                        backgroundColor: AppColors.success,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          viewModel.errorMessage ?? '상태 변경에 실패했습니다.',
+                        ),
+                        backgroundColor: AppColors.error,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
                 }
               },
               child: Column(
@@ -1462,6 +1545,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     String answer,
     int maxLength,
     int index,
+    ApplicationDetailViewModel viewModel,
   ) {
     final controller = TextEditingController(text: answer);
     showDialog(
@@ -1506,12 +1590,29 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               child: const Text(AppStrings.cancel),
             ),
             ElevatedButton(
-              onPressed: () {
-                // TODO: Phase 2에서 저장 로직 구현
-                // setState(() {
-                //   _application.coverLetterQuestions[index] = ...
-                // });
-                Navigator.pop(context);
+              onPressed: () async {
+                final success = await viewModel.updateCoverLetterAnswer(
+                  index,
+                  controller.text,
+                );
+                if (success && mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('답변이 저장되었습니다.'),
+                      backgroundColor: AppColors.success,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                } else if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(viewModel.errorMessage ?? '저장에 실패했습니다.'),
+                      backgroundColor: AppColors.error,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
               },
               child: const Text(AppStrings.save),
             ),
@@ -1522,24 +1623,41 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   void _showInterviewReviewDialog(
-    BuildContext context, {
-    Map<String, dynamic>? review,
+    BuildContext context,
+    ApplicationDetailViewModel viewModel, {
+    dynamic review,
     int? index,
   }) {
     final isEdit = review != null && index != null;
+
+    // review가 InterviewReview 객체인지 Map인지 확인
+    DateTime? reviewDate;
+    String reviewType = '';
+    String reviewText = '';
+    int rating = 3;
+    List<String> questions = [];
+
+    if (isEdit && review != null) {
+      if (review is InterviewReview) {
+        reviewDate = review.date;
+        reviewType = review.type;
+        reviewText = review.review;
+        rating = review.rating;
+        questions = List<String>.from(review.questions);
+      } else if (review is Map<String, dynamic>) {
+        reviewDate = review['date'] as DateTime;
+        reviewType = review['type'] as String;
+        reviewText = review['review'] as String;
+        rating = review['rating'] as int;
+        questions = List<String>.from(review['questions'] as List);
+      }
+    }
+
     final dateController = TextEditingController(
-      text: isEdit ? _formatDate(review['date'] as DateTime) : '',
+      text: isEdit && reviewDate != null ? _formatDate(reviewDate) : '',
     );
-    final typeController = TextEditingController(
-      text: isEdit ? review['type'] as String : '',
-    );
-    final reviewController = TextEditingController(
-      text: isEdit ? review['review'] as String : '',
-    );
-    int rating = isEdit ? review['rating'] as int : 3;
-    final List<String> questions = isEdit
-        ? List<String>.from(review['questions'] as List)
-        : [];
+    final typeController = TextEditingController(text: reviewType);
+    final reviewController = TextEditingController(text: reviewText);
 
     showDialog(
       context: context,
@@ -1686,18 +1804,73 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               child: const Text(AppStrings.cancel),
             ),
             ElevatedButton(
-              onPressed: () {
-                // TODO: Phase 2에서 저장 로직 구현
-                // if (isEdit) {
-                //   setState(() {
-                //     _application.interviewReviews[index] = ...
-                //   });
-                // } else {
-                //   setState(() {
-                //     _application.interviewReviews.add(...);
-                //   });
-                // }
-                Navigator.pop(context);
+              onPressed: () async {
+                final parsedDate = _parseDate(dateController.text);
+                if (parsedDate == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('날짜를 올바르게 입력해주세요.'),
+                      backgroundColor: AppColors.error,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
+
+                String reviewId;
+                if (isEdit && review != null) {
+                  if (review is InterviewReview) {
+                    reviewId = review.id;
+                  } else if (review is Map<String, dynamic>) {
+                    reviewId = review['id'] as String;
+                  } else {
+                    reviewId = DateTime.now().millisecondsSinceEpoch.toString();
+                  }
+                } else {
+                  reviewId = DateTime.now().millisecondsSinceEpoch.toString();
+                }
+
+                final interviewReview = InterviewReview(
+                  id: reviewId,
+                  date: parsedDate,
+                  type: typeController.text.trim(),
+                  questions: questions
+                      .where((q) => q.trim().isNotEmpty)
+                      .toList(),
+                  review: reviewController.text.trim(),
+                  rating: rating,
+                );
+
+                bool success;
+                if (isEdit) {
+                  success = await viewModel.updateInterviewReview(
+                    index,
+                    interviewReview,
+                  );
+                } else {
+                  success = await viewModel.addInterviewReview(interviewReview);
+                }
+
+                if (success && mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isEdit ? '면접 후기가 수정되었습니다.' : '면접 후기가 추가되었습니다.',
+                      ),
+                      backgroundColor: AppColors.success,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                } else if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(viewModel.errorMessage ?? '저장에 실패했습니다.'),
+                      backgroundColor: AppColors.error,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
               },
               child: const Text(AppStrings.save),
             ),
@@ -1707,8 +1880,13 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     );
   }
 
-  void _showMemoDialog(BuildContext context) {
-    final controller = TextEditingController(text: _application.memo ?? '');
+  void _showMemoDialog(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
+    final controller = TextEditingController(
+      text: viewModel.application.memo ?? '',
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1729,12 +1907,26 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
-            onPressed: () {
-              // TODO: 저장 로직
-              setState(() {
-                // _memo = controller.text; // 실제로는 상태 관리 필요
-              });
-              Navigator.pop(context);
+            onPressed: () async {
+              final success = await viewModel.updateMemo(controller.text);
+              if (success && mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('메모가 저장되었습니다.'),
+                    backgroundColor: AppColors.success,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(viewModel.errorMessage ?? '저장에 실패했습니다.'),
+                    backgroundColor: AppColors.error,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
             },
             child: const Text(AppStrings.save),
           ),
@@ -1744,7 +1936,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 면접 질문 추가 다이얼로그
-  void _showAddInterviewQuestionDialog(BuildContext context) {
+  void _showAddInterviewQuestionDialog(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     final questionController = TextEditingController();
     final focusNode = FocusNode();
 
@@ -1874,12 +2069,32 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (questionController.text.trim().isNotEmpty) {
-                            _addInterviewQuestion(
-                              questionController.text.trim(),
-                            );
-                            Navigator.pop(context);
+                            final success = await viewModel
+                                .addInterviewQuestion(
+                                  questionController.text.trim(),
+                                );
+                            if (success && mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('면접 질문이 추가되었습니다.'),
+                                  backgroundColor: AppColors.success,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } else if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    viewModel.errorMessage ?? '추가에 실패했습니다.',
+                                  ),
+                                  backgroundColor: AppColors.error,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -1920,6 +2135,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     BuildContext context,
     InterviewQuestion question,
     int index,
+    ApplicationDetailViewModel viewModel,
   ) {
     final questionController = TextEditingController(text: question.question);
     final focusNode = FocusNode();
@@ -2050,13 +2266,33 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (questionController.text.trim().isNotEmpty) {
-                            _updateInterviewQuestion(
-                              index,
-                              questionController.text.trim(),
-                            );
-                            Navigator.pop(context);
+                            final success = await viewModel
+                                .updateInterviewQuestion(
+                                  index,
+                                  questionController.text.trim(),
+                                );
+                            if (success && mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('면접 질문이 수정되었습니다.'),
+                                  backgroundColor: AppColors.success,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } else if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    viewModel.errorMessage ?? '수정에 실패했습니다.',
+                                  ),
+                                  backgroundColor: AppColors.error,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -2097,6 +2333,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     BuildContext context,
     InterviewQuestion question,
     int index,
+    ApplicationDetailViewModel viewModel,
   ) {
     final answerController = TextEditingController(text: question.answer ?? '');
     final focusNode = FocusNode();
@@ -2228,12 +2465,31 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () {
-                          _updateInterviewAnswer(
+                        onPressed: () async {
+                          final success = await viewModel.updateInterviewAnswer(
                             index,
                             answerController.text.trim(),
                           );
-                          Navigator.pop(context);
+                          if (success && mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('면접 답변이 저장되었습니다.'),
+                                backgroundColor: AppColors.success,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          } else if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  viewModel.errorMessage ?? '저장에 실패했습니다.',
+                                ),
+                                backgroundColor: AppColors.error,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -2269,7 +2525,10 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 체크리스트 항목 추가 다이얼로그
-  void _showAddChecklistItemDialog(BuildContext context) {
+  void _showAddChecklistItemDialog(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     final itemController = TextEditingController();
     final focusNode = FocusNode();
 
@@ -2399,10 +2658,31 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (itemController.text.trim().isNotEmpty) {
-                            _addChecklistItem(itemController.text.trim());
-                            Navigator.pop(context);
+                            final success = await viewModel.addChecklistItem(
+                              itemController.text.trim(),
+                            );
+                            if (success && mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('체크리스트 항목이 추가되었습니다.'),
+                                  backgroundColor: AppColors.success,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } else if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    viewModel.errorMessage ?? '추가에 실패했습니다.',
+                                  ),
+                                  backgroundColor: AppColors.error,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -2443,6 +2723,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     BuildContext context,
     InterviewChecklist item,
     int index,
+    ApplicationDetailViewModel viewModel,
   ) {
     final itemController = TextEditingController(text: item.item);
     final focusNode = FocusNode();
@@ -2573,13 +2854,32 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (itemController.text.trim().isNotEmpty) {
-                            _updateChecklistItem(
+                            final success = await viewModel.updateChecklistItem(
                               index,
                               itemController.text.trim(),
                             );
-                            Navigator.pop(context);
+                            if (success && mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('체크리스트 항목이 수정되었습니다.'),
+                                  backgroundColor: AppColors.success,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } else if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    viewModel.errorMessage ?? '수정에 실패했습니다.',
+                                  ),
+                                  backgroundColor: AppColors.error,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -2616,14 +2916,17 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
   }
 
   // 면접 일정 설정 다이얼로그
-  void _showInterviewScheduleDialog(BuildContext context) {
+  void _showInterviewScheduleDialog(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     final dateController = TextEditingController(
-      text: _application.interviewSchedule?.date != null
-          ? _formatDate(_application.interviewSchedule!.date!)
+      text: viewModel.application.interviewSchedule?.date != null
+          ? _formatDate(viewModel.application.interviewSchedule!.date!)
           : '',
     );
     final locationController = TextEditingController(
-      text: _application.interviewSchedule?.location ?? '',
+      text: viewModel.application.interviewSchedule?.location ?? '',
     );
 
     showDialog(
@@ -2650,7 +2953,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                   final picked = await showDatePicker(
                     context: context,
                     initialDate:
-                        _application.interviewSchedule?.date ?? DateTime.now(),
+                        viewModel.application.interviewSchedule?.date ??
+                        DateTime.now(),
                     firstDate: DateTime.now(),
                     lastDate: DateTime.now().add(const Duration(days: 365)),
                     locale: const Locale('ko', 'KR'),
@@ -2681,16 +2985,33 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final date = dateController.text.isNotEmpty
                   ? _parseDate(dateController.text)
                   : null;
               final location = locationController.text.trim();
-              _updateInterviewSchedule(
+              final success = await viewModel.updateInterviewSchedule(
                 date: date,
                 location: location.isNotEmpty ? location : null,
               );
-              Navigator.pop(context);
+              if (success && mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('면접 일정이 저장되었습니다.'),
+                    backgroundColor: AppColors.success,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(viewModel.errorMessage ?? '저장에 실패했습니다.'),
+                    backgroundColor: AppColors.error,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
             },
             child: const Text(AppStrings.save),
           ),
@@ -2716,147 +3037,19 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     return null;
   }
 
-  // 면접 질문 추가
-  Future<void> _addInterviewQuestion(String question) async {
-    final newQuestion = InterviewQuestion(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      question: question,
-    );
-    final updatedQuestions = [..._application.interviewQuestions, newQuestion];
-    await _updateApplication(interviewQuestions: updatedQuestions);
-  }
-
-  // 면접 질문 수정
-  Future<void> _updateInterviewQuestion(int index, String question) async {
-    final updatedQuestions = List<InterviewQuestion>.from(
-      _application.interviewQuestions,
-    );
-    updatedQuestions[index] = updatedQuestions[index].copyWith(
-      question: question,
-    );
-    await _updateApplication(interviewQuestions: updatedQuestions);
-  }
-
-  // 면접 질문 삭제
-  Future<void> _deleteInterviewQuestion(int index) async {
-    final updatedQuestions = List<InterviewQuestion>.from(
-      _application.interviewQuestions,
-    );
-    updatedQuestions.removeAt(index);
-    await _updateApplication(interviewQuestions: updatedQuestions);
-  }
-
-  // 면접 답변 업데이트
-  Future<void> _updateInterviewAnswer(int index, String answer) async {
-    final updatedQuestions = List<InterviewQuestion>.from(
-      _application.interviewQuestions,
-    );
-    updatedQuestions[index] = updatedQuestions[index].copyWith(
-      answer: answer.isEmpty ? null : answer,
-    );
-    await _updateApplication(interviewQuestions: updatedQuestions);
-  }
-
-  // 체크리스트 항목 추가
-  Future<void> _addChecklistItem(String item) async {
-    final newItem = InterviewChecklist(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      item: item,
-    );
-    final updatedChecklist = [..._application.interviewChecklist, newItem];
-    await _updateApplication(interviewChecklist: updatedChecklist);
-  }
-
-  // 체크리스트 항목 수정
-  Future<void> _updateChecklistItem(int index, String item) async {
-    final updatedChecklist = List<InterviewChecklist>.from(
-      _application.interviewChecklist,
-    );
-    updatedChecklist[index] = updatedChecklist[index].copyWith(item: item);
-    await _updateApplication(interviewChecklist: updatedChecklist);
-  }
-
-  // 체크리스트 항목 삭제
-  Future<void> _deleteChecklistItem(int index) async {
-    final updatedChecklist = List<InterviewChecklist>.from(
-      _application.interviewChecklist,
-    );
-    updatedChecklist.removeAt(index);
-    await _updateApplication(interviewChecklist: updatedChecklist);
-  }
-
-  // 체크리스트 항목 토글
-  Future<void> _toggleChecklistItem(int index, bool isChecked) async {
-    final updatedChecklist = List<InterviewChecklist>.from(
-      _application.interviewChecklist,
-    );
-    updatedChecklist[index] = updatedChecklist[index].copyWith(
-      isChecked: isChecked,
-    );
-    await _updateApplication(interviewChecklist: updatedChecklist);
-  }
-
-  // 면접 일정 업데이트
-  Future<void> _updateInterviewSchedule({
-    DateTime? date,
-    String? location,
-  }) async {
-    final schedule = InterviewSchedule(date: date, location: location);
-    await _updateApplication(interviewSchedule: schedule);
-  }
-
-  // Application 업데이트 헬퍼
-  Future<void> _updateApplication({
-    List<InterviewQuestion>? interviewQuestions,
-    List<InterviewChecklist>? interviewChecklist,
-    InterviewSchedule? interviewSchedule,
-  }) async {
-    final updatedApplication = _application.copyWith(
-      interviewQuestions: interviewQuestions,
-      interviewChecklist: interviewChecklist,
-      interviewSchedule: interviewSchedule,
-      updatedAt: DateTime.now(),
-    );
-
-    try {
-      final storageService = StorageService();
-      final success = await storageService.saveApplication(updatedApplication);
-
-      if (success && mounted) {
-        setState(() {
-          _application = updatedApplication;
-        });
-        _hasChanges = true;
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('저장에 실패했습니다.'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  void _showNotificationSettingsDialog(BuildContext context) {
+  void _showNotificationSettingsDialog(
+    BuildContext context,
+    ApplicationDetailViewModel viewModel,
+  ) {
     // 현재 마감일 알림 설정 가져오기
     NotificationSettings? currentSettings;
-    if (_application.notificationSettings.deadlineNotification) {
+    if (viewModel.application.notificationSettings.deadlineNotification) {
       currentSettings = NotificationSettings(
         deadlineNotification: true,
-        deadlineTiming: _application.notificationSettings.deadlineTiming,
-        customHoursBefore: _application.notificationSettings.customHoursBefore,
+        deadlineTiming:
+            viewModel.application.notificationSettings.deadlineTiming,
+        customHoursBefore:
+            viewModel.application.notificationSettings.customHoursBefore,
       );
     }
 
@@ -2868,70 +3061,25 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
       ),
     ).then((result) async {
       if (result != null && mounted) {
-        // 알림 설정 업데이트
-        final updatedSettings = _application.notificationSettings.copyWith(
-          deadlineNotification:
-              (result as NotificationSettings).deadlineNotification,
-          deadlineTiming: result.deadlineTiming,
-          customHoursBefore: result.customHoursBefore,
+        final success = await viewModel.updateNotificationSettings(
+          result as NotificationSettings,
         );
-
-        final updatedApplication = _application.copyWith(
-          notificationSettings: updatedSettings,
-          updatedAt: DateTime.now(),
-        );
-
-        try {
-          final storageService = StorageService();
-          final success = await storageService.saveApplication(
-            updatedApplication,
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('알림 설정이 저장되었습니다.'),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 2),
+            ),
           );
-
-          if (!mounted) return;
-
-          if (success) {
-            if (!mounted) return;
-            setState(() {
-              _application = updatedApplication;
-            });
-            _hasChanges = true;
-
-            if (!mounted) return;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('알림 설정이 저장되었습니다.'),
-                  backgroundColor: AppColors.success,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            });
-          } else {
-            if (!mounted) return;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('알림 설정 저장에 실패했습니다.'),
-                  backgroundColor: AppColors.error,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            });
-          }
-        } catch (e) {
-          if (!mounted) return;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('오류가 발생했습니다: $e'),
-                backgroundColor: AppColors.error,
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          });
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(viewModel.errorMessage ?? '알림 설정 저장에 실패했습니다.'),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 2),
+            ),
+          );
         }
       }
     });

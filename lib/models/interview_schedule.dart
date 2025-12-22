@@ -43,3 +43,4 @@ class InterviewSchedule {
   bool get hasSchedule => date != null || (location != null && location!.isNotEmpty);
 }
 
+

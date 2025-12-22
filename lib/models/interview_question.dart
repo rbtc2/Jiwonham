@@ -47,3 +47,4 @@ class InterviewQuestion {
   bool get hasAnswer => answer != null && answer!.isNotEmpty;
 }
 
+

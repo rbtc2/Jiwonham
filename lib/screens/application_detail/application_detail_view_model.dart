@@ -7,6 +7,10 @@ import '../../models/application.dart';
 import '../../models/application_status.dart';
 import '../../models/interview_review.dart';
 import '../../models/cover_letter_question.dart';
+import '../../models/interview_question.dart';
+import '../../models/interview_checklist.dart';
+import '../../models/interview_schedule.dart';
+import '../../models/notification_settings.dart';
 import '../../services/storage_service.dart';
 
 class ApplicationDetailViewModel extends ChangeNotifier {
@@ -296,6 +300,415 @@ class ApplicationDetailViewModel extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = '면접 후기 삭제에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 면접 질문 추가
+  Future<bool> addInterviewQuestion(String question) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final newQuestion = InterviewQuestion(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        question: question,
+      );
+      final updatedQuestions = [..._application.interviewQuestions, newQuestion];
+
+      final updatedApplication = _application.copyWith(
+        interviewQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '면접 질문 추가에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '면접 질문 추가에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 면접 질문 수정
+  Future<bool> updateInterviewQuestion(int index, String question) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedQuestions = List<InterviewQuestion>.from(
+        _application.interviewQuestions,
+      );
+      updatedQuestions[index] = updatedQuestions[index].copyWith(
+        question: question,
+      );
+
+      final updatedApplication = _application.copyWith(
+        interviewQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '면접 질문 수정에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '면접 질문 수정에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 면접 질문 삭제
+  Future<bool> deleteInterviewQuestion(int index) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedQuestions = List<InterviewQuestion>.from(
+        _application.interviewQuestions,
+      );
+      updatedQuestions.removeAt(index);
+
+      final updatedApplication = _application.copyWith(
+        interviewQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '면접 질문 삭제에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '면접 질문 삭제에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 면접 답변 업데이트
+  Future<bool> updateInterviewAnswer(int index, String answer) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedQuestions = List<InterviewQuestion>.from(
+        _application.interviewQuestions,
+      );
+      updatedQuestions[index] = updatedQuestions[index].copyWith(
+        answer: answer.isEmpty ? null : answer,
+      );
+
+      final updatedApplication = _application.copyWith(
+        interviewQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '면접 답변 저장에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '면접 답변 저장에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 체크리스트 항목 추가
+  Future<bool> addChecklistItem(String item) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final newItem = InterviewChecklist(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        item: item,
+      );
+      final updatedChecklist = [..._application.interviewChecklist, newItem];
+
+      final updatedApplication = _application.copyWith(
+        interviewChecklist: updatedChecklist,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '체크리스트 항목 추가에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '체크리스트 항목 추가에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 체크리스트 항목 수정
+  Future<bool> updateChecklistItem(int index, String item) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedChecklist = List<InterviewChecklist>.from(
+        _application.interviewChecklist,
+      );
+      updatedChecklist[index] = updatedChecklist[index].copyWith(item: item);
+
+      final updatedApplication = _application.copyWith(
+        interviewChecklist: updatedChecklist,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '체크리스트 항목 수정에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '체크리스트 항목 수정에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 체크리스트 항목 삭제
+  Future<bool> deleteChecklistItem(int index) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedChecklist = List<InterviewChecklist>.from(
+        _application.interviewChecklist,
+      );
+      updatedChecklist.removeAt(index);
+
+      final updatedApplication = _application.copyWith(
+        interviewChecklist: updatedChecklist,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '체크리스트 항목 삭제에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '체크리스트 항목 삭제에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 체크리스트 항목 토글
+  Future<bool> toggleChecklistItem(int index, bool isChecked) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedChecklist = List<InterviewChecklist>.from(
+        _application.interviewChecklist,
+      );
+      updatedChecklist[index] = updatedChecklist[index].copyWith(
+        isChecked: isChecked,
+      );
+
+      final updatedApplication = _application.copyWith(
+        interviewChecklist: updatedChecklist,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '체크리스트 항목 업데이트에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '체크리스트 항목 업데이트에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 면접 일정 업데이트
+  Future<bool> updateInterviewSchedule({
+    DateTime? date,
+    String? location,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final schedule = InterviewSchedule(date: date, location: location);
+
+      final updatedApplication = _application.copyWith(
+        interviewSchedule: schedule,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '면접 일정 저장에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '면접 일정 저장에 실패했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 알림 설정 업데이트
+  Future<bool> updateNotificationSettings(NotificationSettings settings) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedSettings = _application.notificationSettings.copyWith(
+        deadlineNotification: settings.deadlineNotification,
+        deadlineTiming: settings.deadlineTiming,
+        customHoursBefore: settings.customHoursBefore,
+      );
+
+      final updatedApplication = _application.copyWith(
+        notificationSettings: updatedSettings,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _isLoading = false;
+        _errorMessage = '알림 설정 저장에 실패했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = '알림 설정 저장에 실패했습니다: $e';
       notifyListeners();
       return false;
     }

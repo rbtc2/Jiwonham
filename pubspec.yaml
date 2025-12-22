@@ -41,6 +41,9 @@ dependencies:
   # Local storage
   shared_preferences: ^2.3.3
 
+  # State management
+  provider: ^6.1.2
+
   # Localization
   flutter_localizations:
     sdk: flutter
