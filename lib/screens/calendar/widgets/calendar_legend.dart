@@ -4,32 +4,36 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
 import '../../../utils/calendar_event_style.dart';
+import '../../../widgets/modern_card.dart';
 
 class CalendarLegend extends StatelessWidget {
   const CalendarLegend({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildLegendItem(
-            context,
-            CalendarEventStyle.getStyle('deadline'),
-          ),
-          const SizedBox(width: 16),
-          _buildLegendItem(
-            context,
-            CalendarEventStyle.getStyle('announcement'),
-          ),
-          const SizedBox(width: 16),
-          _buildLegendItem(
-            context,
-            CalendarEventStyle.getStyle('interview'),
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ModernCard(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildLegendItem(
+              context,
+              CalendarEventStyle.getStyle('deadline'),
+            ),
+            const SizedBox(width: 20),
+            _buildLegendItem(
+              context,
+              CalendarEventStyle.getStyle('announcement'),
+            ),
+            const SizedBox(width: 20),
+            _buildLegendItem(
+              context,
+              CalendarEventStyle.getStyle('interview'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -38,18 +42,19 @@ class CalendarLegend extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: 14,
+          height: 14,
           decoration: BoxDecoration(
             color: style.color,
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 8),
         Text(
           style.label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

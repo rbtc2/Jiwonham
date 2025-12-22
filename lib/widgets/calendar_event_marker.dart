@@ -35,11 +35,18 @@ class CalendarEventMarker extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getColor();
     return Container(
-      width: 6,
-      height: 6,
+      width: 7,
+      height: 7,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 2,
+            spreadRadius: 0.5,
+          ),
+        ],
       ),
     );
   }

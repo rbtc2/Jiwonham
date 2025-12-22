@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
 import '../../../constants/app_strings.dart';
+import '../../../widgets/modern_card.dart';
+import '../../../widgets/modern_section_header.dart';
 import 'calendar_schedule_item.dart';
 
 class CalendarScheduleList extends StatelessWidget {
@@ -32,45 +34,66 @@ class CalendarScheduleList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dayOfWeek = _getDayOfWeek(selectedDate);
+    final dateText = '${_formatDate(selectedDate)} ($dayOfWeek)';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
+    return ModernCard(
+      padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '${_formatDate(selectedDate)} ($dayOfWeek)',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          ModernSectionHeader(
+            title: dateText,
+            icon: Icons.event_outlined,
+            iconColor: AppColors.primary,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
           if (events.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
-                child: Text(
-                  AppStrings.noSchedule,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.event_busy_outlined,
+                        size: 32,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      AppStrings.noSchedule,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '이 날짜에는 일정이 없습니다',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             )
           else
             ...events.map((event) {
-              return CalendarScheduleItem(
-                event: event,
-                eventTitle: getEventTitle(event),
-                onTap: () => onEventTap(event),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: CalendarScheduleItem(
+                  event: event,
+                  eventTitle: getEventTitle(event),
+                  onTap: () => onEventTap(event),
+                ),
               );
             }),
         ],

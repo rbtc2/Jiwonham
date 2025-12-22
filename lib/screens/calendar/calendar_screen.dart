@@ -12,6 +12,7 @@ import 'widgets/calendar_legend.dart';
 import 'widgets/calendar_schedule_list.dart';
 import 'widgets/monthly_calendar_view.dart';
 import 'widgets/weekly_calendar_view.dart';
+import '../../widgets/modern_card.dart';
 
 enum CalendarView { monthly, weekly }
 
@@ -77,40 +78,97 @@ class CalendarScreenState extends State<CalendarScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getMonthYearText()),
-        leading: IconButton(
-          icon: const Icon(Icons.chevron_left),
-          onPressed: () {
-            setState(() {
-              _currentMonth = DateTime(
-                _currentMonth.year,
-                _currentMonth.month - 1,
-              );
-            });
-          },
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.calendar_today_outlined,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              _getMonthYearText(),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
+        leading: Container(
+          margin: const EdgeInsets.only(left: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.chevron_left),
             onPressed: () {
               setState(() {
                 _currentMonth = DateTime(
                   _currentMonth.year,
-                  _currentMonth.month + 1,
+                  _currentMonth.month - 1,
                 );
               });
             },
           ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _currentMonth = DateTime.now();
-                _selectedDate = DateTime.now();
-              });
-            },
-            child: const Text(AppStrings.today),
+        ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.chevron_right),
+              onPressed: () {
+                setState(() {
+                  _currentMonth = DateTime(
+                    _currentMonth.year,
+                    _currentMonth.month + 1,
+                  );
+                });
+              },
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _currentMonth = DateTime.now();
+                  _selectedDate = DateTime.now();
+                });
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                foregroundColor: AppColors.primary,
+              ),
+              child: Text(
+                AppStrings.today,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
         ],
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
       ),
       body: _viewModel.isLoading
           ? _buildLoadingState(context)
@@ -144,18 +202,41 @@ class CalendarScreenState extends State<CalendarScreen>
   // PHASE 4: 로딩 상태 UI
   Widget _buildLoadingState(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(
-            '일정을 불러오는 중...',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: ModernCard(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                '일정을 불러오는 중...',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '잠시만 기다려주세요',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -163,29 +244,44 @@ class CalendarScreenState extends State<CalendarScreen>
   // PHASE 4: 빈 캘린더 상태 UI (이벤트가 없을 때)
   Widget _buildEmptyCalendarState(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.calendar_today_outlined,
-            size: 64,
-            color: AppColors.textSecondary,
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: ModernCard(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 48,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                '등록된 일정이 없습니다',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '공고를 추가하면 캘린더에 표시됩니다',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            '등록된 일정이 없습니다',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '공고를 추가하면 캘린더에 표시됩니다',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -195,14 +291,17 @@ class CalendarScreenState extends State<CalendarScreen>
   }
 
   Widget _buildViewToggle(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildViewButton(context, AppStrings.monthly, CalendarView.monthly),
-          _buildViewButton(context, AppStrings.weekly, CalendarView.weekly),
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: ModernCard(
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            _buildViewButton(context, AppStrings.monthly, CalendarView.monthly),
+            const SizedBox(width: 4),
+            _buildViewButton(context, AppStrings.weekly, CalendarView.weekly),
+          ],
+        ),
       ),
     );
   }
@@ -214,20 +313,27 @@ class CalendarScreenState extends State<CalendarScreen>
   ) {
     final isSelected = _currentView == view;
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: ElevatedButton(
-          onPressed: () {
-            setState(() {
-              _currentView = view;
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isSelected ? AppColors.primary : AppColors.surface,
-            foregroundColor: isSelected ? Colors.white : AppColors.textPrimary,
-            elevation: isSelected ? 2 : 0,
+      child: ElevatedButton(
+        onPressed: () {
+          setState(() {
+            _currentView = view;
+          });
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isSelected ? AppColors.primary : Colors.transparent,
+          foregroundColor: isSelected ? Colors.white : AppColors.textPrimary,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(label),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 14,
+          ),
         ),
       ),
     );

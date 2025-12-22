@@ -25,34 +25,48 @@ class CalendarDayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
+              ? AppColors.primary.withValues(alpha: 0.15)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: isToday
-              ? Border.all(color: AppColors.primary, width: 2)
+          borderRadius: BorderRadius.circular(12),
+          border: isToday && !isSelected
+              ? Border.all(color: AppColors.primary, width: 1.5)
               : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              '${date.day}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: isSelected || isToday
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-                color: isSelected
-                    ? AppColors.primary
-                    : isToday
-                    ? AppColors.primary
-                    : AppColors.textPrimary,
+            Container(
+              width: isSelected ? 32 : null,
+              height: isSelected ? 32 : null,
+              decoration: isSelected
+                  ? BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    )
+                  : null,
+              child: Center(
+                child: Text(
+                  '${date.day}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: isSelected || isToday
+                        ? FontWeight.bold
+                        : FontWeight.w500,
+                    fontSize: isSelected ? 15 : 14,
+                    color: isSelected
+                        ? Colors.white
+                        : isToday
+                        ? AppColors.primary
+                        : AppColors.textPrimary,
+                  ),
+                ),
               ),
             ),
             if (events.isNotEmpty) ...[
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: events.take(3).map((event) {
@@ -65,7 +79,7 @@ class CalendarDayCell extends StatelessWidget {
                     type = EventType.interview;
                   }
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 1.5),
                     child: CalendarEventMarker(type: type),
                   );
                 }).toList(),

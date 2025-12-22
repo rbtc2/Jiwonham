@@ -10,24 +10,28 @@ class WeekdayHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-    return Row(
-      children: weekdays.map((day) {
-        return Expanded(
-          child: Center(
-            child: Text(
-              day,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: day == '일'
-                    ? AppColors.error
-                    : day == '토'
-                    ? AppColors.primary
-                    : AppColors.textPrimary,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: weekdays.map((day) {
+          return Expanded(
+            child: Center(
+              child: Text(
+                day,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: day == '일'
+                      ? AppColors.error
+                      : day == '토'
+                      ? AppColors.primary
+                      : AppColors.textPrimary,
+                ),
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }
