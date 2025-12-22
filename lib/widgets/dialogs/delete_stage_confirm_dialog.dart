@@ -4,37 +4,18 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
+import 'modern_bottom_sheet.dart';
 
-class DeleteStageConfirmDialog extends StatelessWidget {
-  const DeleteStageConfirmDialog({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('일정 삭제'),
-      content: const Text('이 일정을 삭제하시겠습니까?'),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text(AppStrings.cancel),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context, true);
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-          child: const Text(AppStrings.delete),
-        ),
-      ],
+class DeleteStageConfirmDialog {
+  static Future<bool?> show(BuildContext context) {
+    return ModernBottomSheet.showConfirm(
+      context: context,
+      title: '일정 삭제',
+      message: '이 일정을 삭제하시겠습니까?',
+      icon: Icons.warning_amber_rounded,
+      iconColor: AppColors.error,
+      confirmText: AppStrings.delete,
+      confirmButtonColor: AppColors.error,
     );
   }
 }
-
-
-
-
-
-
-

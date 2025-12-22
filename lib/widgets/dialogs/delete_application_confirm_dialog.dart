@@ -4,43 +4,18 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
+import 'modern_bottom_sheet.dart';
 
-class DeleteApplicationConfirmDialog extends StatelessWidget {
-  const DeleteApplicationConfirmDialog({super.key});
-
+class DeleteApplicationConfirmDialog {
   static Future<bool?> show(BuildContext context) {
-    return showDialog<bool>(
+    return ModernBottomSheet.showConfirm(
       context: context,
-      builder: (context) => const DeleteApplicationConfirmDialog(),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text(AppStrings.deleteConfirm),
-      content: const Text(AppStrings.deleteConfirmMessage),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context, false);
-          },
-          child: const Text(AppStrings.cancel),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context, true);
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-          child: const Text(AppStrings.delete),
-        ),
-      ],
+      title: AppStrings.deleteConfirm,
+      message: AppStrings.deleteConfirmMessage,
+      icon: Icons.warning_amber_rounded,
+      iconColor: AppColors.error,
+      confirmText: AppStrings.delete,
+      confirmButtonColor: AppColors.error,
     );
   }
 }
-
-
-
-
-
-

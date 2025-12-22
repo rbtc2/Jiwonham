@@ -4,103 +4,95 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
+import 'modern_bottom_sheet.dart';
 
-class CoverLetterAnswerDialog extends StatefulWidget {
-  final String question;
-  final String initialAnswer;
-  final int maxLength;
-
-  const CoverLetterAnswerDialog({
-    super.key,
-    required this.question,
-    required this.initialAnswer,
-    required this.maxLength,
-  });
-
+class CoverLetterAnswerDialog {
   static Future<String?> show(
     BuildContext context, {
     required String question,
     required String initialAnswer,
     required int maxLength,
   }) {
-    return showDialog<String>(
+    final controller = TextEditingController(text: initialAnswer);
+    final focusNode = FocusNode();
+
+    return ModernBottomSheet.showCustom<String>(
       context: context,
-      builder: (context) => CoverLetterAnswerDialog(
-        question: question,
-        initialAnswer: initialAnswer,
-        maxLength: maxLength,
+      header: ModernBottomSheetHeader(
+        title: question,
+        icon: Icons.edit_note,
+        iconColor: AppColors.success,
       ),
-    );
-  }
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          // 자동 포커스
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (focusNode.canRequestFocus) {
+              focusNode.requestFocus();
+            }
+          });
 
-  @override
-  State<CoverLetterAnswerDialog> createState() =>
-      _CoverLetterAnswerDialogState();
-}
-
-class _CoverLetterAnswerDialogState extends State<CoverLetterAnswerDialog> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialAnswer);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StatefulBuilder(
-      builder: (context, setDialogState) => AlertDialog(
-        title: Text(widget.question),
-        content: SingleChildScrollView(
-          child: Column(
+          return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
-                controller: _controller,
-                maxLines: 10,
-                maxLength: widget.maxLength,
+                controller: controller,
+                focusNode: focusNode,
+                maxLines: null,
+                minLines: 10,
+                maxLength: maxLength,
+                textInputAction: TextInputAction.newline,
+                style: Theme.of(context).textTheme.bodyLarge,
                 decoration: InputDecoration(
                   hintText: '답변을 입력하세요',
+                  filled: true,
+                  fillColor: AppColors.background,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.all(20),
+                  counterStyle: TextStyle(
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 onChanged: (value) {
-                  setDialogState(() {});
+                  setState(() {});
                 },
               ),
               const SizedBox(height: 8),
               Text(
-                '${_controller.text.length} / ${widget.maxLength} ${AppStrings.characterCount}',
+                '${controller.text.length} / $maxLength ${AppStrings.characterCount}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context, _controller.text);
-            },
-            child: const Text(AppStrings.save),
-          ),
-        ],
+          );
+        },
+      ),
+      actions: ModernBottomSheetActions(
+        confirmText: AppStrings.save,
+        onConfirm: () {
+          controller.dispose();
+          focusNode.dispose();
+          Navigator.pop(context, controller.text);
+        },
       ),
     );
   }

@@ -5,142 +5,152 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../utils/date_utils.dart';
+import 'modern_bottom_sheet.dart';
 
-class EditStageDialog extends StatefulWidget {
-  final String initialType;
-  final DateTime initialDate;
+class EditStageDialog {
+  static Future<Map<String, dynamic>?> show(
+    BuildContext context, {
+    required String initialType,
+    required DateTime initialDate,
+  }) {
+    final typeController = TextEditingController(text: initialType);
+    DateTime selectedDate = initialDate;
+    final typeFocusNode = FocusNode();
 
-  const EditStageDialog({
-    super.key,
-    required this.initialType,
-    required this.initialDate,
-  });
-
-  @override
-  State<EditStageDialog> createState() => _EditStageDialogState();
-}
-
-class _EditStageDialogState extends State<EditStageDialog> {
-  late final TextEditingController _typeController;
-  late DateTime _selectedDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _typeController = TextEditingController(text: widget.initialType);
-    _selectedDate = widget.initialDate;
-  }
-
-  @override
-  void dispose() {
-    _typeController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('일정 수정'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppStrings.stageType,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _typeController,
-              decoration: InputDecoration(
-                hintText: AppStrings.stageTypeExample,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppStrings.stageDate,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: () async {
-                final DateTime? picked = await showDatePicker(
-                  context: context,
-                  initialDate: _selectedDate,
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                  locale: const Locale('ko', 'KR'),
-                );
-                if (picked != null) {
-                  setState(() {
-                    _selectedDate = picked;
-                  });
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      formatDate(_selectedDate),
-                      style: const TextStyle(color: AppColors.textPrimary),
-                    ),
-                    const Icon(Icons.calendar_today, size: 20),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+    return ModernBottomSheet.showCustom<Map<String, dynamic>>(
+      context: context,
+      header: const ModernBottomSheetHeader(
+        title: '일정 수정',
+        icon: Icons.edit_calendar,
+        iconColor: AppColors.primary,
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text(AppStrings.cancel),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_typeController.text.trim().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('전형 유형을 입력해주세요.'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-              return;
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          // 첫 번째 필드에 자동 포커스
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (typeFocusNode.canRequestFocus) {
+              typeFocusNode.requestFocus();
             }
+          });
 
-            Navigator.pop(context, {
-              'type': _typeController.text.trim(),
-              'date': _selectedDate,
-            });
-          },
-          child: const Text(AppStrings.save),
-        ),
-      ],
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppStrings.stageType,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: typeController,
+                focusNode: typeFocusNode,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  hintText: AppStrings.stageTypeExample,
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.all(20),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                AppStrings.stageDate,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                    locale: const Locale('ko', 'KR'),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      selectedDate = picked;
+                    });
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        formatDate(selectedDate),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 20,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+      actions: ModernBottomSheetActions(
+        confirmText: AppStrings.save,
+        onConfirm: () {
+          if (typeController.text.trim().isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('전형 유형을 입력해주세요.'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+            return;
+          }
+
+          typeController.dispose();
+          typeFocusNode.dispose();
+
+          Navigator.pop(context, {
+            'type': typeController.text.trim(),
+            'date': selectedDate,
+          });
+        },
+      ),
     );
   }
 }
-
-
-
-
-
-
-

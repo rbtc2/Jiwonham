@@ -474,11 +474,8 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
 
   // Phase 2: 일정 추가 다이얼로그 - AddStageDialog 위젯으로 분리됨
   void _showAddStageDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const AddStageDialog(),
-    ).then((result) {
-      if (result != null && result is Map<String, dynamic>) {
+    AddStageDialog.show(context).then((result) {
+      if (result != null) {
         setState(() {
           final updatedStages = List<Map<String, dynamic>>.from(
             _formData.nextStages,
@@ -496,14 +493,12 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
   // Phase 2: 일정 수정 다이얼로그 - EditStageDialog 위젯으로 분리됨
   void _showEditStageDialog(BuildContext context, int index) {
     final stage = _formData.nextStages[index];
-    showDialog(
-      context: context,
-      builder: (context) => EditStageDialog(
-        initialType: stage['type'] as String,
-        initialDate: stage['date'] as DateTime,
-      ),
+    EditStageDialog.show(
+      context,
+      initialType: stage['type'] as String,
+      initialDate: stage['date'] as DateTime,
     ).then((result) {
-      if (result != null && result is Map<String, dynamic>) {
+      if (result != null) {
         setState(() {
           final updatedStages = List<Map<String, dynamic>>.from(
             _formData.nextStages,
@@ -520,10 +515,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
 
   // Phase 2: 일정 삭제 확인 다이얼로그 - DeleteStageConfirmDialog 위젯으로 분리됨
   void _showDeleteStageConfirmDialog(BuildContext context, int index) {
-    showDialog(
-      context: context,
-      builder: (context) => const DeleteStageConfirmDialog(),
-    ).then((result) {
+    DeleteStageConfirmDialog.show(context).then((result) {
       if (result == true) {
         setState(() {
           final updatedStages = List<Map<String, dynamic>>.from(
@@ -540,11 +532,8 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
 
   // Phase 2: 문항 추가 다이얼로그 - AddQuestionDialog 위젯으로 분리됨
   void _showAddQuestionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const AddQuestionDialog(),
-    ).then((result) {
-      if (result != null && result is Map<String, dynamic>) {
+    AddQuestionDialog.show(context).then((result) {
+      if (result != null) {
         setState(() {
           final updatedQuestions = List<CoverLetterQuestion>.from(
             _formData.coverLetterQuestions,
@@ -566,14 +555,12 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
   // Phase 2: 문항 수정 다이얼로그 - EditQuestionDialog 위젯으로 분리됨
   void _showEditQuestionDialog(BuildContext context, int index) {
     final question = _formData.coverLetterQuestions[index];
-    showDialog(
-      context: context,
-      builder: (context) => EditQuestionDialog(
-        initialQuestion: question.question,
-        initialMaxLength: question.maxLength,
-      ),
+    EditQuestionDialog.show(
+      context,
+      initialQuestion: question.question,
+      initialMaxLength: question.maxLength,
     ).then((result) {
-      if (result != null && result is Map<String, dynamic>) {
+      if (result != null) {
         setState(() {
           final updatedQuestions = List<CoverLetterQuestion>.from(
             _formData.coverLetterQuestions,
@@ -607,26 +594,22 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       currentSettings = _formData.announcementNotificationSettings;
     }
 
-    showDialog(
-      context: context,
-      builder: (context) => NotificationSettingsDialog(
-        notificationType: type,
-        initialSettings: currentSettings,
-      ),
+    NotificationSettingsDialog.show(
+      context,
+      notificationType: type,
+      initialSettings: currentSettings,
     ).then((result) {
       if (result != null) {
-        onSettingsChanged(result as NotificationSettings?);
+        onSettingsChanged(result);
       }
     });
   }
 
   // Phase 2: 문항 삭제 확인 다이얼로그 - DeleteQuestionConfirmDialog 위젯으로 분리됨
   void _showDeleteQuestionConfirmDialog(BuildContext context, int index) {
-    showDialog(
-      context: context,
-      builder: (context) => DeleteQuestionConfirmDialog(
-        questionText: _formData.coverLetterQuestions[index].question,
-      ),
+    DeleteQuestionConfirmDialog.show(
+      context,
+      questionText: _formData.coverLetterQuestions[index].question,
     ).then((result) {
       if (result == true) {
         setState(() {

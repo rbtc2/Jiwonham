@@ -6,275 +6,339 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../models/interview_review.dart';
 import '../../utils/date_utils.dart';
+import 'modern_bottom_sheet.dart';
 
-class InterviewReviewDialog extends StatefulWidget {
-  final InterviewReview? review;
-
-  const InterviewReviewDialog({
-    super.key,
-    this.review,
-  });
-
+class InterviewReviewDialog {
   static Future<Map<String, dynamic>?> show(
     BuildContext context, {
     InterviewReview? review,
   }) {
-    return showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => InterviewReviewDialog(review: review),
-    );
-  }
-
-  @override
-  State<InterviewReviewDialog> createState() => _InterviewReviewDialogState();
-}
-
-class _InterviewReviewDialogState extends State<InterviewReviewDialog> {
-  late TextEditingController _dateController;
-  late TextEditingController _typeController;
-  late TextEditingController _reviewController;
-  late int _rating;
-  late List<String> _questions;
-  late List<TextEditingController> _questionControllers;
-
-  bool get _isEdit => widget.review != null;
-
-  @override
-  void initState() {
-    super.initState();
-    final review = widget.review;
-    _dateController = TextEditingController(
+    final isEdit = review != null;
+    final dateController = TextEditingController(
       text: review != null ? formatDate(review.date) : '',
     );
-    _typeController = TextEditingController(
+    final typeController = TextEditingController(
       text: review?.type ?? '',
     );
-    _reviewController = TextEditingController(
+    final reviewController = TextEditingController(
       text: review?.review ?? '',
     );
-    _rating = review?.rating ?? 3;
-    _questions = review != null
+    int rating = review?.rating ?? 3;
+    List<String> questions = review != null
         ? List<String>.from(review.questions)
         : <String>[];
-    _questionControllers = _questions
+    final List<TextEditingController> questionControllers = questions
         .map((q) => TextEditingController(text: q))
         .toList();
-  }
 
-  @override
-  void dispose() {
-    _dateController.dispose();
-    _typeController.dispose();
-    _reviewController.dispose();
-    for (var controller in _questionControllers) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  void _addQuestion() {
-    setState(() {
-      _questions.add('');
-      _questionControllers.add(TextEditingController());
-    });
-  }
-
-  void _removeQuestion(int index) {
-    setState(() {
-      _questions.removeAt(index);
-      _questionControllers[index].dispose();
-      _questionControllers.removeAt(index);
-    });
-  }
-
-  Future<void> _selectDate() async {
-    final picked = await showDatePicker(
+    return ModernBottomSheet.showCustom<Map<String, dynamic>>(
       context: context,
-      initialDate: widget.review?.date ?? DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now(),
-      locale: const Locale('ko', 'KR'),
-    );
-    if (picked != null && mounted) {
-      setState(() {
-        _dateController.text = formatDate(picked);
-      });
-    }
-  }
+      header: ModernBottomSheetHeader(
+        title: isEdit ? '면접 후기 수정' : AppStrings.writeInterviewReview,
+        icon: Icons.rate_review,
+        iconColor: AppColors.primary,
+      ),
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          void addQuestion() {
+            setState(() {
+              questions.add('');
+              questionControllers.add(TextEditingController());
+            });
+          }
 
-  void _save() {
-    // 질문 리스트 업데이트
-    final questions = _questionControllers
-        .map((c) => c.text.trim())
-        .where((q) => q.isNotEmpty)
-        .toList();
+          void removeQuestion(int index) {
+            setState(() {
+              questions.removeAt(index);
+              questionControllers[index].dispose();
+              questionControllers.removeAt(index);
+            });
+          }
 
-    // 날짜 파싱 (YYYY.MM.DD 형식)
-    DateTime date;
-    try {
-      final dateParts = _dateController.text.trim().split('.');
-      if (dateParts.length == 3) {
-        date = DateTime(
-          int.parse(dateParts[0]),
-          int.parse(dateParts[1]),
-          int.parse(dateParts[2]),
-        );
-      } else {
-        // 파싱 실패 시 기존 날짜 또는 현재 날짜 사용
-        date = widget.review?.date ?? DateTime.now();
-      }
-    } catch (e) {
-      // 파싱 실패 시 기존 날짜 또는 현재 날짜 사용
-      date = widget.review?.date ?? DateTime.now();
-    }
+          Future<void> selectDate() async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: review?.date ?? DateTime.now(),
+              firstDate: DateTime.now().subtract(const Duration(days: 365)),
+              lastDate: DateTime.now(),
+              locale: const Locale('ko', 'KR'),
+            );
+            if (picked != null) {
+              setState(() {
+                dateController.text = formatDate(picked);
+              });
+            }
+          }
 
-    Navigator.pop(context, {
-      'id': widget.review?.id,
-      'date': date,
-      'type': _typeController.text.trim(),
-      'questions': questions,
-      'review': _reviewController.text.trim(),
-      'rating': _rating,
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StatefulBuilder(
-      builder: (context, setDialogState) => AlertDialog(
-        title: Text(
-          _isEdit ? '면접 후기 수정' : AppStrings.writeInterviewReview,
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _dateController,
-                decoration: InputDecoration(
-                  labelText: AppStrings.interviewDate,
-                  hintText: AppStrings.selectDate,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                ),
-                readOnly: true,
-                onTap: _selectDate,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _typeController,
-                decoration: InputDecoration(
-                  labelText: AppStrings.interviewType,
-                  hintText: '예: 1차 면접, 2차 면접, 최종 면접',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                AppStrings.interviewQuestions,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 날짜 선택
+                TextField(
+                  controller: dateController,
+                  decoration: InputDecoration(
+                    labelText: AppStrings.interviewDate,
+                    hintText: AppStrings.selectDate,
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
-              ),
-              const SizedBox(height: 8),
-              ...List.generate(
-                _questionControllers.length,
-                (i) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: TextField(
-                    controller: _questionControllers[i],
-                    decoration: InputDecoration(
-                      hintText: '질문 ${i + 1}',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
                       ),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.delete_outline),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    suffixIcon: const Icon(Icons.calendar_today),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                  readOnly: true,
+                  onTap: selectDate,
+                ),
+                const SizedBox(height: 20),
+                // 면접 유형
+                TextField(
+                  controller: typeController,
+                  decoration: InputDecoration(
+                    labelText: AppStrings.interviewType,
+                    hintText: '예: 1차 면접, 2차 면접, 최종 면접',
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // 면접 질문
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppStrings.interviewQuestions,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: addQuestion,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(AppStrings.addInterviewQuestion),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...List.generate(
+                  questionControllers.length,
+                  (i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextField(
+                      controller: questionControllers[i],
+                      decoration: InputDecoration(
+                        hintText: '질문 ${i + 1}',
+                        filled: true,
+                        fillColor: AppColors.background,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade200,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 20),
+                          onPressed: () => removeQuestion(i),
+                          color: AppColors.error,
+                        ),
+                        contentPadding: const EdgeInsets.all(20),
+                      ),
+                    ),
+                  ),
+                ),
+                if (questionControllers.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '면접 질문이 없습니다. 질문을 추가해보세요.',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                // 면접 후기
+                Text(
+                  AppStrings.interviewReviewText,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: reviewController,
+                  maxLines: null,
+                  minLines: 6,
+                  textInputAction: TextInputAction.newline,
+                  decoration: InputDecoration(
+                    hintText: '면접 분위기, 느낀 점, 개선할 점 등을 작성하세요',
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // 별점 평가
+                Text(
+                  AppStrings.rating,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      5,
+                      (i) => IconButton(
+                        icon: Icon(
+                          i < rating ? Icons.star : Icons.star_border,
+                          color: AppColors.warning,
+                          size: 40,
+                        ),
                         onPressed: () {
-                          setDialogState(() {
-                            _removeQuestion(i);
+                          setState(() {
+                            rating = i + 1;
                           });
                         },
+                        padding: const EdgeInsets.all(8),
                       ),
                     ),
                   ),
                 ),
-              ),
-              TextButton.icon(
-                onPressed: () {
-                  setDialogState(() {
-                    _addQuestion();
-                  });
-                },
-                icon: const Icon(Icons.add),
-                label: const Text(AppStrings.addInterviewQuestion),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                AppStrings.interviewReviewText,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _reviewController,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: '면접 분위기, 느낀 점, 개선할 점 등을 작성하세요',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                AppStrings.rating,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  5,
-                  (i) => IconButton(
-                    icon: Icon(
-                      i < _rating ? Icons.star : Icons.star_border,
-                      color: AppColors.warning,
-                      size: 32,
-                    ),
-                    onPressed: () {
-                      setDialogState(() {
-                        _rating = i + 1;
-                      });
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: _save,
-            child: const Text(AppStrings.save),
-          ),
-        ],
+              ],
+            ),
+          );
+        },
       ),
+      actions: ModernBottomSheetActions(
+        confirmText: AppStrings.save,
+        onConfirm: () {
+          // 질문 리스트 업데이트
+          final questionsList = questionControllers
+              .map((c) => c.text.trim())
+              .where((q) => q.isNotEmpty)
+              .toList();
+
+          // 날짜 파싱 (YYYY.MM.DD 형식)
+          DateTime date;
+          try {
+            final dateParts = dateController.text.trim().split('.');
+            if (dateParts.length == 3) {
+              date = DateTime(
+                int.parse(dateParts[0]),
+                int.parse(dateParts[1]),
+                int.parse(dateParts[2]),
+              );
+            } else {
+              date = review?.date ?? DateTime.now();
+            }
+          } catch (e) {
+            date = review?.date ?? DateTime.now();
+          }
+
+          // 컨트롤러 정리
+          dateController.dispose();
+          typeController.dispose();
+          reviewController.dispose();
+          for (var controller in questionControllers) {
+            controller.dispose();
+          }
+
+          Navigator.pop(context, {
+            'id': review?.id,
+            'date': date,
+            'type': typeController.text.trim(),
+            'questions': questionsList,
+            'review': reviewController.text.trim(),
+            'rating': rating,
+          });
+        },
+      ),
+      isScrollControlled: true,
     );
   }
 }
-

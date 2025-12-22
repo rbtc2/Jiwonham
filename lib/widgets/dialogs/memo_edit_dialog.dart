@@ -4,139 +4,78 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
+import 'modern_bottom_sheet.dart';
 
-class MemoEditDialog extends StatefulWidget {
-  final String? initialMemo;
-
-  const MemoEditDialog({
-    super.key,
-    this.initialMemo,
-  });
-
+class MemoEditDialog {
   static Future<String?> show(
     BuildContext context, {
     String? initialMemo,
   }) {
-    return showDialog<String>(
+    final controller = TextEditingController(text: initialMemo ?? '');
+    final focusNode = FocusNode();
+
+    return ModernBottomSheet.showCustom<String>(
       context: context,
-      builder: (context) => MemoEditDialog(initialMemo: initialMemo),
-    );
-  }
-
-  @override
-  State<MemoEditDialog> createState() => _MemoEditDialogState();
-}
-
-class _MemoEditDialogState extends State<MemoEditDialog> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialMemo ?? '');
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+      header: const ModernBottomSheetHeader(
+        title: AppStrings.editMemo,
+        icon: Icons.note_outlined,
+        iconColor: AppColors.primary,
       ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 600,
-          maxHeight: MediaQuery.of(context).size.height * 0.8,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 헤더 영역
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    AppStrings.editMemo,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          // 자동 포커스
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (focusNode.canRequestFocus) {
+              focusNode.requestFocus();
+            }
+          });
+
+          return TextField(
+            controller: controller,
+            focusNode: focusNode,
+            maxLines: null,
+            minLines: 12,
+            textInputAction: TextInputAction.newline,
+            style: Theme.of(context).textTheme.bodyLarge,
+            decoration: InputDecoration(
+              hintText: '메모를 입력하세요\n\n지원 과정 중 빠르게 기록하는 메모입니다.',
+              hintStyle: TextStyle(
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
+                height: 1.5,
               ),
-            ),
-            const Divider(height: 1),
-            // 입력 영역
-            Flexible(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: TextField(
-                  controller: _controller,
-                  maxLines: null,
-                  minLines: 15,
-                  textInputAction: TextInputAction.newline,
-                  decoration: InputDecoration(
-                    hintText: '메모를 입력하세요',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.all(16),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                  ),
-                  style: const TextStyle(fontSize: 16),
-                  autofocus: true,
+              filled: true,
+              fillColor: AppColors.background,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: Colors.grey.shade200,
+                  width: 1,
                 ),
               ),
-            ),
-            // 액션 버튼 영역
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text(AppStrings.cancel),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context, _controller.text);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                    ),
-                    child: const Text(AppStrings.save),
-                  ),
-                ],
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
               ),
+              contentPadding: const EdgeInsets.all(20),
             ),
-          ],
-        ),
+          );
+        },
+      ),
+      actions: ModernBottomSheetActions(
+        confirmText: AppStrings.save,
+        onConfirm: () {
+          controller.dispose();
+          focusNode.dispose();
+          Navigator.pop(context, controller.text);
+        },
       ),
     );
   }
 }
-
-
-
-
-
-

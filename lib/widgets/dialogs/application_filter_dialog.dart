@@ -2,171 +2,127 @@
 // 공고 목록에서 상태 및 마감일 필터를 설정하는 다이얼로그
 
 import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../models/application_status.dart';
+import 'modern_bottom_sheet.dart';
 
-class ApplicationFilterDialog extends StatefulWidget {
-  final ApplicationStatus? initialStatusFilter;
-  final String? initialDeadlineFilter;
-
-  const ApplicationFilterDialog({
-    super.key,
-    this.initialStatusFilter,
-    this.initialDeadlineFilter,
-  });
-
+class ApplicationFilterDialog {
   static Future<Map<String, dynamic>?> show(
     BuildContext context, {
     ApplicationStatus? initialStatusFilter,
     String? initialDeadlineFilter,
   }) {
-    return showDialog<Map<String, dynamic>>(
+    ApplicationStatus? selectedStatus = initialStatusFilter;
+    String? selectedDeadline = initialDeadlineFilter;
+
+    return ModernBottomSheet.showCustom<Map<String, dynamic>>(
       context: context,
-      builder: (context) => ApplicationFilterDialog(
-        initialStatusFilter: initialStatusFilter,
-        initialDeadlineFilter: initialDeadlineFilter,
+      header: const ModernBottomSheetHeader(
+        title: AppStrings.filter,
+        icon: Icons.filter_list,
+        iconColor: AppColors.primary,
       ),
-    );
-  }
-
-  @override
-  State<ApplicationFilterDialog> createState() =>
-      _ApplicationFilterDialogState();
-}
-
-class _ApplicationFilterDialogState extends State<ApplicationFilterDialog> {
-  late ApplicationStatus? _selectedStatus;
-  late String? _selectedDeadline;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedStatus = widget.initialStatusFilter;
-    _selectedDeadline = widget.initialDeadlineFilter;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasActiveFilters =
-        widget.initialStatusFilter != null ||
-        widget.initialDeadlineFilter != null;
-
-    return AlertDialog(
-      title: const Text(AppStrings.filter),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '상태',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            RadioGroup<ApplicationStatus?>(
-              groupValue: _selectedStatus,
-              onChanged: (value) {
-                setState(() {
-                  _selectedStatus = value;
-                });
-              },
-              child: Column(
-                children: [
-                  ...ApplicationStatus.values.map((status) {
-                    return RadioListTile<ApplicationStatus>(
-                      title: Text(_getStatusText(status)),
-                      value: status,
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '상태',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              RadioGroup<ApplicationStatus?>(
+                groupValue: selectedStatus,
+                onChanged: (value) {
+                  setState(() {
+                    selectedStatus = value;
+                  });
+                },
+                child: Column(
+                  children: [
+                    ...ApplicationStatus.values.map((status) {
+                      return RadioListTile<ApplicationStatus>(
+                        title: Text(_getStatusText(status)),
+                        value: status,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    }),
+                    RadioListTile<ApplicationStatus?>(
+                      title: const Text('전체'),
+                      value: null,
                       contentPadding: EdgeInsets.zero,
-                    );
-                  }),
-                  RadioListTile<ApplicationStatus?>(
-                    title: const Text('전체'),
-                    value: null,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '마감일',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            RadioGroup<String?>(
-              groupValue: _selectedDeadline,
-              onChanged: (value) {
-                setState(() {
-                  _selectedDeadline = value;
-                });
-              },
-              child: Column(
-                children: [
-                  RadioListTile<String?>(
-                    title: const Text('전체'),
-                    value: null,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  RadioListTile<String?>(
-                    title: const Text(AppStrings.deadlineWithin7Days),
-                    value: AppStrings.deadlineWithin7Days,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  RadioListTile<String?>(
-                    title: const Text(AppStrings.deadlineWithin3Days),
-                    value: AppStrings.deadlineWithin3Days,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  RadioListTile<String?>(
-                    title: const Text(AppStrings.deadlinePassed),
-                    value: AppStrings.deadlinePassed,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ],
+              const SizedBox(height: 24),
+              Text(
+                '마감일',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 12),
+              RadioGroup<String?>(
+                groupValue: selectedDeadline,
+                onChanged: (value) {
+                  setState(() {
+                    selectedDeadline = value;
+                  });
+                },
+                child: Column(
+                  children: [
+                    RadioListTile<String?>(
+                      title: const Text('전체'),
+                      value: null,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    RadioListTile<String?>(
+                      title: const Text(AppStrings.deadlineWithin7Days),
+                      value: AppStrings.deadlineWithin7Days,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    RadioListTile<String?>(
+                      title: const Text(AppStrings.deadlineWithin3Days),
+                      value: AppStrings.deadlineWithin3Days,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    RadioListTile<String?>(
+                      title: const Text(AppStrings.deadlinePassed),
+                      value: AppStrings.deadlinePassed,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
-      actions: [
-        // 필터 초기화 버튼 (필터가 적용되어 있을 때만 활성화)
-        if (hasActiveFilters)
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _selectedStatus = null;
-                _selectedDeadline = null;
-              });
+      actions: ModernBottomSheetActions(
+        cancelText: AppStrings.cancel,
+        confirmText: AppStrings.applyFilter,
+        onCancel: () => Navigator.pop(context),
+        onConfirm: () {
+          Navigator.pop(
+            context,
+            {
+              'status': selectedStatus,
+              'deadline': selectedDeadline,
             },
-            child: const Text(AppStrings.resetFilter),
-          ),
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text(AppStrings.cancel),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(
-              context,
-              {
-                'status': _selectedStatus,
-                'deadline': _selectedDeadline,
-              },
-            );
-          },
-          child: const Text(AppStrings.applyFilter),
-        ),
-      ],
+          );
+        },
+      ),
+      isScrollControlled: true,
     );
   }
 
-  String _getStatusText(ApplicationStatus status) {
+  static String _getStatusText(ApplicationStatus status) {
     switch (status) {
       case ApplicationStatus.notApplied:
         return AppStrings.notApplied;
@@ -181,4 +137,3 @@ class _ApplicationFilterDialogState extends State<ApplicationFilterDialog> {
     }
   }
 }
-
