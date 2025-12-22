@@ -50,3 +50,5 @@ class EmptyApplicationList extends StatelessWidget {
 }
 
 
+
+

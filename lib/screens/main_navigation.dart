@@ -7,7 +7,6 @@ import '../constants/app_strings.dart';
 import 'home/home_screen.dart';
 import 'applications/applications_screen.dart';
 import 'calendar/calendar_screen.dart';
-import 'statistics/statistics_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -38,7 +37,6 @@ class MainNavigationState extends State<MainNavigation> {
       const HomeScreen(),
       ApplicationsScreen(key: _applicationsScreenKey),
       CalendarScreen(key: _calendarScreenKey),
-      const StatisticsScreen(),
     ];
   }
 
@@ -92,11 +90,6 @@ class MainNavigationState extends State<MainNavigation> {
             icon: Icon(Icons.calendar_today_outlined),
             activeIcon: Icon(Icons.calendar_today),
             label: AppStrings.navCalendar,
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: AppStrings.navStatistics,
           ),
         ],
       ),
