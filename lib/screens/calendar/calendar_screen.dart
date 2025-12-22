@@ -12,7 +12,9 @@ import 'widgets/calendar_legend.dart';
 import 'widgets/calendar_schedule_list.dart';
 import 'widgets/monthly_calendar_view.dart';
 import 'widgets/weekly_calendar_view.dart';
+import 'widgets/month_year_picker.dart';
 import '../../widgets/modern_card.dart';
+import '../../widgets/dialogs/modern_bottom_sheet.dart';
 
 enum CalendarView { monthly, weekly }
 
@@ -93,11 +95,25 @@ class CalendarScreenState extends State<CalendarScreen>
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              _getMonthYearText(),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+            GestureDetector(
+              onTap: () => _showMonthYearPicker(context),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _getMonthYearText(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_drop_down,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                ],
               ),
             ),
           ],
@@ -288,6 +304,45 @@ class CalendarScreenState extends State<CalendarScreen>
 
   String _getMonthYearText() {
     return '${_currentMonth.year}년 ${_currentMonth.month}월';
+  }
+
+  // 년/월 선택 다이얼로그 표시
+  Future<void> _showMonthYearPicker(BuildContext context) async {
+    final pickerKey = GlobalKey<State<MonthYearPicker>>();
+    
+    await ModernBottomSheet.showCustom(
+      context: context,
+      header: ModernBottomSheetHeader(
+        title: '날짜 선택',
+        icon: Icons.calendar_today_outlined,
+        iconColor: AppColors.primary,
+      ),
+      content: MonthYearPicker(
+        key: pickerKey,
+        initialYear: _currentMonth.year,
+        initialMonth: _currentMonth.month,
+        onSelected: (year, month) {
+          // 이 콜백은 실시간 업데이트용 (필요시 사용)
+        },
+      ),
+      actions: ModernBottomSheetActions(
+        cancelText: '취소',
+        confirmText: '확인',
+        onCancel: () => Navigator.pop(context),
+        onConfirm: () {
+          final state = pickerKey.currentState;
+          if (state != null && state is MonthYearPickerState) {
+            final year = state.selectedYear;
+            final month = state.selectedMonth;
+            setState(() {
+              _currentMonth = DateTime(year, month);
+            });
+            Navigator.pop(context);
+          }
+        },
+      ),
+      maxHeight: MediaQuery.of(context).size.height * 0.7,
+    );
   }
 
   Widget _buildViewToggle(BuildContext context) {
