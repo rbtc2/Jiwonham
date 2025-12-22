@@ -37,66 +37,69 @@ class CalendarScheduleList extends StatelessWidget {
     final dateText = '${_formatDate(selectedDate)} ($dayOfWeek)';
 
     return ModernCard(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ModernSectionHeader(
-            title: dateText,
-            icon: Icons.event_outlined,
-            iconColor: AppColors.primary,
-          ),
-          const SizedBox(height: 20),
-          if (events.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
+      padding: const EdgeInsets.all(12.0),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ModernSectionHeader(
+              title: dateText,
+              icon: Icons.event_outlined,
+              iconColor: AppColors.primary,
+            ),
+            const SizedBox(height: 12),
+            if (events.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.event_busy_outlined,
+                          size: 28,
+                          color: AppColors.primary,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.event_busy_outlined,
-                        size: 32,
-                        color: AppColors.primary,
+                      const SizedBox(height: 8),
+                      Text(
+                        AppStrings.noSchedule,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      AppStrings.noSchedule,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 2),
+                      Text(
+                        '이 날짜에는 일정이 없습니다',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '이 날짜에는 일정이 없습니다',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            )
-          else
-            ...events.map((event) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: CalendarScheduleItem(
-                  event: event,
-                  eventTitle: getEventTitle(event),
-                  onTap: () => onEventTap(event),
-                ),
-              );
-            }),
-        ],
+              )
+            else
+              ...events.map((event) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: CalendarScheduleItem(
+                    event: event,
+                    eventTitle: getEventTitle(event),
+                    onTap: () => onEventTap(event),
+                  ),
+                );
+              }),
+          ],
+        ),
       ),
     );
   }
