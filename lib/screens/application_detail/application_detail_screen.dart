@@ -15,6 +15,12 @@ import '../../models/interview_question.dart';
 import '../../models/interview_checklist.dart';
 import '../../models/notification_settings.dart';
 import '../../widgets/dialogs/notification_settings_dialog.dart';
+import '../../widgets/dialogs/add_interview_question_dialog.dart';
+import '../../widgets/dialogs/edit_interview_question_dialog.dart';
+import '../../widgets/dialogs/interview_answer_dialog.dart';
+import '../../widgets/dialogs/add_checklist_item_dialog.dart';
+import '../../widgets/dialogs/edit_checklist_item_dialog.dart';
+import '../../widgets/dialogs/interview_schedule_dialog.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 import 'application_detail_view_model.dart';
 
@@ -640,8 +646,34 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
-              onPressed: () {
-                _showAddInterviewQuestionDialog(context, viewModel);
+              onPressed: () async {
+                await AddInterviewQuestionDialog.show(
+                  context,
+                  onSave: (question) async {
+                    final success = await viewModel.addInterviewQuestion(
+                      question,
+                    );
+                    if (success && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('면접 질문이 추가되었습니다.'),
+                          backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    } else if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            viewModel.errorMessage ?? '추가에 실패했습니다.',
+                          ),
+                          backgroundColor: AppColors.error,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                );
               },
               icon: const Icon(Icons.add, size: 18),
               label: Text(AppStrings.addInterviewPrepQuestion),
@@ -725,12 +757,33 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                 children: [
                   IconButton(
                     icon: const Icon(Icons.edit, size: 18),
-                    onPressed: () {
-                      _showEditInterviewQuestionDialog(
+                    onPressed: () async {
+                      await EditInterviewQuestionDialog.show(
                         context,
-                        question,
-                        index,
-                        viewModel,
+                        initialQuestion: question.question,
+                        onSave: (updatedQuestion) async {
+                          final success = await viewModel
+                              .updateInterviewQuestion(index, updatedQuestion);
+                          if (success && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('면접 질문이 수정되었습니다.'),
+                                backgroundColor: AppColors.success,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          } else if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  viewModel.errorMessage ?? '수정에 실패했습니다.',
+                                ),
+                                backgroundColor: AppColors.error,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
                       );
                     },
                     padding: EdgeInsets.zero,
@@ -773,8 +826,37 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           if (question.hasAnswer) ...[
             const SizedBox(height: 8),
             InkWell(
-              onTap: () {
-                _showInterviewAnswerDialog(context, question, index, viewModel);
+              onTap: () async {
+                await InterviewAnswerDialog.show(
+                  context,
+                  question: question.question,
+                  initialAnswer: question.answer ?? '',
+                  onSave: (answer) async {
+                    final success = await viewModel.updateInterviewAnswer(
+                      index,
+                      answer,
+                    );
+                    if (success && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('면접 답변이 저장되었습니다.'),
+                          backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    } else if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            viewModel.errorMessage ?? '저장에 실패했습니다.',
+                          ),
+                          backgroundColor: AppColors.error,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                );
               },
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -807,7 +889,36 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             const SizedBox(height: 4),
             TextButton(
               onPressed: () {
-                _showInterviewAnswerDialog(context, question, index, viewModel);
+                InterviewAnswerDialog.show(
+                  context,
+                  question: question.question,
+                  initialAnswer: question.answer ?? '',
+                  onSave: (answer) async {
+                    final success = await viewModel.updateInterviewAnswer(
+                      index,
+                      answer,
+                    );
+                    if (success && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('면접 답변이 저장되었습니다.'),
+                          backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    } else if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            viewModel.errorMessage ?? '저장에 실패했습니다.',
+                          ),
+                          backgroundColor: AppColors.error,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                );
               },
               child: Text(AppStrings.writeInterviewAnswer),
             ),
@@ -835,8 +946,32 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
-              onPressed: () {
-                _showAddChecklistItemDialog(context, viewModel);
+              onPressed: () async {
+                await AddChecklistItemDialog.show(
+                  context,
+                  onSave: (item) async {
+                    final success = await viewModel.addChecklistItem(item);
+                    if (success && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('체크리스트 항목이 추가되었습니다.'),
+                          backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    } else if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            viewModel.errorMessage ?? '추가에 실패했습니다.',
+                          ),
+                          backgroundColor: AppColors.error,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                );
               },
               icon: const Icon(Icons.add, size: 18),
               label: Text(AppStrings.addChecklistItem),
@@ -921,8 +1056,34 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           ),
           IconButton(
             icon: const Icon(Icons.edit, size: 18),
-            onPressed: () {
-              _showEditChecklistItemDialog(context, item, index, viewModel);
+            onPressed: () async {
+              await EditChecklistItemDialog.show(
+                context,
+                initialItem: item.item,
+                onSave: (updatedItem) async {
+                  final success = await viewModel.updateChecklistItem(
+                    index,
+                    updatedItem,
+                  );
+                  if (success && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('체크리스트 항목이 수정되었습니다.'),
+                        backgroundColor: AppColors.success,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(viewModel.errorMessage ?? '수정에 실패했습니다.'),
+                        backgroundColor: AppColors.error,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+              );
             },
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -976,8 +1137,38 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             TextButton(
-              onPressed: () {
-                _showInterviewScheduleDialog(context, viewModel);
+              onPressed: () async {
+                await InterviewScheduleDialog.show(
+                  context,
+                  initialDate: viewModel.application.interviewSchedule?.date,
+                  initialLocation:
+                      viewModel.application.interviewSchedule?.location,
+                  onSave: (date, location) async {
+                    final success = await viewModel.updateInterviewSchedule(
+                      date: date,
+                      location: location,
+                    );
+                    if (success && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('면접 일정이 저장되었습니다.'),
+                          backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    } else if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            viewModel.errorMessage ?? '저장에 실패했습니다.',
+                          ),
+                          backgroundColor: AppColors.error,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                );
               },
               child: Text(
                 viewModel.application.interviewSchedule?.hasSchedule == true
@@ -1935,401 +2126,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
     );
   }
 
-  // 면접 질문 추가 다이얼로그
-  void _showAddInterviewQuestionDialog(
-    BuildContext context,
-    ApplicationDetailViewModel viewModel,
-  ) {
-    final questionController = TextEditingController();
-    final focusNode = FocusNode();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 드래그 핸들
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                // 제목
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.help_outline,
-                        color: AppColors.primary,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        AppStrings.addInterviewPrepQuestion,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // 입력 필드
-                TextField(
-                  controller: questionController,
-                  focusNode: focusNode,
-                  autofocus: true,
-                  maxLines: null,
-                  minLines: 6,
-                  textInputAction: TextInputAction.newline,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  decoration: InputDecoration(
-                    hintText:
-                        '예상 면접 질문을 입력하세요\n\n예: "자기소개를 해주세요"\n예: "이 회사를 지원한 이유는 무엇인가요?"',
-                    hintStyle: TextStyle(
-                      color: AppColors.textSecondary.withValues(alpha: 0.6),
-                      height: 1.5,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.background,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade200,
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.all(20),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // 버튼
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          AppStrings.cancel,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (questionController.text.trim().isNotEmpty) {
-                            final success = await viewModel
-                                .addInterviewQuestion(
-                                  questionController.text.trim(),
-                                );
-                            if (success && mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('면접 질문이 추가되었습니다.'),
-                                  backgroundColor: AppColors.success,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            } else if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    viewModel.errorMessage ?? '추가에 실패했습니다.',
-                                  ),
-                                  backgroundColor: AppColors.error,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          AppStrings.save,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ).then((_) {
-      focusNode.dispose();
-    });
-  }
-
-  // 면접 질문 수정 다이얼로그
-  void _showEditInterviewQuestionDialog(
-    BuildContext context,
-    InterviewQuestion question,
-    int index,
-    ApplicationDetailViewModel viewModel,
-  ) {
-    final questionController = TextEditingController(text: question.question);
-    final focusNode = FocusNode();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 드래그 핸들
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                // 제목
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.edit_outlined,
-                        color: AppColors.primary,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        AppStrings.editInterviewPrepQuestion,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // 입력 필드
-                TextField(
-                  controller: questionController,
-                  focusNode: focusNode,
-                  autofocus: true,
-                  maxLines: null,
-                  minLines: 6,
-                  textInputAction: TextInputAction.newline,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  decoration: InputDecoration(
-                    hintText:
-                        '예상 면접 질문을 입력하세요\n\n예: "자기소개를 해주세요"\n예: "이 회사를 지원한 이유는 무엇인가요?"',
-                    hintStyle: TextStyle(
-                      color: AppColors.textSecondary.withValues(alpha: 0.6),
-                      height: 1.5,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.background,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade200,
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.all(20),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // 버튼
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          AppStrings.cancel,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (questionController.text.trim().isNotEmpty) {
-                            final success = await viewModel
-                                .updateInterviewQuestion(
-                                  index,
-                                  questionController.text.trim(),
-                                );
-                            if (success && mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('면접 질문이 수정되었습니다.'),
-                                  backgroundColor: AppColors.success,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            } else if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    viewModel.errorMessage ?? '수정에 실패했습니다.',
-                                  ),
-                                  backgroundColor: AppColors.error,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          AppStrings.save,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ).then((_) {
-      focusNode.dispose();
-    });
-  }
-
-  // 면접 답변 작성/수정 다이얼로그
-  void _showInterviewAnswerDialog(
+  // 체크리스트 항목 추가 다이얼로그
+  void _showAddChecklistItemDialog(
     BuildContext context,
     InterviewQuestion question,
     int index,
