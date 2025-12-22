@@ -34,7 +34,9 @@ class CalendarScheduleList extends StatelessWidget {
     final dayOfWeek = _getDayOfWeek(selectedDate);
 
     return Container(
-      height: 200,
+      constraints: const BoxConstraints(
+        minHeight: 250,
+      ),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,

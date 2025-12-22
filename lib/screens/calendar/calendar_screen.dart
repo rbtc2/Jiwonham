@@ -120,16 +120,21 @@ class CalendarScreenState extends State<CalendarScreen>
               children: [
                 // 뷰 전환 버튼
                 _buildViewToggle(context),
-                // 캘린더
-                Expanded(child: _buildCalendar(context)),
+                // 캘린더 - 필요한 만큼만 공간 차지
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: _buildCalendar(context),
+                ),
                 // 범례
                 const CalendarLegend(),
-                // 선택된 날짜의 일정 목록
-                CalendarScheduleList(
-                  selectedDate: _selectedDate,
-                  events: _viewModel.getEventsForDate(_selectedDate),
-                  getEventTitle: _viewModel.getEventTitle,
-                  onEventTap: (event) => _handleEventTap(event),
+                // 선택된 날짜의 일정 목록 - 남은 공간을 모두 차지
+                Expanded(
+                  child: CalendarScheduleList(
+                    selectedDate: _selectedDate,
+                    events: _viewModel.getEventsForDate(_selectedDate),
+                    getEventTitle: _viewModel.getEventTitle,
+                    onEventTap: (event) => _handleEventTap(event),
+                  ),
                 ),
               ],
             ),
