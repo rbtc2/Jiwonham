@@ -79,7 +79,6 @@ class AppStrings {
   static const String weekly = '주간';
   static const String daily = '일간';
 
-
   // Search & Filter
   static const String searchPlaceholder = '회사명, 직무명 검색...';
   static const String applyFilter = '필터 적용';
@@ -123,13 +122,30 @@ class AppStrings {
   static const String rating = '평가';
   static const String addInterviewQuestion = '질문 추가';
 
+  // Interview Preparation
+  static const String interviewPreparation = '면접 준비';
+  static const String interviewQuestionsPrep = '면접 질문 준비';
+  static const String addInterviewPrepQuestion = '질문 추가';
+  static const String editInterviewPrepQuestion = '질문 수정';
+  static const String deleteInterviewPrepQuestion = '질문 삭제';
+  static const String writeInterviewAnswer = '답변 작성';
+  static const String editInterviewAnswer = '답변 수정';
+  static const String noInterviewQuestions = '면접 질문이 없습니다. 질문을 추가해보세요.';
+  static const String interviewChecklist = '체크리스트';
+  static const String addChecklistItem = '항목 추가';
+  static const String editChecklistItem = '항목 수정';
+  static const String deleteChecklistItem = '항목 삭제';
+  static const String noChecklistItems = '체크리스트 항목이 없습니다. 항목을 추가해보세요.';
+  static const String interviewSchedule = '면접 일정';
+  static const String interviewLocation = '면접 장소';
+  static const String noInterviewSchedule = '면접 일정이 설정되지 않았습니다.';
+
   // Calendar Screen
   static const String noSchedule = '일정이 없습니다';
   static const String deadlineEvent = '마감일';
   static const String announcementEvent = '발표일';
   static const String interviewEvent = '면접';
   static const String legend = '범례';
-
 
   // Notification Settings Screen
   static const String enableNotifications = '알림 활성화';

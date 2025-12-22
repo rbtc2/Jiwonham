@@ -6,6 +6,9 @@ import 'next_stage.dart';
 import 'cover_letter_question.dart';
 import 'notification_settings.dart';
 import 'interview_review.dart';
+import 'interview_question.dart';
+import 'interview_checklist.dart';
+import 'interview_schedule.dart';
 
 class Application {
   final String id;
@@ -17,6 +20,9 @@ class Application {
   final List<NextStage> nextStages; // 다음 전형 일정 리스트
   final List<CoverLetterQuestion> coverLetterQuestions; // 자기소개서 문항 리스트
   final List<InterviewReview> interviewReviews; // 면접 후기 리스트
+  final List<InterviewQuestion> interviewQuestions; // 면접 질문 준비 리스트
+  final List<InterviewChecklist> interviewChecklist; // 면접 체크리스트 리스트
+  final InterviewSchedule? interviewSchedule; // 면접 일정 정보
   final String? memo; // 기타 메모
   final ApplicationStatus status; // 상태
   final bool isApplied; // 지원 완료 체크
@@ -34,6 +40,9 @@ class Application {
     List<NextStage>? nextStages,
     List<CoverLetterQuestion>? coverLetterQuestions,
     List<InterviewReview>? interviewReviews,
+    List<InterviewQuestion>? interviewQuestions,
+    List<InterviewChecklist>? interviewChecklist,
+    this.interviewSchedule,
     this.memo,
     this.status = ApplicationStatus.notApplied,
     this.isApplied = false,
@@ -43,6 +52,8 @@ class Application {
   }) : nextStages = nextStages ?? [],
        coverLetterQuestions = coverLetterQuestions ?? [],
        interviewReviews = interviewReviews ?? [],
+       interviewQuestions = interviewQuestions ?? [],
+       interviewChecklist = interviewChecklist ?? [],
        notificationSettings = notificationSettings ?? NotificationSettings(),
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
@@ -61,6 +72,9 @@ class Application {
           .map((q) => q.toJson())
           .toList(),
       'interviewReviews': interviewReviews.map((r) => r.toJson()).toList(),
+      'interviewQuestions': interviewQuestions.map((q) => q.toJson()).toList(),
+      'interviewChecklist': interviewChecklist.map((c) => c.toJson()).toList(),
+      'interviewSchedule': interviewSchedule?.toJson(),
       'memo': memo,
       'status': status.name,
       'isApplied': isApplied,
@@ -98,6 +112,19 @@ class Application {
               ?.map((e) => InterviewReview.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      interviewQuestions:
+          (json['interviewQuestions'] as List<dynamic>?)
+              ?.map((e) => InterviewQuestion.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      interviewChecklist:
+          (json['interviewChecklist'] as List<dynamic>?)
+              ?.map((e) => InterviewChecklist.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      interviewSchedule: json['interviewSchedule'] != null
+          ? InterviewSchedule.fromJson(json['interviewSchedule'] as Map<String, dynamic>)
+          : null,
       memo: json['memo'] as String?,
       status: ApplicationStatus.values.firstWhere(
         (e) => e.name == json['status'],
@@ -129,6 +156,9 @@ class Application {
     List<NextStage>? nextStages,
     List<CoverLetterQuestion>? coverLetterQuestions,
     List<InterviewReview>? interviewReviews,
+    List<InterviewQuestion>? interviewQuestions,
+    List<InterviewChecklist>? interviewChecklist,
+    InterviewSchedule? interviewSchedule,
     String? memo,
     ApplicationStatus? status,
     bool? isApplied,
@@ -146,6 +176,9 @@ class Application {
       nextStages: nextStages ?? this.nextStages,
       coverLetterQuestions: coverLetterQuestions ?? this.coverLetterQuestions,
       interviewReviews: interviewReviews ?? this.interviewReviews,
+      interviewQuestions: interviewQuestions ?? this.interviewQuestions,
+      interviewChecklist: interviewChecklist ?? this.interviewChecklist,
+      interviewSchedule: interviewSchedule ?? this.interviewSchedule,
       memo: memo ?? this.memo,
       status: status ?? this.status,
       isApplied: isApplied ?? this.isApplied,

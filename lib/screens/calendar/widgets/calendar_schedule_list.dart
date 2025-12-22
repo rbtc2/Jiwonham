@@ -34,10 +34,7 @@ class CalendarScheduleList extends StatelessWidget {
     final dayOfWeek = _getDayOfWeek(selectedDate);
 
     return Container(
-      constraints: const BoxConstraints(
-        minHeight: 250,
-      ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: const BorderRadius.only(
@@ -47,6 +44,7 @@ class CalendarScheduleList extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             '${_formatDate(selectedDate)} ($dayOfWeek)',
@@ -55,28 +53,26 @@ class CalendarScheduleList extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Expanded(
-            child: events.isEmpty
-                ? Center(
-                    child: Text(
-                      AppStrings.noSchedule,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: events.length,
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      return CalendarScheduleItem(
-                        event: event,
-                        eventTitle: getEventTitle(event),
-                        onTap: () => onEventTap(event),
-                      );
-                    },
+          if (events.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  AppStrings.noSchedule,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
                   ),
-          ),
+                ),
+              ),
+            )
+          else
+            ...events.map((event) {
+              return CalendarScheduleItem(
+                event: event,
+                eventTitle: getEventTitle(event),
+                onTap: () => onEventTap(event),
+              );
+            }),
         ],
       ),
     );

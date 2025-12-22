@@ -127,8 +127,8 @@ class CalendarScreenState extends State<CalendarScreen>
                 ),
                 // 범례
                 const CalendarLegend(),
-                // 선택된 날짜의 일정 목록 - 남은 공간을 모두 차지
-                Expanded(
+                // 선택된 날짜의 일정 목록 - 남은 공간을 차지
+                Flexible(
                   child: CalendarScheduleList(
                     selectedDate: _selectedDate,
                     events: _viewModel.getEventsForDate(_selectedDate),

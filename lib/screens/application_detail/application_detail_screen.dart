@@ -10,6 +10,9 @@ import '../../widgets/status_chip.dart';
 import '../../models/application.dart';
 import '../../models/application_status.dart';
 import '../../models/interview_review.dart';
+import '../../models/interview_question.dart';
+import '../../models/interview_checklist.dart';
+import '../../models/interview_schedule.dart';
 import '../../models/notification_settings.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/dialogs/notification_settings_dialog.dart';
@@ -201,8 +204,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             controller: _tabController,
             tabs: const [
               Tab(text: '정보'),
-              Tab(text: AppStrings.coverLetterAnswers),
-              Tab(text: AppStrings.interviewReview),
+              Tab(text: '서류 단계'),
+              Tab(text: '면접 단계'),
             ],
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
@@ -281,6 +284,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 면접 준비 섹션
+          _buildInterviewPreparationSection(context),
+          const SizedBox(height: 16),
           // 면접 후기 섹션
           _buildInterviewReviewSection(context),
           // 하단 패딩 추가
@@ -633,6 +639,385 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
           ],
         ),
       ),
+    );
+  }
+
+  // 면접 준비 섹션 빌드
+  Widget _buildInterviewPreparationSection(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppStrings.interviewPreparation,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // 면접 질문 준비
+            _buildInterviewQuestionsSection(context),
+            const SizedBox(height: 16),
+            // 체크리스트
+            _buildInterviewChecklistSection(context),
+            const SizedBox(height: 16),
+            // 면접 일정 정보
+            _buildInterviewScheduleSection(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 면접 질문 준비 섹션
+  Widget _buildInterviewQuestionsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              AppStrings.interviewQuestionsPrep,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                _showAddInterviewQuestionDialog(context);
+              },
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(AppStrings.addInterviewPrepQuestion),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_application.interviewQuestions.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppStrings.noInterviewQuestions,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...List.generate(_application.interviewQuestions.length, (index) {
+            final question = _application.interviewQuestions[index];
+            return _buildInterviewQuestionItem(context, question, index);
+          }),
+      ],
+    );
+  }
+
+  // 면접 질문 아이템
+  Widget _buildInterviewQuestionItem(
+    BuildContext context,
+    InterviewQuestion question,
+    int index,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  question.question,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 18),
+                    onPressed: () {
+                      _showEditInterviewQuestionDialog(context, question, index);
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    onPressed: () {
+                      _deleteInterviewQuestion(index);
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    color: AppColors.error,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (question.hasAnswer) ...[
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () {
+                _showInterviewAnswerDialog(context, question, index);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        question.answer!,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      AppStrings.editInterviewAnswer,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () {
+                _showInterviewAnswerDialog(context, question, index);
+              },
+              child: Text(AppStrings.writeInterviewAnswer),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // 체크리스트 섹션
+  Widget _buildInterviewChecklistSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              AppStrings.interviewChecklist,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                _showAddChecklistItemDialog(context);
+              },
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(AppStrings.addChecklistItem),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_application.interviewChecklist.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppStrings.noChecklistItems,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...List.generate(_application.interviewChecklist.length, (index) {
+            final item = _application.interviewChecklist[index];
+            return _buildChecklistItem(context, item, index);
+          }),
+      ],
+    );
+  }
+
+  // 체크리스트 아이템
+  Widget _buildChecklistItem(
+    BuildContext context,
+    InterviewChecklist item,
+    int index,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Checkbox(
+            value: item.isChecked,
+            onChanged: (value) {
+              _toggleChecklistItem(index, value ?? false);
+            },
+          ),
+          Expanded(
+            child: Text(
+              item.item,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                decoration: item.isChecked ? TextDecoration.lineThrough : null,
+                color: item.isChecked ? AppColors.textSecondary : null,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit, size: 18),
+            onPressed: () {
+              _showEditChecklistItemDialog(context, item, index);
+            },
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, size: 18),
+            onPressed: () {
+              _deleteChecklistItem(index);
+            },
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            color: AppColors.error,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 면접 일정 정보 섹션
+  Widget _buildInterviewScheduleSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              AppStrings.interviewSchedule,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                _showInterviewScheduleDialog(context);
+              },
+              child: Text(
+                _application.interviewSchedule?.hasSchedule == true
+                    ? '수정'
+                    : '설정',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_application.interviewSchedule?.hasSchedule != true)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppStrings.noInterviewSchedule,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_application.interviewSchedule?.date != null) ...[
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatDate(_application.interviewSchedule!.date!),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (_application.interviewSchedule?.location != null &&
+                    _application.interviewSchedule!.location!.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _application.interviewSchedule!.location!,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -1332,6 +1717,436 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
         ],
       ),
     );
+  }
+
+  // 면접 질문 추가 다이얼로그
+  void _showAddInterviewQuestionDialog(BuildContext context) {
+    final questionController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.addInterviewPrepQuestion),
+        content: TextField(
+          controller: questionController,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: '예상 면접 질문을 입력하세요',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (questionController.text.trim().isNotEmpty) {
+                _addInterviewQuestion(questionController.text.trim());
+                Navigator.pop(context);
+              }
+            },
+            child: const Text(AppStrings.save),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 면접 질문 수정 다이얼로그
+  void _showEditInterviewQuestionDialog(
+    BuildContext context,
+    InterviewQuestion question,
+    int index,
+  ) {
+    final questionController = TextEditingController(text: question.question);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.editInterviewPrepQuestion),
+        content: TextField(
+          controller: questionController,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: '예상 면접 질문을 입력하세요',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (questionController.text.trim().isNotEmpty) {
+                _updateInterviewQuestion(index, questionController.text.trim());
+                Navigator.pop(context);
+              }
+            },
+            child: const Text(AppStrings.save),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 면접 답변 작성/수정 다이얼로그
+  void _showInterviewAnswerDialog(
+    BuildContext context,
+    InterviewQuestion question,
+    int index,
+  ) {
+    final answerController = TextEditingController(text: question.answer ?? '');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(question.question),
+        content: SingleChildScrollView(
+          child: TextField(
+            controller: answerController,
+            maxLines: 10,
+            decoration: InputDecoration(
+              hintText: '답변을 입력하세요',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _updateInterviewAnswer(index, answerController.text.trim());
+              Navigator.pop(context);
+            },
+            child: const Text(AppStrings.save),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 체크리스트 항목 추가 다이얼로그
+  void _showAddChecklistItemDialog(BuildContext context) {
+    final itemController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.addChecklistItem),
+        content: TextField(
+          controller: itemController,
+          maxLines: 2,
+          decoration: InputDecoration(
+            hintText: '체크리스트 항목을 입력하세요',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (itemController.text.trim().isNotEmpty) {
+                _addChecklistItem(itemController.text.trim());
+                Navigator.pop(context);
+              }
+            },
+            child: const Text(AppStrings.save),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 체크리스트 항목 수정 다이얼로그
+  void _showEditChecklistItemDialog(
+    BuildContext context,
+    InterviewChecklist item,
+    int index,
+  ) {
+    final itemController = TextEditingController(text: item.item);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.editChecklistItem),
+        content: TextField(
+          controller: itemController,
+          maxLines: 2,
+          decoration: InputDecoration(
+            hintText: '체크리스트 항목을 입력하세요',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (itemController.text.trim().isNotEmpty) {
+                _updateChecklistItem(index, itemController.text.trim());
+                Navigator.pop(context);
+              }
+            },
+            child: const Text(AppStrings.save),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 면접 일정 설정 다이얼로그
+  void _showInterviewScheduleDialog(BuildContext context) {
+    final dateController = TextEditingController(
+      text: _application.interviewSchedule?.date != null
+          ? _formatDate(_application.interviewSchedule!.date!)
+          : '',
+    );
+    final locationController = TextEditingController(
+      text: _application.interviewSchedule?.location ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.interviewSchedule),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: dateController,
+                decoration: InputDecoration(
+                  labelText: AppStrings.interviewDate,
+                  hintText: AppStrings.selectDate,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  suffixIcon: const Icon(Icons.calendar_today),
+                ),
+                readOnly: true,
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _application.interviewSchedule?.date ?? DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                    locale: const Locale('ko', 'KR'),
+                  );
+                  if (picked != null) {
+                    dateController.text = _formatDate(picked);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: locationController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: AppStrings.interviewLocation,
+                  hintText: '면접 장소를 입력하세요',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final date = dateController.text.isNotEmpty
+                  ? _parseDate(dateController.text)
+                  : null;
+              final location = locationController.text.trim();
+              _updateInterviewSchedule(
+                date: date,
+                location: location.isNotEmpty ? location : null,
+              );
+              Navigator.pop(context);
+            },
+            child: const Text(AppStrings.save),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 날짜 파싱 헬퍼
+  DateTime? _parseDate(String dateString) {
+    try {
+      final parts = dateString.split('.');
+      if (parts.length == 3) {
+        return DateTime(
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+          int.parse(parts[2]),
+        );
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  }
+
+  // 면접 질문 추가
+  Future<void> _addInterviewQuestion(String question) async {
+    final newQuestion = InterviewQuestion(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      question: question,
+    );
+    final updatedQuestions = [..._application.interviewQuestions, newQuestion];
+    await _updateApplication(
+      interviewQuestions: updatedQuestions,
+    );
+  }
+
+  // 면접 질문 수정
+  Future<void> _updateInterviewQuestion(int index, String question) async {
+    final updatedQuestions = List<InterviewQuestion>.from(_application.interviewQuestions);
+    updatedQuestions[index] = updatedQuestions[index].copyWith(question: question);
+    await _updateApplication(
+      interviewQuestions: updatedQuestions,
+    );
+  }
+
+  // 면접 질문 삭제
+  Future<void> _deleteInterviewQuestion(int index) async {
+    final updatedQuestions = List<InterviewQuestion>.from(_application.interviewQuestions);
+    updatedQuestions.removeAt(index);
+    await _updateApplication(
+      interviewQuestions: updatedQuestions,
+    );
+  }
+
+  // 면접 답변 업데이트
+  Future<void> _updateInterviewAnswer(int index, String answer) async {
+    final updatedQuestions = List<InterviewQuestion>.from(_application.interviewQuestions);
+    updatedQuestions[index] = updatedQuestions[index].copyWith(
+      answer: answer.isEmpty ? null : answer,
+    );
+    await _updateApplication(
+      interviewQuestions: updatedQuestions,
+    );
+  }
+
+  // 체크리스트 항목 추가
+  Future<void> _addChecklistItem(String item) async {
+    final newItem = InterviewChecklist(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      item: item,
+    );
+    final updatedChecklist = [..._application.interviewChecklist, newItem];
+    await _updateApplication(
+      interviewChecklist: updatedChecklist,
+    );
+  }
+
+  // 체크리스트 항목 수정
+  Future<void> _updateChecklistItem(int index, String item) async {
+    final updatedChecklist = List<InterviewChecklist>.from(_application.interviewChecklist);
+    updatedChecklist[index] = updatedChecklist[index].copyWith(item: item);
+    await _updateApplication(
+      interviewChecklist: updatedChecklist,
+    );
+  }
+
+  // 체크리스트 항목 삭제
+  Future<void> _deleteChecklistItem(int index) async {
+    final updatedChecklist = List<InterviewChecklist>.from(_application.interviewChecklist);
+    updatedChecklist.removeAt(index);
+    await _updateApplication(
+      interviewChecklist: updatedChecklist,
+    );
+  }
+
+  // 체크리스트 항목 토글
+  Future<void> _toggleChecklistItem(int index, bool isChecked) async {
+    final updatedChecklist = List<InterviewChecklist>.from(_application.interviewChecklist);
+    updatedChecklist[index] = updatedChecklist[index].copyWith(isChecked: isChecked);
+    await _updateApplication(
+      interviewChecklist: updatedChecklist,
+    );
+  }
+
+  // 면접 일정 업데이트
+  Future<void> _updateInterviewSchedule({
+    DateTime? date,
+    String? location,
+  }) async {
+    final schedule = InterviewSchedule(
+      date: date,
+      location: location,
+    );
+    await _updateApplication(
+      interviewSchedule: schedule,
+    );
+  }
+
+  // Application 업데이트 헬퍼
+  Future<void> _updateApplication({
+    List<InterviewQuestion>? interviewQuestions,
+    List<InterviewChecklist>? interviewChecklist,
+    InterviewSchedule? interviewSchedule,
+  }) async {
+    final updatedApplication = _application.copyWith(
+      interviewQuestions: interviewQuestions,
+      interviewChecklist: interviewChecklist,
+      interviewSchedule: interviewSchedule,
+      updatedAt: DateTime.now(),
+    );
+
+    try {
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+
+      if (success && mounted) {
+        setState(() {
+          _application = updatedApplication;
+        });
+        _hasChanges = true;
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('저장에 실패했습니다.'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('오류가 발생했습니다: $e'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _showNotificationSettingsDialog(BuildContext context) {
