@@ -48,41 +48,48 @@ class MonthlyCalendarView extends StatelessWidget {
               final cellHeight = cellWidth; // 정사각형
               final gridHeight = weeks * (cellHeight + 4); // mainAxisSpacing 포함
               
-              return SizedBox(
-                height: gridHeight,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    childAspectRatio: 1,
-                    crossAxisSpacing: 4,
-                    mainAxisSpacing: 4,
-                  ),
-                  itemCount: weeks * 7,
-                  itemBuilder: (context, index) {
-                    final dayOffset = index - (firstDayOfWeek - 1);
-                    if (dayOffset < 0 || dayOffset >= daysInMonth) {
-                      return const SizedBox.shrink();
-                    }
-                    final date = DateTime(
-                      currentMonth.year,
-                      currentMonth.month,
-                      dayOffset + 1,
-                    );
-                    final isSelected = isSameDay(date, selectedDate);
-                    final now = DateTime.now();
-                    final isToday = isSameDay(date, now);
-                    final dateEvents = getEventsForDate(date);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: gridHeight,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 7,
+                        childAspectRatio: 1,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4,
+                      ),
+                      itemCount: weeks * 7,
+                      itemBuilder: (context, index) {
+                        final dayOffset = index - (firstDayOfWeek - 1);
+                        if (dayOffset < 0 || dayOffset >= daysInMonth) {
+                          return const SizedBox.shrink();
+                        }
+                        final date = DateTime(
+                          currentMonth.year,
+                          currentMonth.month,
+                          dayOffset + 1,
+                        );
+                        final isSelected = isSameDay(date, selectedDate);
+                        final now = DateTime.now();
+                        final isToday = isSameDay(date, now);
+                        final dateEvents = getEventsForDate(date);
 
-                    return CalendarDayCell(
-                      date: date,
-                      isSelected: isSelected,
-                      isToday: isToday,
-                      events: dateEvents,
-                      onTap: () => onDateSelected(date),
-                    );
-                  },
-                ),
+                        return CalendarDayCell(
+                          date: date,
+                          isSelected: isSelected,
+                          isToday: isToday,
+                          events: dateEvents,
+                          onTap: () => onDateSelected(date),
+                        );
+                      },
+                    ),
+                  ),
+                  // 캘린더 하단 여유 공간 추가 (오버플로우 방지)
+                  const SizedBox(height: 40),
+                ],
               );
             },
           ),
