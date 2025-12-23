@@ -8,6 +8,7 @@ import '../../constants/app_strings.dart';
 import '../../models/application_status.dart';
 import '../../widgets/dialogs/application_filter_dialog.dart';
 import '../../widgets/dialogs/multi_delete_confirm_dialog.dart';
+import '../../widgets/modern_card.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 import 'application_list_item.dart';
 import 'applications_view_model.dart';
@@ -103,9 +104,30 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
           title: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: _viewModel.isSelectionMode
-                ? Text(
-                    '${_viewModel.selectedCount}개 선택됨',
+                ? Row(
                     key: const ValueKey('selection'),
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.check_circle_outline,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '${_viewModel.selectedCount}개 선택됨',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                    ],
                   )
                 : _isSearchMode
                 ? ApplicationSearchBar(
@@ -119,21 +141,50 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(AppStrings.applicationsTitle),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.description_outlined,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            AppStrings.applicationsTitle,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                            ),
+                          ),
+                        ],
+                      ),
                       if (hasActiveFilters) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          _viewModel.buildActiveFiltersText(),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                              ),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 40), // 아이콘 + 간격 고려
+                          child: Text(
+                            _viewModel.buildActiveFiltersText(),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ],
                     ],
                   ),
           ),
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          backgroundColor: AppColors.surface,
+          elevation: 0,
           leading: _viewModel.isSelectionMode
               ? IconButton(
                   icon: const Icon(Icons.close),
@@ -388,7 +439,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
         // Phase 4: 새 공고 추가 버튼 (선택 모드일 때는 숨김)
         floatingActionButton: _viewModel.isSelectionMode
             ? null
-            : FloatingActionButton(
+            : FloatingActionButton.extended(
                 onPressed: () async {
                   // Phase 4: 새 공고 추가 후 결과 확인
                   final result = await Navigator.push(
@@ -403,8 +454,10 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
                     _viewModel.loadApplications();
                   }
                 },
+                icon: const Icon(Icons.add),
+                label: const Text(AppStrings.addNewApplication),
                 backgroundColor: AppColors.primary,
-                child: const Icon(Icons.add),
+                elevation: 2,
               ),
       ),
     );
@@ -414,56 +467,153 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     return TabBar(
       controller: _tabController,
       tabs: const [
-        Tab(text: AppStrings.all),
-        Tab(text: AppStrings.notApplied),
-        Tab(text: AppStrings.inProgress),
-        Tab(text: AppStrings.passed),
-        Tab(text: AppStrings.rejected),
+        Tab(
+          text: AppStrings.all,
+          height: 48,
+        ),
+        Tab(
+          text: AppStrings.notApplied,
+          height: 48,
+        ),
+        Tab(
+          text: AppStrings.inProgress,
+          height: 48,
+        ),
+        Tab(
+          text: AppStrings.passed,
+          height: 48,
+        ),
+        Tab(
+          text: AppStrings.rejected,
+          height: 48,
+        ),
       ],
       isScrollable: false,
       tabAlignment: TabAlignment.center,
       labelColor: AppColors.primary,
       unselectedLabelColor: AppColors.textSecondary,
       indicatorColor: AppColors.primary,
+      indicatorSize: TabBarIndicatorSize.tab,
+      labelStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedLabelStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 8),
     );
   }
 
   Widget _buildApplicationList(BuildContext context, ApplicationStatus status) {
     // Phase 1: 로딩 상태 표시
     if (_viewModel.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: ModernCard(
+            padding: const EdgeInsets.all(40.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    strokeWidth: 3,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  '공고를 불러오는 중...',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     // Phase 1: 에러 상태 표시
     if (_viewModel.errorMessage != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: AppColors.error),
-            const SizedBox(height: 16),
-            Text(
-              '데이터를 불러오는 중 오류가 발생했습니다.',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: AppColors.error),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: ModernCard(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: AppColors.error,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  '데이터를 불러오는 중 오류가 발생했습니다.',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _viewModel.errorMessage!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    _viewModel.loadApplications();
+                  },
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text(
+                    '다시 시도',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              _viewModel.errorMessage!,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _viewModel.loadApplications();
-              },
-              child: const Text('다시 시도'),
-            ),
-          ],
+          ),
         ),
       );
     }
@@ -582,28 +732,56 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$successCount개의 공고가 삭제되었습니다.'),
-          backgroundColor: AppColors.success,
-          duration: const Duration(seconds: 2),
-          action: SnackBarAction(
-            label: '확인',
-            textColor: Colors.white,
-            onPressed: () {},
+          content: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '$successCount개의 공고가 삭제되었습니다.',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 2),
         ),
       );
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$successCount개 삭제 성공, $failCount개 삭제 실패'),
-          backgroundColor: AppColors.error,
-          duration: const Duration(seconds: 3),
-          action: SnackBarAction(
-            label: '확인',
-            textColor: Colors.white,
-            onPressed: () {},
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '$successCount개 삭제 성공, $failCount개 삭제 실패',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 3),
         ),
       );
     }

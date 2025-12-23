@@ -43,7 +43,8 @@ class _ApplicationSearchBarState extends State<ApplicationSearchBar> {
       controller: _controller,
       autofocus: true,
       style: TextStyle(
-        fontSize: 16,
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
         color: Theme.of(context).brightness == Brightness.dark
             ? Colors.white
             : AppColors.textPrimary,
@@ -52,8 +53,9 @@ class _ApplicationSearchBarState extends State<ApplicationSearchBar> {
         hintText: AppStrings.searchPlaceholder,
         border: InputBorder.none,
         hintStyle: TextStyle(
+          fontSize: 18,
           color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withValues(alpha: 0.7)
+              ? Colors.white.withValues(alpha: 0.6)
               : AppColors.textSecondary.withValues(alpha: 0.6),
         ),
       ),

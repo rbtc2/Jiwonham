@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
+import '../../../widgets/modern_card.dart';
 
 class SearchQueryChip extends StatelessWidget {
   final String query;
@@ -16,34 +17,48 @@ class SearchQueryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ),
-      color: AppColors.surface,
-      child: Wrap(
-        spacing: 8,
-        children: [
-          Chip(
-            label: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.search, size: 16),
-                const SizedBox(width: 4),
-                Text(query),
-              ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ModernCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.search,
+                size: 18,
+                color: AppColors.primary,
+              ),
             ),
-            onDeleted: onDeleted,
-            deleteIcon: const Icon(Icons.close, size: 18),
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            labelStyle: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w500,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                query,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 15,
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: onDeleted,
+              icon: const Icon(Icons.close, size: 20),
+              color: AppColors.textSecondary,
+              style: IconButton.styleFrom(
+                padding: const EdgeInsets.all(8),
+                minimumSize: const Size(32, 32),
+              ),
+              tooltip: '검색어 제거',
+            ),
+          ],
+        ),
       ),
     );
   }
