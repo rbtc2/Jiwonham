@@ -148,44 +148,33 @@ class ApplicationListItem extends StatelessWidget {
                       children: [
                         // 지원서 링크 아이콘 (있으면)
                         if (application.applicationLink != null) ...[
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppColors.primary,
-                                width: 1,
-                              ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.link,
+                              size: 18,
+                              color: AppColors.primary,
                             ),
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.link,
-                                size: 16,
-                                color: AppColors.primary,
-                              ),
-                              onPressed: () async {
-                                try {
-                                  Uri uri = Uri.parse(application.applicationLink!);
-                                  if (!uri.hasScheme) {
-                                    uri = Uri.parse('https://${application.applicationLink}');
-                                  }
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('링크를 열 수 없습니다: $e'),
-                                        backgroundColor: AppColors.error,
-                                      ),
-                                    );
-                                  }
+                            onPressed: () async {
+                              try {
+                                Uri uri = Uri.parse(application.applicationLink!);
+                                if (!uri.hasScheme) {
+                                  uri = Uri.parse('https://${application.applicationLink}');
                                 }
-                              },
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              tooltip: '지원서 링크 열기',
-                            ),
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('링크를 열 수 없습니다: $e'),
+                                      backgroundColor: AppColors.error,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            tooltip: '지원서 링크 열기',
                           ),
                           const SizedBox(width: 8),
                         ],

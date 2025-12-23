@@ -33,7 +33,8 @@ class _NotificationSettingsScreenState
 
   Future<void> _loadSettings() async {
     final storageService = StorageService();
-    final excludeArchived = await storageService.getExcludeArchivedFromStatistics();
+    final excludeArchived = await storageService
+        .getExcludeArchivedFromStatistics();
     if (mounted) {
       setState(() {
         _excludeArchivedFromStats = excludeArchived;
@@ -52,52 +53,49 @@ class _NotificationSettingsScreenState
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           // 뒤로가기 시 설정 변경 여부를 결과로 반환
           Navigator.of(context).pop(_settingsChanged);
         }
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.settings),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            right: 16.0,
-            top: 16.0,
-            bottom: MediaQuery.of(context).padding.bottom + 16.0,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 알림 설정 섹션
-              _buildNotificationSection(context),
-              const SizedBox(height: 24),
+        appBar: AppBar(title: const Text(AppStrings.settings), elevation: 0),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              top: 16.0,
+              bottom: MediaQuery.of(context).padding.bottom + 16.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 알림 설정 섹션
+                _buildNotificationSection(context),
+                const SizedBox(height: 24),
 
-              // 프리미엄 섹션
-              _buildPremiumSection(context),
-              const SizedBox(height: 24),
+                // 프리미엄 섹션
+                _buildPremiumSection(context),
+                const SizedBox(height: 24),
 
-              // 데이터 관리 섹션
-              _buildDataManagementSection(context),
-              const SizedBox(height: 24),
+                // 데이터 관리 섹션
+                _buildDataManagementSection(context),
+                const SizedBox(height: 24),
 
-              // 정보 섹션
-              _buildInfoSection(context),
-              const SizedBox(height: 24),
+                // 정보 섹션
+                _buildInfoSection(context),
+                const SizedBox(height: 24),
 
-              // 후원하기 섹션
-              _buildDonationSection(context),
-              // 하단 여백 추가
-              const SizedBox(height: 24),
-            ],
+                // 후원하기 섹션
+                _buildDonationSection(context),
+                // 하단 여백 추가
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -125,9 +123,9 @@ class _NotificationSettingsScreenState
               const SizedBox(width: 12),
               Text(
                 AppStrings.receiveNotification,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -146,9 +144,9 @@ class _NotificationSettingsScreenState
           const SizedBox(height: 8),
           Text(
             AppStrings.notificationDescription,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 16),
           const Divider(height: 1),
@@ -167,14 +165,15 @@ class _NotificationSettingsScreenState
             ),
             subtitle: Text(
               AppStrings.excludeArchivedFromStatsDescription,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
             value: _excludeArchivedFromStats,
             onChanged: (value) async {
               final storageService = StorageService();
-              final success = await storageService.setExcludeArchivedFromStatistics(value);
+              final success = await storageService
+                  .setExcludeArchivedFromStatistics(value);
               if (success && mounted) {
                 setState(() {
                   _excludeArchivedFromStats = value;
@@ -214,9 +213,9 @@ class _NotificationSettingsScreenState
               const SizedBox(width: 12),
               Text(
                 AppStrings.premium,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -233,9 +232,9 @@ class _NotificationSettingsScreenState
                 Text(
                   AppStrings.alreadyPurchased,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.success,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: AppColors.success,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             )
@@ -258,26 +257,22 @@ class _NotificationSettingsScreenState
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(
-                Icons.block,
-                color: AppColors.primary,
-                size: 20,
-              ),
+              const Icon(Icons.block, color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 AppStrings.removeAds,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             AppStrings.premiumDescription,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -316,15 +311,15 @@ class _NotificationSettingsScreenState
                     Text(
                       AppStrings.buyDeveloperCoffee,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       AppStrings.donationDescription,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -364,9 +359,9 @@ class _NotificationSettingsScreenState
               const SizedBox(width: 12),
               Text(
                 AppStrings.dataManagement,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -393,7 +388,8 @@ class _NotificationSettingsScreenState
           _buildDataManagementItem(
             context,
             icon: Icons.description_outlined,
-            title: '${AppStrings.savedApplications}: $_applicationCount${AppStrings.count}',
+            title:
+                '${AppStrings.savedApplications}: $_applicationCount${AppStrings.count}',
             isReadOnly: true,
           ),
         ],
@@ -410,10 +406,7 @@ class _NotificationSettingsScreenState
     bool isReadOnly = false,
   }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: iconColor ?? AppColors.textSecondary,
-      ),
+      leading: Icon(icon, color: iconColor ?? AppColors.textSecondary),
       title: Text(title),
       trailing: isReadOnly
           ? null
@@ -450,9 +443,9 @@ class _NotificationSettingsScreenState
               const SizedBox(width: 12),
               Text(
                 AppStrings.info,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -494,10 +487,7 @@ class _NotificationSettingsScreenState
     bool isReadOnly = false,
   }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: AppColors.textSecondary,
-      ),
+      leading: Icon(icon, color: AppColors.textSecondary),
       title: Text(title),
       trailing: isReadOnly
           ? null

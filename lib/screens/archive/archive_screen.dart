@@ -12,6 +12,7 @@ import '../application_detail/application_detail_screen.dart';
 import 'widgets/archive_folder_item.dart';
 import 'widgets/archive_application_list.dart';
 import 'widgets/create_folder_dialog.dart';
+import 'widgets/edit_folder_dialog.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -135,6 +136,110 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('폴더 생성에 실패했습니다.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // 폴더 옵션 Bottom Sheet 표시
+  Future<void> _showFolderOptionsBottomSheet(ArchiveFolder folder) async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 핸들 바
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // 폴더 이름 변경
+              ListTile(
+                leading: Icon(Icons.edit, color: AppColors.primary),
+                title: const Text('폴더 이름 변경'),
+                onTap: () => Navigator.pop(context, 'rename'),
+              ),
+              // 구분선
+              const Divider(height: 1),
+              // 폴더 삭제
+              ListTile(
+                leading: Icon(Icons.delete_outline, color: AppColors.error),
+                title: Text(
+                  '폴더 삭제',
+                  style: TextStyle(color: AppColors.error),
+                ),
+                onTap: () => Navigator.pop(context, 'delete'),
+              ),
+              // 취소 버튼
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('취소'),
+                ),
+              ),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result == 'rename') {
+      await _renameFolder(folder);
+    } else if (result == 'delete') {
+      await _deleteFolder(folder);
+    }
+  }
+
+  // 폴더 이름 수정
+  Future<void> _renameFolder(ArchiveFolder folder) async {
+    final result = await showDialog<ArchiveFolder>(
+      context: context,
+      builder: (context) => EditFolderDialog(folder: folder),
+    );
+
+    if (result != null) {
+      final success = await _storageService.saveArchiveFolder(result);
+      if (success && mounted) {
+        await _refreshData();
+        if (mounted) {
+          // 성공 메시지
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text('폴더 이름이 "${result.name}"(으)로 변경되었습니다.'),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else if (mounted) {
+        // 실패 메시지
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('폴더 이름 변경에 실패했습니다.'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -551,7 +656,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                               _newlyCreatedFolderId = null; // 선택 시 하이라이트 해제
                             });
                           },
-                          onLongPress: () => _deleteFolder(folder),
+                          onLongPress: () => _showFolderOptionsBottomSheet(folder),
                         );
                       },
                     ),

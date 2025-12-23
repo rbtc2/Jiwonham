@@ -79,16 +79,25 @@ class _ArchiveFolderSelectDialogState extends State<ArchiveFolderSelectDialog> {
                       else
                         ..._folders.map((folder) {
                           return RadioListTile<String?>(
-                            title: Row(
-                              children: [
-                                Icon(
-                                  Icons.folder,
-                                  color: Color(folder.color),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(folder.name),
-                              ],
+                            title: Tooltip(
+                              message: folder.name.length > 20 ? folder.name : '', // 긴 이름만 툴팁 표시
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.folder,
+                                    color: Color(folder.color),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      folder.name,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             value: folder.id,
                             activeColor: AppColors.primary,

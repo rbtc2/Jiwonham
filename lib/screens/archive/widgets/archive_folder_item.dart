@@ -106,9 +106,10 @@ class _ArchiveFolderItemState extends State<ArchiveFolderItem>
                 width: double.infinity,
                 child: Text(
                   widget.name,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.normal,
                         color: widget.isSelected ? widget.color : AppColors.textPrimary,
+                        fontSize: 12,
                       ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
