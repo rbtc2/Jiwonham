@@ -25,7 +25,8 @@ class CalendarViewModel extends ChangeNotifier {
 
     try {
       final storageService = StorageService();
-      final applications = await storageService.getAllApplications();
+      // 보관함 제외한 공고만 가져오기 (활성 공고만)
+      final applications = await storageService.getActiveApplications();
 
       // Application 데이터를 캘린더 이벤트로 변환
       _events = _convertApplicationsToEvents(applications);

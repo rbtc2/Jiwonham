@@ -18,6 +18,9 @@ class ApplicationFilterService {
   }) {
     List<Application> filtered = List.from(applications);
 
+    // 보관함 공고 제외 (안전장치)
+    filtered = filtered.where((app) => !app.isArchived).toList();
+
     // 검색 필터 적용
     if (searchQuery != null && searchQuery.isNotEmpty) {
       filtered = filtered.where((app) {
