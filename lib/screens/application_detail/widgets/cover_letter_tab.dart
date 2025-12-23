@@ -3,16 +3,19 @@
 
 import 'package:flutter/material.dart';
 import '../../../models/application.dart';
+import '../../../models/cover_letter_question.dart';
 import 'cover_letter_section.dart';
 
 class CoverLetterTab extends StatelessWidget {
   final Application application;
   final Function(int, String) onAnswerUpdated;
+  final Function(CoverLetterQuestion) onQuestionAdded;
 
   const CoverLetterTab({
     super.key,
     required this.application,
     required this.onAnswerUpdated,
+    required this.onQuestionAdded,
   });
 
   @override
@@ -27,6 +30,7 @@ class CoverLetterTab extends StatelessWidget {
           CoverLetterSection(
             application: application,
             onAnswerUpdated: onAnswerUpdated,
+            onQuestionAdded: onQuestionAdded,
           ),
           const SizedBox(height: 100),
         ],

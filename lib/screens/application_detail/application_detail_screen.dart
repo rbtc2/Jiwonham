@@ -163,6 +163,26 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                         );
                       }
                     },
+                    onQuestionAdded: (question) async {
+                      await viewModel.addCoverLetterQuestion(question);
+                      if (context.mounted) {
+                        if (viewModel.errorMessage != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(viewModel.errorMessage!),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('자기소개서 문항이 추가되었습니다.'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                   // 면접 후기 탭
                   InterviewReviewTab(

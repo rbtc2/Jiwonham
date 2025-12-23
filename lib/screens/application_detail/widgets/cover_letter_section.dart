@@ -5,16 +5,20 @@ import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
 import '../../../constants/app_strings.dart';
 import '../../../models/application.dart';
+import '../../../models/cover_letter_question.dart';
+import '../../../widgets/dialogs/add_question_dialog.dart';
 import 'question_item.dart';
 
 class CoverLetterSection extends StatelessWidget {
   final Application application;
   final Function(int, String) onAnswerUpdated;
+  final Function(CoverLetterQuestion) onQuestionAdded;
 
   const CoverLetterSection({
     super.key,
     required this.application,
     required this.onAnswerUpdated,
+    required this.onQuestionAdded,
   });
 
   @override
@@ -40,7 +44,7 @@ class CoverLetterSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '문항은 수정 화면에서 관리할 수 있습니다',
+                        '자기소개서 문항과 답변을 관리합니다',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 11,
@@ -48,6 +52,11 @@ class CoverLetterSection extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _showAddDialog(context),
+                  icon: const Icon(Icons.add),
+                  label: const Text(AppStrings.addQuestion),
                 ),
               ],
             ),
@@ -104,6 +113,17 @@ class CoverLetterSection extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showAddDialog(BuildContext context) async {
+    final result = await AddQuestionDialog.show(context);
+    if (result != null && context.mounted) {
+      final newQuestion = CoverLetterQuestion(
+        question: result['question'] as String,
+        maxLength: result['maxLength'] as int,
+      );
+      onQuestionAdded(newQuestion);
+    }
   }
 }
 

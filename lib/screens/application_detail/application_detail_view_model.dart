@@ -234,4 +234,34 @@ class ApplicationDetailViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // 자기소개서 문항 추가
+  Future<void> addCoverLetterQuestion(CoverLetterQuestion question) async {
+    _errorMessage = null;
+    try {
+      final updatedQuestions = List<CoverLetterQuestion>.from(
+        _application.coverLetterQuestions,
+      );
+      updatedQuestions.add(question);
+
+      final updatedApplication = _application.copyWith(
+        coverLetterQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        notifyListeners();
+      } else {
+        _errorMessage = '자기소개서 문항을 저장하는 중 오류가 발생했습니다.';
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = '자기소개서 문항을 저장하는 중 오류가 발생했습니다: $e';
+      notifyListeners();
+    }
+  }
 }
