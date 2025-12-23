@@ -11,12 +11,9 @@ import 'calendar_view_model.dart';
 import 'widgets/calendar_legend.dart';
 import 'widgets/calendar_schedule_list.dart';
 import 'widgets/monthly_calendar_view.dart';
-import 'widgets/weekly_calendar_view.dart';
 import 'widgets/month_year_picker.dart';
 import '../../widgets/modern_card.dart';
 import '../../widgets/dialogs/modern_bottom_sheet.dart';
-
-enum CalendarView { monthly, weekly }
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -31,7 +28,6 @@ class CalendarScreenState extends State<CalendarScreen>
   late CalendarViewModel _viewModel;
 
   // UI 상태 (ViewModel에 포함되지 않는 UI 전용 상태)
-  CalendarView _currentView = CalendarView.monthly;
   DateTime _selectedDate = DateTime.now();
   DateTime _currentMonth = DateTime.now();
 
@@ -192,8 +188,6 @@ class CalendarScreenState extends State<CalendarScreen>
           ? _buildEmptyCalendarState(context)
           : Column(
               children: [
-                // 뷰 전환 버튼
-                _buildViewToggle(context),
                 // 캘린더 - 필요한 만큼만 공간 차지
                 Flexible(
                   fit: FlexFit.loose,
@@ -345,83 +339,19 @@ class CalendarScreenState extends State<CalendarScreen>
     );
   }
 
-  Widget _buildViewToggle(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: ModernCard(
-        padding: const EdgeInsets.all(4),
-        child: Row(
-          children: [
-            _buildViewButton(context, AppStrings.monthly, CalendarView.monthly),
-            const SizedBox(width: 4),
-            _buildViewButton(context, AppStrings.weekly, CalendarView.weekly),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildViewButton(
-    BuildContext context,
-    String label,
-    CalendarView view,
-  ) {
-    final isSelected = _currentView == view;
-    return Expanded(
-      child: ElevatedButton(
-        onPressed: () {
-          setState(() {
-            _currentView = view;
-          });
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isSelected ? AppColors.primary : Colors.transparent,
-          foregroundColor: isSelected ? Colors.white : AppColors.textPrimary,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildCalendar(BuildContext context) {
-    switch (_currentView) {
-      case CalendarView.monthly:
-        return MonthlyCalendarView(
-          currentMonth: _currentMonth,
-          selectedDate: _selectedDate,
-          events: _viewModel.events,
-          onDateSelected: (date) {
-            setState(() {
-              _selectedDate = date;
-            });
-          },
-          isSameDay: _viewModel.isSameDay,
-          getEventsForDate: _viewModel.getEventsForDate,
-        );
-      case CalendarView.weekly:
-        return WeeklyCalendarView(
-          selectedDate: _selectedDate,
-          events: _viewModel.events,
-          onDateSelected: (date) {
-            setState(() {
-              _selectedDate = date;
-            });
-          },
-          isSameDay: _viewModel.isSameDay,
-          getEventsForDate: _viewModel.getEventsForDate,
-        );
-    }
+    return MonthlyCalendarView(
+      currentMonth: _currentMonth,
+      selectedDate: _selectedDate,
+      events: _viewModel.events,
+      onDateSelected: (date) {
+        setState(() {
+          _selectedDate = date;
+        });
+      },
+      isSameDay: _viewModel.isSameDay,
+      getEventsForDate: _viewModel.getEventsForDate,
+    );
   }
 
   // PHASE 2: 이벤트 탭 처리 (개선된 에러 처리)
