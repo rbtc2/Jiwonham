@@ -13,18 +13,25 @@ class ApplicationDetailViewModel extends ChangeNotifier {
   Application _application;
   bool _hasChanges = false;
   String? _errorMessage;
+  bool _isLoading = false;
 
   ApplicationDetailViewModel({required Application application})
-      : _application = application;
+      : _application = application {
+    // 생성 시 최신 데이터 자동 로드
+    loadApplication();
+  }
 
   // Getters
   Application get application => _application;
   bool get hasChanges => _hasChanges;
   String? get errorMessage => _errorMessage;
+  bool get isLoading => _isLoading;
 
   // Application 다시 로드
   Future<void> loadApplication() async {
     _errorMessage = null;
+    _isLoading = true;
+    notifyListeners();
     try {
       final storageService = StorageService();
       final loadedApplication =
@@ -32,13 +39,16 @@ class ApplicationDetailViewModel extends ChangeNotifier {
       if (loadedApplication != null) {
         _application = loadedApplication;
         _hasChanges = false;
+        _isLoading = false;
         notifyListeners();
       } else {
         _errorMessage = '공고를 찾을 수 없습니다.';
+        _isLoading = false;
         notifyListeners();
       }
     } catch (e) {
       _errorMessage = '공고를 불러오는 중 오류가 발생했습니다: $e';
+      _isLoading = false;
       notifyListeners();
     }
   }
