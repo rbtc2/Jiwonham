@@ -35,7 +35,7 @@ class ApplicationListItem extends StatelessWidget {
       // PHASE 7: 선택 모드 진입 시 애니메이션
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         // 선택 모드일 때만 배경색 변경, 일반 모드일 때는 투명
         color: isSelectionMode && isSelected
@@ -54,7 +54,7 @@ class ApplicationListItem extends StatelessWidget {
           }
         },
         child: ModernCard(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           borderRadius: BorderRadius.circular(16),
           onTap: isSelectionMode
               ? () {
@@ -186,20 +186,20 @@ class ApplicationListItem extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // 회사명
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.business,
-                        size: 20,
+                        size: 18,
                         color: AppColors.primary,
                       ),
                     ),
@@ -209,13 +209,13 @@ class ApplicationListItem extends StatelessWidget {
                         application.companyName,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          fontSize: 16,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // 직무명
                 if (application.position != null &&
@@ -223,14 +223,14 @@ class ApplicationListItem extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           Icons.work_outline,
-                          size: 20,
+                          size: 18,
                           color: AppColors.primary,
                         ),
                       ),
@@ -239,14 +239,14 @@ class ApplicationListItem extends StatelessWidget {
                         child: Text(
                           application.position!,
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                 ],
 
                 // 구분 및 근무지 배지
@@ -336,7 +336,7 @@ class ApplicationListItem extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                 ],
 
                 // 날짜 정보
