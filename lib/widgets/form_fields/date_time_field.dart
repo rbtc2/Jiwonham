@@ -8,7 +8,7 @@ import '../../models/notification_settings.dart';
 
 class DateTimeField extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final DateTime? selectedDate;
   final String? errorText;
   final NotificationSettings? notificationSettings;
@@ -25,7 +25,7 @@ class DateTimeField extends StatelessWidget {
   const DateTimeField({
     super.key,
     required this.label,
-    required this.icon,
+    this.icon,
     this.selectedDate,
     this.errorText,
     this.notificationSettings,
@@ -81,19 +81,21 @@ class DateTimeField extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+            if (icon != null) ...[
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
               ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             Text(
               label,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(

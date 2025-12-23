@@ -7,7 +7,7 @@ import '../../constants/app_colors.dart';
 class LabeledTextField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
-  final IconData icon;
+  final IconData? icon;
   final String? hintText;
   final String? errorText;
   final VoidCallback? onChanged;
@@ -18,7 +18,7 @@ class LabeledTextField extends StatelessWidget {
     super.key,
     required this.label,
     required this.controller,
-    required this.icon,
+    this.icon,
     this.hintText,
     this.errorText,
     this.onChanged,
@@ -33,19 +33,21 @@ class LabeledTextField extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+            if (icon != null) ...[
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
               ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

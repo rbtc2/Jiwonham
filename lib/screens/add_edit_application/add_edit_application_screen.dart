@@ -254,7 +254,6 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         LabeledTextField(
           label: AppStrings.position,
           controller: _formData.positionController,
-          icon: Icons.work_outline,
           hintText: '직무명을 입력하세요',
         ),
         const SizedBox(height: 24),
@@ -281,7 +280,6 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         // 서류 마감일 선택
         DateTimeField(
           label: AppStrings.deadlineRequired,
-          icon: Icons.calendar_today,
           selectedDate: _formData.deadline,
           errorText: _formData.deadlineError,
           notificationSettings: _formData.deadlineNotificationSettings,
@@ -377,7 +375,6 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         // 서류 발표일 선택
         DateTimeField(
           label: AppStrings.announcementDate,
-          icon: Icons.campaign,
           selectedDate: _formData.announcementDate,
           notificationSettings: _formData.announcementNotificationSettings,
           includeTime: _formData.announcementDateIncludeTime,
