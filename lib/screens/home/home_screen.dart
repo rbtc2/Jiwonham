@@ -6,6 +6,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 import '../notification_settings/notification_settings_screen.dart';
+import '../archive/archive_screen.dart';
 import '../main_navigation.dart';
 import 'widgets/statistics_section.dart';
 import 'widgets/urgent_applications_section.dart';
@@ -103,6 +104,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          // 보관함 아이콘
+          IconButton(
+            icon: const Icon(Icons.archive_outlined),
+            onPressed: () async {
+              // 보관함 화면으로 이동
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ArchiveScreen()),
+              );
+              // 보관함에서 복원/삭제가 발생했을 수 있으므로 데이터 새로고침
+              if (mounted) {
+                _viewModel.refresh();
+                _refreshApplicationsScreen();
+              }
+            },
+            tooltip: '보관함',
+          ),
+          // 설정 아이콘
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () async {
