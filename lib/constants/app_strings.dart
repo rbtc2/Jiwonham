@@ -7,7 +7,7 @@ class AppStrings {
 
   // Home Screen
   static const String homeTitle = '취업 준비 관리';
-  static const String todayStatistics = '오늘의 통계';
+  static const String todayStatistics = '나의 통계';
   static const String urgentApplications = '마감 임박 공고';
   static const String urgentApplicationsSubtitle = 'D-3 이내';
   static const String todaySchedule = '오늘의 일정';

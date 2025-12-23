@@ -40,7 +40,14 @@ class ExperienceLevelField extends StatelessWidget {
                   label: Text(level.label),
                   selected: isSelected,
                   onSelected: (selected) {
-                    onChanged(selected ? level : null);
+                    // 이미 선택된 칩을 다시 클릭하면 선택 해제 (null 전달)
+                    if (isSelected && !selected) {
+                      onChanged(null);
+                    } else if (selected) {
+                      onChanged(level);
+                    } else {
+                      onChanged(null);
+                    }
                   },
                   selectedColor: AppColors.primary.withValues(alpha: 0.2),
                   backgroundColor: AppColors.surface,

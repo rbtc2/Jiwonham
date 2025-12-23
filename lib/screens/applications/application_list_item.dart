@@ -82,14 +82,12 @@ class ApplicationListItem extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 상단: D-day 배지와 알람 아이콘
+                // 상단: 알람 아이콘과 D-day 배지
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    DDayBadge(deadline: application.deadline),
-                    // 알람이 설정되어 있으면 표시
+                    // 알람이 설정되어 있으면 표시 (D-day 배지 앞에 위치)
                     if (_hasNotification(application.notificationSettings)) ...[
-                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
@@ -102,7 +100,10 @@ class ApplicationListItem extends StatelessWidget {
                           size: 18,
                         ),
                       ),
+                      const SizedBox(width: 8),
                     ],
+                    // D-day 배지 (항상 제일 우측에 위치)
+                    DDayBadge(deadline: application.deadline),
                   ],
                 ),
                 const SizedBox(height: 16),
