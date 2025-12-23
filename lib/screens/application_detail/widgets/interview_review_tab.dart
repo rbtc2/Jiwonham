@@ -1,10 +1,9 @@
 // 면접 후기 탭 위젯
-// 면접 준비 섹션과 면접 후기 목록을 표시하는 탭
+// 면접 후기를 표시하고 관리하는 탭
 
 import 'package:flutter/material.dart';
 import '../../../models/application.dart';
 import '../../../models/interview_review.dart';
-import 'interview_preparation_section.dart';
 import 'interview_review_section.dart';
 
 class InterviewReviewTab extends StatelessWidget {
@@ -30,10 +29,6 @@ class InterviewReviewTab extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 면접 준비 섹션
-          const InterviewPreparationSection(),
-          const SizedBox(height: 16),
-          // 면접 후기 섹션
           InterviewReviewSection(
             application: application,
             onReviewAdded: onReviewAdded,
@@ -46,9 +41,3 @@ class InterviewReviewTab extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-

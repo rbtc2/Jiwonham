@@ -26,6 +26,9 @@ class _NotificationSettingsScreenState
   NotificationTiming _announcementTiming = NotificationTiming.onTheDay;
   NotificationTiming _interviewTiming = NotificationTiming.onTheDay;
 
+  int? _deadlineCustomHours;
+  int? _interviewCustomHours;
+
   TimeOfDay _defaultNotificationTime = const TimeOfDay(hour: 9, minute: 0);
 
   @override
@@ -151,7 +154,15 @@ class _NotificationSettingsScreenState
                     setState(() {
                       _deadlineTiming = value;
                       if (value == NotificationTiming.custom) {
-                        // TODO: 사용자 지정 시간 입력 다이얼로그
+                        _showCustomHoursDialog(
+                          context,
+                          initialHours: _deadlineCustomHours ?? 24,
+                          onSaved: (hours) {
+                            setState(() {
+                              _deadlineCustomHours = hours;
+                            });
+                          },
+                        );
                       }
                     });
                   }
@@ -181,7 +192,10 @@ class _NotificationSettingsScreenState
                     _buildTimingRadio(
                       context,
                       NotificationTiming.custom,
-                      AppStrings.customTime,
+                      _deadlineTiming == NotificationTiming.custom &&
+                              _deadlineCustomHours != null
+                          ? '${AppStrings.customTime} ($_deadlineCustomHours시간 전)'
+                          : AppStrings.customTime,
                     ),
                   ],
                 ),
@@ -313,7 +327,15 @@ class _NotificationSettingsScreenState
                     setState(() {
                       _interviewTiming = value;
                       if (value == NotificationTiming.custom) {
-                        // TODO: 시간 지정 다이얼로그
+                        _showCustomHoursDialog(
+                          context,
+                          initialHours: _interviewCustomHours ?? 1,
+                          onSaved: (hours) {
+                            setState(() {
+                              _interviewCustomHours = hours;
+                            });
+                          },
+                        );
                       }
                     });
                   }
@@ -333,7 +355,10 @@ class _NotificationSettingsScreenState
                     _buildTimingRadio(
                       context,
                       NotificationTiming.custom,
-                      '${AppStrings.timeBefore} (예: 1시간 전)',
+                      _interviewTiming == NotificationTiming.custom &&
+                              _interviewCustomHours != null
+                          ? '${AppStrings.timeBefore} ($_interviewCustomHours시간 전)'
+                          : '${AppStrings.timeBefore} (예: 1시간 전)',
                     ),
                   ],
                 ),
@@ -416,5 +441,99 @@ class _NotificationSettingsScreenState
 
   String _formatTime(TimeOfDay time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _showCustomHoursDialog(
+    BuildContext context, {
+    required int initialHours,
+    required Function(int) onSaved,
+  }) async {
+    final hoursController = TextEditingController(
+      text: initialHours.toString(),
+    );
+    bool isValid = true;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('사용자 지정 시간'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('알림을 받을 시간을 입력하세요 (시간 단위)'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: hoursController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: '시간 전',
+                  hintText: '24',
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  errorText: !isValid && hoursController.text.trim().isEmpty
+                      ? '시간을 입력해주세요.'
+                      : null,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                onChanged: (value) {
+                  final hours = int.tryParse(value.trim());
+                  setState(() {
+                    isValid = hours != null && hours > 0;
+                  });
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final hours = int.tryParse(hoursController.text.trim());
+                if (hours != null && hours > 0) {
+                  onSaved(hours);
+                  Navigator.pop(dialogContext);
+                } else {
+                  setState(() {
+                    isValid = false;
+                  });
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('저장'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    hoursController.dispose();
   }
 }
