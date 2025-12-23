@@ -7,7 +7,6 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/application.dart';
 import '../models/archive_folder.dart';
-import 'notification_service.dart';
 
 class StorageService {
   static const String _applicationIdsKey = 'application_ids';
@@ -79,15 +78,6 @@ class StorageService {
         await _prefs!.setString(_applicationIdsKey, jsonEncode(ids));
       }
 
-      // 알림 스케줄링 (저장 성공 후)
-      try {
-        final notificationService = NotificationService();
-        await notificationService.scheduleApplicationNotifications(application);
-      } catch (e) {
-        // 알림 스케줄링 실패해도 저장은 성공으로 처리
-        // (알림은 부가 기능이므로)
-      }
-
       return true;
     } catch (e) {
       return false;
@@ -101,14 +91,6 @@ class StorageService {
     }
 
     try {
-      // 알림 취소 (삭제 전)
-      try {
-        final notificationService = NotificationService();
-        await notificationService.cancelApplicationNotifications(id);
-      } catch (e) {
-        // 알림 취소 실패해도 삭제는 계속 진행
-      }
-
       // Application 데이터 삭제
       await _prefs!.remove('application_$id');
 
@@ -202,14 +184,6 @@ class StorageService {
       final application = await getApplicationById(applicationId);
       if (application == null) {
         return false;
-      }
-
-      // 보관함으로 이동 시 알림 취소
-      try {
-        final notificationService = NotificationService();
-        await notificationService.cancelApplicationNotifications(applicationId);
-      } catch (e) {
-        // 알림 취소 실패해도 보관함 이동은 계속 진행
       }
 
       // 보관함으로 이동 시 알림 설정 비활성화

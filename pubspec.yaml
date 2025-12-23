@@ -44,16 +44,18 @@ dependencies:
   # State management
   provider: ^6.1.2
 
-  # Local notifications
-  flutter_local_notifications: ^18.0.1
-  timezone: ^0.9.4
-  
-  # Permission handler
-  permission_handler: ^11.3.1
-
   # Localization
   flutter_localizations:
     sdk: flutter
+
+  # Local notifications
+  flutter_local_notifications: ^17.2.3
+
+  # Timezone support for notifications
+  timezone: ^0.9.4
+
+  # Permission handling
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

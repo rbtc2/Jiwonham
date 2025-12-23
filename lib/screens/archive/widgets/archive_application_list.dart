@@ -50,10 +50,7 @@ class ArchiveApplicationList extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: EdgeInsets.only(
-        top: 8,
-        bottom: MediaQuery.of(context).padding.bottom + 80, // 하단 네비게이션 바 높이 + safe area
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: applications.length,
       itemBuilder: (context, index) {
         final application = applications[index];

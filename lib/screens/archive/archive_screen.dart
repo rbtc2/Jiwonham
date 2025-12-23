@@ -527,13 +527,12 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   // AppBar 타이틀 위젯 빌드 (브레드크럼 포함)
   Widget _buildTitleWidget() {
-    // 현재 선택된 폴더/전체 보관함의 공고 개수 계산
-    final currentApps = _selectedFolderId == null
-        ? _archivedApplications.length
-        : _archivedApplications.where((app) => app.archiveFolderId == _selectedFolderId).length;
-    
     if (_selectedFolderId == null) {
-      // 전체 보관함
+      // 전체 보관함: 폴더에 속하지 않은 공고 개수
+      final rootAppCount = _archivedApplications
+          .where((app) => app.archiveFolderId == null)
+          .length;
+      
       return Row(
         key: const ValueKey('all'),
         mainAxisSize: MainAxisSize.min,
@@ -545,22 +544,28 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           ),
           const SizedBox(width: 8),
           const Text('보관함'),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '$currentApps',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+          if (rootAppCount > 0) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.primary,
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                '$rootAppCount',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       );
     } else {
@@ -586,25 +591,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             ),
             const SizedBox(width: 8),
             const Text('보관함'),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '$currentApps',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
           ],
         );
       }
+
+      // 선택된 폴더의 공고 개수 계산
+      final folderAppCount = _archivedApplications
+          .where((app) => app.archiveFolderId == folder.id)
+          .length;
 
       return Row(
         key: ValueKey('folder_${folder.id}'),
@@ -640,22 +634,28 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Color(folder.color).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '$currentApps',
-              style: TextStyle(
-                color: Color(folder.color),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+          if (folderAppCount > 0) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Color(folder.color).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Color(folder.color),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                '$folderAppCount',
+                style: TextStyle(
+                  color: Color(folder.color),
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       );
     }
