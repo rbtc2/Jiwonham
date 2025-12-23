@@ -315,12 +315,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   // 폴더 위치 변경
   Future<void> _moveFolderPosition(ArchiveFolder folder) async {
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => MoveFolderDialog(
-        folder: folder,
-        allFolders: _folders,
-      ),
+    final result = await MoveFolderDialog.show(
+      context,
+      folder,
+      _folders,
     );
 
     if (result != null && mounted) {
