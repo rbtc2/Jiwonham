@@ -95,14 +95,14 @@ class _InterviewReviewScreenState extends State<InterviewReviewScreen> {
               builder: (context) => AddEditInterviewReviewScreen(
                 companyName: widget.companyName,
                 position: widget.position,
+                onSave: (reviewData) {
+                  setState(() {
+                    _interviewReviews.add(reviewData);
+                  });
+                },
               ),
             ),
-          ).then((value) {
-            if (value != null && value == true) {
-              // TODO: 면접 후기 새로고침
-              setState(() {});
-            }
-          });
+          );
         },
         icon: const Icon(Icons.add),
         label: const Text(AppStrings.writeInterviewReview),
@@ -158,14 +158,14 @@ class _InterviewReviewScreenState extends State<InterviewReviewScreen> {
                 position: widget.position,
                 review: review,
                 reviewIndex: index,
+                onSave: (reviewData) {
+                  setState(() {
+                    _interviewReviews[index] = reviewData;
+                  });
+                },
               ),
             ),
-          ).then((value) {
-            if (value != null && value == true) {
-              // TODO: 면접 후기 새로고침
-              setState(() {});
-            }
-          });
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -286,13 +286,14 @@ class _InterviewReviewScreenState extends State<InterviewReviewScreen> {
                             position: widget.position,
                             review: review,
                             reviewIndex: index,
+                            onSave: (reviewData) {
+                              setState(() {
+                                _interviewReviews[index] = reviewData;
+                              });
+                            },
                           ),
                         ),
-                      ).then((value) {
-                        if (value != null && value == true) {
-                          setState(() {});
-                        }
-                      });
+                      );
                     },
                     child: const Text('수정'),
                   ),

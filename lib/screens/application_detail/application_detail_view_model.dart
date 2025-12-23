@@ -458,4 +458,24 @@ class ApplicationDetailViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // 공고 삭제
+  Future<bool> deleteApplication() async {
+    _errorMessage = null;
+    try {
+      final storageService = StorageService();
+      final success = await storageService.deleteApplication(_application.id);
+      if (success) {
+        return true;
+      } else {
+        _errorMessage = '공고를 삭제하는 중 오류가 발생했습니다.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = '공고를 삭제하는 중 오류가 발생했습니다: $e';
+      notifyListeners();
+      return false;
+    }
+  }
 }

@@ -362,14 +362,35 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
             child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
-            onPressed: () {
-              // TODO: 삭제 로직
+            onPressed: () async {
               Navigator.pop(dialogContext);
-              if (mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('공고가 삭제되었습니다.')));
-                Navigator.pop(context);
+              if (!mounted) return;
+              final viewModel = Provider.of<ApplicationDetailViewModel>(
+                this.context,
+                listen: false,
+              );
+              final success = await viewModel.deleteApplication();
+              if (!mounted) return;
+              if (success) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(
+                    content: Text('공고가 삭제되었습니다.'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                if (!mounted) return;
+                Navigator.pop(this.context, true);
+              } else {
+                if (!mounted) return;
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      viewModel.errorMessage ?? '공고를 삭제하는 중 오류가 발생했습니다.',
+                    ),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),

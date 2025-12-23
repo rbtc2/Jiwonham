@@ -10,6 +10,7 @@ class AddEditInterviewReviewScreen extends StatefulWidget {
   final String? position;
   final Map<String, dynamic>? review;
   final int? reviewIndex;
+  final Function(Map<String, dynamic>)? onSave;
 
   const AddEditInterviewReviewScreen({
     super.key,
@@ -17,6 +18,7 @@ class AddEditInterviewReviewScreen extends StatefulWidget {
     this.position,
     this.review,
     this.reviewIndex,
+    this.onSave,
   });
 
   @override
@@ -438,19 +440,26 @@ class _AddEditInterviewReviewScreenState
         return;
       }
 
-      // TODO: 저장 로직
-      // final questions = _questionControllers
-      //     .map((controller) => controller.text)
-      //     .where((text) => text.isNotEmpty)
-      //     .toList();
-      //
-      // final reviewData = {
-      //   'date': _selectedDate,
-      //   'type': _typeController.text,
-      //   'questions': questions,
-      //   'review': _reviewController.text,
-      //   'rating': _rating,
-      // };
+      final questions = _questionControllers
+          .map((controller) => controller.text)
+          .where((text) => text.isNotEmpty)
+          .toList();
+
+      final reviewData = {
+        'id': _isEdit && widget.review != null
+            ? widget.review!['id'] as String
+            : DateTime.now().millisecondsSinceEpoch.toString(),
+        'date': _selectedDate,
+        'type': _typeController.text,
+        'questions': questions,
+        'review': _reviewController.text,
+        'rating': _rating,
+      };
+
+      // 콜백이 있으면 호출
+      if (widget.onSave != null) {
+        widget.onSave!(reviewData);
+      }
 
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(

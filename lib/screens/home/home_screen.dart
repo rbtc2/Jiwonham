@@ -11,6 +11,7 @@ import '../../services/storage_service.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 import '../notification_settings/notification_settings_screen.dart';
 import '../application_detail/application_detail_screen.dart';
+import '../main_navigation.dart';
 import '../../widgets/d_day_badge.dart';
 
 // Phase 4: StatefulWidget으로 변경하여 새로고침 기능 추가
@@ -73,14 +74,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void _refreshApplicationsScreen() {
     if (!mounted) return;
     try {
-      final mainNavigationState = context
-          .findAncestorStateOfType<State<StatefulWidget>>();
-      if (mainNavigationState != null &&
-          mainNavigationState.runtimeType.toString().contains(
-            'MainNavigationState',
-          )) {
-        // ignore: avoid_dynamic_calls
-        (mainNavigationState as dynamic).refreshApplicationsScreen();
+      final mainNavigationState =
+          context.findAncestorStateOfType<MainNavigationState>();
+      if (mainNavigationState != null) {
+        mainNavigationState.refreshApplicationsScreen();
       }
     } catch (e) {
       // 에러 발생 시 무시 (이미 WidgetsBindingObserver로 자동 새로고침됨)
@@ -374,15 +371,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             TextButton(
               onPressed: () {
-                // Phase 4: 공고 목록 화면으로 이동
-                final mainNavigationState = context
-                    .findAncestorStateOfType<State<StatefulWidget>>();
-                if (mainNavigationState != null &&
-                    mainNavigationState.runtimeType.toString().contains(
-                      'MainNavigationState',
-                    )) {
-                  // ignore: avoid_dynamic_calls
-                  (mainNavigationState as dynamic).setCurrentIndex(1);
+                // 공고 목록 화면으로 이동
+                final mainNavigationState =
+                    context.findAncestorStateOfType<MainNavigationState>();
+                if (mainNavigationState != null) {
+                  mainNavigationState.setCurrentIndex(1);
                 }
               },
               child: const Text(AppStrings.viewAll),
