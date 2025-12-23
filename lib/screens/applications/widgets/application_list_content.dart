@@ -27,6 +27,7 @@ class ApplicationListContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: applications.length,
       // Phase 5: itemExtent 설정으로 성능 최적화 (선택사항)

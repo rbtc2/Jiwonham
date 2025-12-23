@@ -206,6 +206,11 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
       onRetry: () {
         _viewModel.loadApplications();
       },
+      onRefresh: () async {
+        // Pull-to-refresh: 데이터 새로고침 및 보관함 개수 업데이트
+        await _viewModel.loadApplications();
+        await _loadArchivedCount();
+      },
       onApplicationChanged: () {
         // 상태 변경 시 목록 새로고침
         _viewModel.loadApplications();

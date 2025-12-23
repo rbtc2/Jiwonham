@@ -19,6 +19,7 @@ class ApplicationListView extends StatelessWidget {
   final bool hasActiveFilters;
   final String statusText;
   final VoidCallback onRetry;
+  final Future<void> Function()? onRefresh;
   final VoidCallback onApplicationChanged;
   final Function(String) onSelectionToggled;
   final Function(String) onLongPress;
@@ -35,14 +36,14 @@ class ApplicationListView extends StatelessWidget {
     required this.hasActiveFilters,
     required this.statusText,
     required this.onRetry,
+    this.onRefresh,
     required this.onApplicationChanged,
     required this.onSelectionToggled,
     required this.onLongPress,
     required this.onResetFilters,
   });
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildContent(BuildContext context) {
     // 로딩 상태
     if (isLoading) {
       return const ApplicationListLoading();
@@ -50,18 +51,30 @@ class ApplicationListView extends StatelessWidget {
 
     // 에러 상태
     if (errorMessage != null) {
-      return ApplicationListError(
-        errorMessage: errorMessage!,
-        onRetry: onRetry,
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: ApplicationListError(
+            errorMessage: errorMessage!,
+            onRetry: onRetry,
+          ),
+        ),
       );
     }
 
     // 빈 목록 상태
     if (applications.isEmpty) {
-      return EmptyApplicationList(
-        tabName: statusText,
-        hasFilters: hasActiveFilters,
-        onResetFilters: onResetFilters,
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: EmptyApplicationList(
+            tabName: statusText,
+            hasFilters: hasActiveFilters,
+            onResetFilters: onResetFilters,
+          ),
+        ),
       );
     }
 
@@ -74,6 +87,21 @@ class ApplicationListView extends StatelessWidget {
       onSelectionToggled: onSelectionToggled,
       onLongPress: onLongPress,
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final content = _buildContent(context);
+
+    // 새로고침 기능이 있으면 RefreshIndicator로 감싸기
+    if (onRefresh != null && !isLoading) {
+      return RefreshIndicator(
+        onRefresh: onRefresh!,
+        child: content,
+      );
+    }
+
+    return content;
   }
 }
 
