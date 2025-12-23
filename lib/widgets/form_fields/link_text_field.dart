@@ -95,17 +95,29 @@ class LinkTextField extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.link, size: 20, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.link,
+                size: 20,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
             Text(
               AppStrings.applicationLink,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -115,13 +127,26 @@ class LinkTextField extends StatelessWidget {
                   hintText: 'https://...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
                   ),
                   filled: true,
                   fillColor: AppColors.surface,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   errorText: errorText,
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.error),
+                    borderSide: const BorderSide(color: AppColors.error, width: 2),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -137,18 +162,31 @@ class LinkTextField extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(width: 8),
-            OutlinedButton(
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
               onPressed: () async {
                 await _handleTestLink(context);
               },
-              style: OutlinedButton.styleFrom(
+              icon: const Icon(Icons.open_in_new, size: 18),
+              label: const Text(
+                AppStrings.testLink,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,
                 ),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text(AppStrings.testLink),
             ),
           ],
         ),

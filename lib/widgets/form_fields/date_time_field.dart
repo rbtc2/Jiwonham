@@ -69,22 +69,41 @@ class DateTimeField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final notificationColor = _getNotificationColor(notificationSettings);
+    final isNotificationEnabled = notificationSettings != null &&
+        ((notificationType == 'deadline' &&
+                notificationSettings!.deadlineNotification) ||
+            (notificationType == 'announcement' &&
+                notificationSettings!.announcementNotification));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 20, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
             Text(
               label,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         // 날짜 선택 필드와 시간 포함 토글
         Row(
           children: [
@@ -102,8 +121,12 @@ class DateTimeField extends StatelessWidget {
                     onDateSelected(picked);
                   }
                 },
+                borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -123,6 +146,8 @@ class DateTimeField extends StatelessWidget {
                           color: selectedDate != null
                               ? AppColors.textPrimary
                               : AppColors.textSecondary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       Icon(
@@ -137,40 +162,66 @@ class DateTimeField extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             // 시간 포함 토글
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '시간',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '시간',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Switch(
-                  value: includeTime,
-                  onChanged: onTimeToggled ?? (value) {},
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Switch(
+                    value: includeTime,
+                    onChanged: onTimeToggled ?? (value) {},
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             // 알림 설정 버튼
             if (onNotificationSettingsTap != null)
-              IconButton(
-                onPressed: () {
-                  onNotificationSettingsTap!(
-                    context,
-                    notificationType,
-                    onNotificationSettingsChanged,
-                  );
-                },
-                icon: Icon(
-                  _getNotificationIcon(notificationSettings),
-                  color: _getNotificationColor(notificationSettings),
+              Container(
+                decoration: BoxDecoration(
+                  color: isNotificationEnabled
+                      ? notificationColor.withValues(alpha: 0.1)
+                      : AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isNotificationEnabled
+                        ? notificationColor
+                        : Colors.grey.shade300,
+                    width: isNotificationEnabled ? 1.5 : 1,
+                  ),
                 ),
-                tooltip: '알림 설정',
+                child: IconButton(
+                  onPressed: () {
+                    onNotificationSettingsTap!(
+                      context,
+                      notificationType,
+                      onNotificationSettingsChanged,
+                    );
+                  },
+                  icon: Icon(
+                    _getNotificationIcon(notificationSettings),
+                    color: notificationColor,
+                    size: 22,
+                  ),
+                  tooltip: '알림 설정',
+                  padding: const EdgeInsets.all(12),
+                ),
               ),
           ],
         ),
@@ -204,8 +255,12 @@ class DateTimeField extends StatelessWidget {
                 onTimeSelected!(picked);
               }
             },
+            borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
@@ -221,7 +276,7 @@ class DateTimeField extends StatelessWidget {
                         size: 20,
                         color: AppColors.textSecondary,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Text(
                         selectedTime != null
                             ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
@@ -230,6 +285,8 @@ class DateTimeField extends StatelessWidget {
                           color: selectedTime != null
                               ? AppColors.textPrimary
                               : AppColors.textSecondary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],

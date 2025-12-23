@@ -145,35 +145,76 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: Text(
-          widget.application != null ? '공고 수정' : AppStrings.addApplication,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                widget.application != null ? Icons.edit_outlined : Icons.add_circle_outline,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              widget.application != null ? '공고 수정' : AppStrings.addApplication,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+          ],
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              _validateAndSave(context);
-            },
-            child: const Text(
-              AppStrings.save,
-              style: TextStyle(color: Colors.white),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _validateAndSave(context);
+              },
+              icon: const Icon(Icons.save_outlined, size: 18),
+              label: const Text(
+                AppStrings.save,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
         ],
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: AppColors.surface,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             // Phase 1: 필수 입력 필드
             _buildRequiredFields(context),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // Phase 3: 동적 추가 기능
             _buildDynamicFields(context),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // 기타 메모 입력 (제일 하단)
             _buildMemoField(context),
@@ -659,10 +700,29 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     if (!_validateRequiredFields()) {
       // 에러가 있으면 첫 번째 에러 필드로 스크롤
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('필수 입력 항목을 확인해주세요.'),
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  '필수 입력 항목을 확인해주세요.',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: AppColors.error,
-          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
@@ -742,12 +802,29 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _formData.editingApplicationId != null
-                  ? '공고가 성공적으로 수정되었습니다.'
-                  : '공고가 성공적으로 저장되었습니다.',
+            content: Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _formData.editingApplicationId != null
+                        ? '공고가 성공적으로 수정되었습니다.'
+                        : '공고가 성공적으로 저장되었습니다.',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
             backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -756,10 +833,29 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('저장 중 오류가 발생했습니다.'),
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    '저장 중 오류가 발생했습니다.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.error,
-            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -767,8 +863,27 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('저장 중 오류가 발생했습니다: $e'),
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '저장 중 오류가 발생했습니다: $e',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -781,9 +896,28 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
 
     if (urlString.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('링크를 입력해주세요.'),
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  '링크를 입력해주세요.',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
         ),
       );
       return;
@@ -799,9 +933,28 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('올바른 URL 형식이 아닙니다.'),
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  '올바른 URL 형식이 아닙니다.',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
         ),
       );
       return;
@@ -817,9 +970,28 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
 
       if (!launched && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('링크를 열 수 없습니다.'),
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    '링크를 열 수 없습니다.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }
@@ -827,8 +999,27 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('링크 열기 실패: $e'),
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '링크 열기 실패: $e',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }
