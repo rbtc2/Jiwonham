@@ -6,8 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../models/application.dart';
-import '../../models/application_status.dart';
 import '../../services/storage_service.dart';
+import '../../services/home_statistics_service.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
 import '../notification_settings/notification_settings_screen.dart';
 import '../application_detail/application_detail_screen.dart';
@@ -43,12 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final storageService = StorageService();
       // 보관함 통계 제외 설정 확인
-      final excludeArchived = await storageService.getExcludeArchivedFromStatistics();
-      
+      final excludeArchived = await storageService
+          .getExcludeArchivedFromStatistics();
+
       // 설정에 따라 보관함 포함/제외
       final applications = excludeArchived
-          ? await storageService.getActiveApplications()  // 보관함 제외
-          : await storageService.getAllApplications();     // 보관함 포함
+          ? await storageService
+                .getActiveApplications() // 보관함 제외
+          : await storageService.getAllApplications(); // 보관함 포함
 
       if (!mounted) return;
 
@@ -74,8 +76,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _refreshApplicationsScreen() {
     if (!mounted) return;
     try {
-      final mainNavigationState =
-          context.findAncestorStateOfType<MainNavigationState>();
+      final mainNavigationState = context
+          .findAncestorStateOfType<MainNavigationState>();
       if (mainNavigationState != null) {
         mainNavigationState.refreshApplicationsScreen();
       }
@@ -95,14 +97,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Phase 6: 통계 계산
-  int get _totalApplications => _applications.length;
-  int get _inProgressCount => _applications
-      .where((app) => app.status == ApplicationStatus.inProgress)
-      .length;
-  int get _passedCount => _applications
-      .where((app) => app.status == ApplicationStatus.passed)
-      .length;
+  // Phase 1: 통계 계산 (서비스 사용)
+  int get _totalApplications =>
+      HomeStatisticsService.getTotalApplications(_applications);
+  int get _inProgressCount =>
+      HomeStatisticsService.getInProgressCount(_applications);
+  int get _passedCount => HomeStatisticsService.getPassedCount(_applications);
 
   // Phase 6: 마감 임박 공고 (D-3 이내)
   List<Application> get _urgentApplications {
@@ -372,8 +372,8 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () {
                 // 공고 목록 화면으로 이동
-                final mainNavigationState =
-                    context.findAncestorStateOfType<MainNavigationState>();
+                final mainNavigationState = context
+                    .findAncestorStateOfType<MainNavigationState>();
                 if (mainNavigationState != null) {
                   mainNavigationState.setCurrentIndex(1);
                 }
@@ -447,9 +447,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ApplicationDetailScreen(
-                application: application,
-              ),
+              builder: (context) =>
+                  ApplicationDetailScreen(application: application),
             ),
           );
         },
@@ -645,9 +644,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ApplicationDetailScreen(
-                                  application: app,
-                                ),
+                                builder: (context) =>
+                                    ApplicationDetailScreen(application: app),
                               ),
                             );
                           },
