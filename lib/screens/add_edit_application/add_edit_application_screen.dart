@@ -2,21 +2,16 @@
 // 새 공고를 추가하거나 기존 공고를 수정하는 화면
 
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
-import '../../models/cover_letter_question.dart';
 import '../../models/notification_settings.dart';
 import '../../models/application.dart';
-import '../../models/next_stage.dart';
-import '../../models/application_status.dart';
 import '../../models/preparation_checklist.dart';
 import '../../services/storage_service.dart';
-// Phase 1: 폼 필드 위젯 import
+import '../../services/application_form_converter.dart';
+import '../../services/link_test_service.dart';
+// Phase 1: 폼 필드 위젯 import (메모 필드용)
 import '../../widgets/form_fields/labeled_text_field.dart';
-import '../../widgets/form_fields/link_text_field.dart';
-import '../../widgets/form_fields/date_time_field.dart';
-import '../../widgets/form_fields/experience_level_field.dart';
 // Phase 2: 다이얼로그 위젯 import
 import '../../widgets/dialogs/add_stage_dialog.dart';
 import '../../widgets/dialogs/edit_stage_dialog.dart';
@@ -29,10 +24,14 @@ import '../../widgets/dialogs/edit_question_dialog.dart';
 import '../../widgets/dialogs/delete_question_confirm_dialog.dart';
 import '../../widgets/dialogs/notification_settings_dialog.dart';
 import '../../utils/validation.dart';
+import '../../utils/snackbar_utils.dart';
+import '../../utils/form_data_updater.dart';
 // Phase 6: 섹션별 위젯 import
 import '../../widgets/application_form_sections/preparation_checklist_section.dart';
 import '../../widgets/application_form_sections/next_stages_section.dart';
 import '../../widgets/application_form_sections/cover_letter_questions_section.dart';
+// Phase 1: 필수 필드 섹션 위젯 import
+import '../../widgets/application_form_sections/required_fields_section.dart';
 // Phase 7: 상태 관리
 import '../../models/application_form_data.dart';
 
@@ -61,86 +60,10 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     }
   }
 
-  // Phase 7: 기존 Application 데이터 로드
+  // Phase 9: 기존 Application 데이터 로드 - ApplicationFormConverter 사용
   void _loadApplicationData(Application application) {
-    // 시간 정보 추출
-    bool deadlineIncludeTime = false;
-    TimeOfDay? deadlineTime;
-    if (application.deadline.hour != 0 || application.deadline.minute != 0) {
-      deadlineIncludeTime = true;
-      deadlineTime = TimeOfDay(
-        hour: application.deadline.hour,
-        minute: application.deadline.minute,
-      );
-    }
-
-    bool announcementDateIncludeTime = false;
-    TimeOfDay? announcementDateTime;
-    if (application.announcementDate != null) {
-      final announcementHour = application.announcementDate!.hour;
-      final announcementMinute = application.announcementDate!.minute;
-      if (announcementHour != 0 || announcementMinute != 0) {
-        announcementDateIncludeTime = true;
-        announcementDateTime = TimeOfDay(
-          hour: announcementHour,
-          minute: announcementMinute,
-        );
-      }
-    }
-
-    // NextStage 리스트 변환
-    final List<Map<String, dynamic>> nextStages = application.nextStages
-        .map((stage) => {'type': stage.type, 'date': stage.date})
-        .toList();
-
-    // 알림 설정 추출
-    final notificationSettings = application.notificationSettings;
-    NotificationSettings? deadlineNotificationSettings;
-    if (notificationSettings.deadlineNotification) {
-      deadlineNotificationSettings = NotificationSettings(
-        deadlineNotification: true,
-        deadlineTiming: notificationSettings.deadlineTiming,
-        customHoursBefore: notificationSettings.customHoursBefore,
-      );
-    }
-    NotificationSettings? announcementNotificationSettings;
-    if (notificationSettings.announcementNotification) {
-      announcementNotificationSettings = NotificationSettings(
-        announcementNotification: true,
-        announcementTiming: notificationSettings.announcementTiming,
-      );
-    }
-
-    // ApplicationFormData 업데이트
     setState(() {
-      _formData = ApplicationFormData(
-        companyNameController: TextEditingController(
-          text: application.companyName,
-        ),
-        applicationLinkController: TextEditingController(
-          text: application.applicationLink ?? '',
-        ),
-        positionController: TextEditingController(
-          text: application.position ?? '',
-        ),
-        workplaceController: TextEditingController(
-          text: application.workplace ?? '',
-        ),
-        memoController: TextEditingController(text: application.memo ?? ''),
-        deadline: application.deadline,
-        announcementDate: application.announcementDate,
-        experienceLevel: application.experienceLevel,
-        preparationChecklist: List.from(application.preparationChecklist),
-        nextStages: nextStages,
-        coverLetterQuestions: List.from(application.coverLetterQuestions),
-        deadlineIncludeTime: deadlineIncludeTime,
-        deadlineTime: deadlineTime,
-        announcementDateIncludeTime: announcementDateIncludeTime,
-        announcementDateTime: announcementDateTime,
-        deadlineNotificationSettings: deadlineNotificationSettings,
-        announcementNotificationSettings: announcementNotificationSettings,
-        editingApplicationId: application.id,
-      );
+      _formData = ApplicationFormConverter.fromApplication(application);
     });
   }
 
@@ -222,7 +145,17 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Phase 1: 필수 입력 필드
-            _buildRequiredFields(context),
+            RequiredFieldsSection(
+              formData: _formData,
+              onFormDataChanged: (newFormData) {
+                setState(() {
+                  _formData = newFormData;
+                });
+              },
+              onNotificationSettingsTap: _showNotificationSettingsDialog,
+              onTestLink: (url) =>
+                  LinkTestService.testAndOpenLink(context, url),
+            ),
             const SizedBox(height: 32),
 
             // Phase 3: 동적 추가 기능
@@ -239,272 +172,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     );
   }
 
-  // Phase 1: 필수 입력 필드 섹션
-  Widget _buildRequiredFields(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 회사명 입력
-        LabeledTextField(
-          label: AppStrings.companyNameRequired,
-          controller: _formData.companyNameController,
-          icon: Icons.business,
-          hintText: '회사명을 입력하세요',
-          errorText: _formData.companyNameError,
-          onChanged: () {
-            if (_formData.companyNameError != null) {
-              setState(() {
-                _formData = _formData.copyWith(
-                  companyNameErrorNull: () => null,
-                );
-              });
-            }
-          },
-        ),
-        const SizedBox(height: 24),
-
-        // 직무명 입력
-        LabeledTextField(
-          label: AppStrings.position,
-          controller: _formData.positionController,
-          hintText: '직무명을 입력하세요',
-        ),
-        const SizedBox(height: 24),
-
-        // 구분 선택
-        ExperienceLevelField(
-          selectedLevel: _formData.experienceLevel,
-          onChanged: (level) {
-            setState(() {
-              _formData = _formData.copyWith(experienceLevel: level);
-            });
-          },
-        ),
-        const SizedBox(height: 24),
-
-        // 지원서 링크 입력
-        LinkTextField(
-          controller: _formData.applicationLinkController,
-          errorText: _formData.applicationLinkError,
-          onChanged: () {
-            if (_formData.applicationLinkError != null) {
-              setState(() {
-                _formData = _formData.copyWith(
-                  applicationLinkErrorNull: () => null,
-                );
-              });
-            }
-          },
-          onTestLink: (url) async {
-            await _testLink(context);
-          },
-        ),
-        const SizedBox(height: 24),
-
-        // 근무처 입력
-        LabeledTextField(
-          label: AppStrings.workplace,
-          controller: _formData.workplaceController,
-          hintText: '근무처를 입력하세요',
-        ),
-        const SizedBox(height: 24),
-
-        // 서류 마감일 선택
-        DateTimeField(
-          label: AppStrings.deadlineRequired,
-          selectedDate: _formData.deadline,
-          errorText: _formData.deadlineError,
-          notificationSettings: _formData.deadlineNotificationSettings,
-          includeTime: _formData.deadlineIncludeTime,
-          selectedTime: _formData.deadlineTime,
-          onDateSelected: (date) {
-            setState(() {
-              // 날짜만 선택한 경우, 시간 포함 여부에 따라 시간 설정
-              DateTime? newDeadline;
-              if (_formData.deadlineIncludeTime &&
-                  _formData.deadlineTime != null) {
-                newDeadline = DateTime(
-                  date.year,
-                  date.month,
-                  date.day,
-                  _formData.deadlineTime!.hour,
-                  _formData.deadlineTime!.minute,
-                );
-              } else {
-                newDeadline = DateTime(date.year, date.month, date.day);
-              }
-              _formData = _formData.copyWith(
-                deadline: newDeadline,
-                deadlineErrorNull: () => null,
-              );
-            });
-          },
-          onTimeToggled: (includeTime) {
-            setState(() {
-              TimeOfDay? newDeadlineTime = _formData.deadlineTime;
-              DateTime? newDeadline = _formData.deadline;
-
-              if (includeTime) {
-                newDeadlineTime =
-                    newDeadlineTime ?? const TimeOfDay(hour: 0, minute: 0);
-                if (newDeadline != null) {
-                  newDeadline = DateTime(
-                    newDeadline.year,
-                    newDeadline.month,
-                    newDeadline.day,
-                    newDeadlineTime.hour,
-                    newDeadlineTime.minute,
-                  );
-                }
-              } else {
-                newDeadlineTime = null;
-                if (newDeadline != null) {
-                  newDeadline = DateTime(
-                    newDeadline.year,
-                    newDeadline.month,
-                    newDeadline.day,
-                  );
-                }
-              }
-
-              _formData = _formData.copyWith(
-                deadlineIncludeTime: includeTime,
-                deadlineTime: newDeadlineTime,
-                deadline: newDeadline,
-              );
-            });
-          },
-          onTimeSelected: (time) {
-            setState(() {
-              DateTime? newDeadline = _formData.deadline;
-              if (newDeadline != null) {
-                newDeadline = DateTime(
-                  newDeadline.year,
-                  newDeadline.month,
-                  newDeadline.day,
-                  time.hour,
-                  time.minute,
-                );
-              }
-              _formData = _formData.copyWith(
-                deadlineTime: time,
-                deadline: newDeadline,
-              );
-            });
-          },
-          onNotificationSettingsChanged: (settings) {
-            setState(() {
-              _formData = _formData.copyWith(
-                deadlineNotificationSettings: settings,
-              );
-            });
-          },
-          notificationType: 'deadline',
-          onNotificationSettingsTap: _showNotificationSettingsDialog,
-        ),
-        const SizedBox(height: 24),
-
-        // 서류 발표일 선택
-        DateTimeField(
-          label: AppStrings.announcementDate,
-          selectedDate: _formData.announcementDate,
-          notificationSettings: _formData.announcementNotificationSettings,
-          includeTime: _formData.announcementDateIncludeTime,
-          selectedTime: _formData.announcementDateTime,
-          onDateSelected: (date) {
-            setState(() {
-              // 날짜만 선택한 경우, 시간 포함 여부에 따라 시간 설정
-              DateTime? newAnnouncementDate;
-              if (_formData.announcementDateIncludeTime &&
-                  _formData.announcementDateTime != null) {
-                newAnnouncementDate = DateTime(
-                  date.year,
-                  date.month,
-                  date.day,
-                  _formData.announcementDateTime!.hour,
-                  _formData.announcementDateTime!.minute,
-                );
-              } else {
-                newAnnouncementDate = DateTime(date.year, date.month, date.day);
-              }
-              _formData = _formData.copyWith(
-                announcementDate: newAnnouncementDate,
-              );
-            });
-          },
-          onTimeToggled: (includeTime) {
-            setState(() {
-              TimeOfDay? newAnnouncementDateTime =
-                  _formData.announcementDateTime;
-              DateTime? newAnnouncementDate = _formData.announcementDate;
-
-              if (includeTime) {
-                newAnnouncementDateTime =
-                    newAnnouncementDateTime ??
-                    const TimeOfDay(hour: 0, minute: 0);
-                if (newAnnouncementDate != null) {
-                  newAnnouncementDate = DateTime(
-                    newAnnouncementDate.year,
-                    newAnnouncementDate.month,
-                    newAnnouncementDate.day,
-                    newAnnouncementDateTime.hour,
-                    newAnnouncementDateTime.minute,
-                  );
-                }
-              } else {
-                newAnnouncementDateTime = null;
-                if (newAnnouncementDate != null) {
-                  newAnnouncementDate = DateTime(
-                    newAnnouncementDate.year,
-                    newAnnouncementDate.month,
-                    newAnnouncementDate.day,
-                  );
-                }
-              }
-
-              _formData = _formData.copyWith(
-                announcementDateIncludeTime: includeTime,
-                announcementDateTime: newAnnouncementDateTime,
-                announcementDate: newAnnouncementDate,
-              );
-            });
-          },
-          onTimeSelected: (time) {
-            setState(() {
-              DateTime? newAnnouncementDate = _formData.announcementDate;
-              if (newAnnouncementDate != null) {
-                newAnnouncementDate = DateTime(
-                  newAnnouncementDate.year,
-                  newAnnouncementDate.month,
-                  newAnnouncementDate.day,
-                  time.hour,
-                  time.minute,
-                );
-              }
-              _formData = _formData.copyWith(
-                announcementDateTime: time,
-                announcementDate: newAnnouncementDate,
-              );
-            });
-          },
-          onNotificationSettingsChanged: (settings) {
-            setState(() {
-              _formData = _formData.copyWith(
-                announcementNotificationSettings: settings,
-              );
-            });
-          },
-          notificationType: 'announcement',
-          onNotificationSettingsTap: _showNotificationSettingsDialog,
-        ),
-      ],
-    );
-  }
-
-  // Phase 1: 폼 필드 빌더 메서드들은 위젯으로 분리됨
-  // - _buildTextField -> LabeledTextField
-  // - _buildLinkField -> LinkTextField
-  // - _buildDateFieldWithNotification -> DateTimeField
+  // Phase 1: 필수 입력 필드 섹션은 RequiredFieldsSection 위젯으로 분리됨
 
   // 메모 입력 필드 (여러 줄)
   Widget _buildMemoField(BuildContext context) {
@@ -563,86 +231,61 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     );
   }
 
-  // Phase 2: 체크리스트 항목 추가 다이얼로그
+  // Phase 12: 체크리스트 항목 추가 다이얼로그 - FormDataUpdater 사용
   void _showAddChecklistItemDialog(BuildContext context) {
     AddChecklistItemDialog.show(context).then((result) {
       if (result != null) {
         setState(() {
-          final updatedChecklist = List<PreparationChecklist>.from(
-            _formData.preparationChecklist,
-          );
-          updatedChecklist.add(
-            PreparationChecklist(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              item: result,
-              isChecked: false,
-            ),
-          );
-          _formData = _formData.copyWith(
-            preparationChecklist: updatedChecklist,
-          );
+          _formData = FormDataUpdater.addChecklistItem(_formData, result);
         });
       }
     });
   }
 
-  // Phase 2: 체크리스트 항목 수정 다이얼로그
+  // Phase 12: 체크리스트 항목 수정 다이얼로그 - FormDataUpdater 사용
   void _showEditChecklistItemDialog(BuildContext context, int index) {
     final item = _formData.preparationChecklist[index];
     EditChecklistItemDialog.show(context, item.item).then((result) {
       if (result != null) {
         setState(() {
-          final updatedChecklist = List<PreparationChecklist>.from(
-            _formData.preparationChecklist,
-          );
-          updatedChecklist[index] = updatedChecklist[index].copyWith(
-            item: result,
-          );
-          _formData = _formData.copyWith(
-            preparationChecklist: updatedChecklist,
+          _formData = FormDataUpdater.updateChecklistItem(
+            _formData,
+            index,
+            result,
           );
         });
       }
     });
   }
 
-  // Phase 2: 체크리스트 항목 삭제 확인 다이얼로그
+  // Phase 12: 체크리스트 항목 삭제 확인 다이얼로그 - FormDataUpdater 사용
   void _showDeleteChecklistItemConfirmDialog(BuildContext context, int index) {
     final item = _formData.preparationChecklist[index];
     DeleteChecklistItemConfirmDialog.show(context, item.item).then((result) {
       if (result == true) {
         setState(() {
-          final updatedChecklist = List<PreparationChecklist>.from(
-            _formData.preparationChecklist,
-          );
-          updatedChecklist.removeAt(index);
-          _formData = _formData.copyWith(
-            preparationChecklist: updatedChecklist,
-          );
+          _formData = FormDataUpdater.removeChecklistItem(_formData, index);
         });
       }
     });
   }
 
-  // Phase 2: 일정 추가 다이얼로그 - AddStageDialog 위젯으로 분리됨
+  // Phase 12: 일정 추가 다이얼로그 - FormDataUpdater 사용
   void _showAddStageDialog(BuildContext context) {
     AddStageDialog.show(context).then((result) {
       if (result != null) {
         setState(() {
-          final updatedStages = List<Map<String, dynamic>>.from(
-            _formData.nextStages,
+          _formData = FormDataUpdater.addStage(
+            _formData,
+            result['type'] as String,
+            result['date'] as DateTime,
           );
-          updatedStages.add({
-            'type': result['type'] as String,
-            'date': result['date'] as DateTime,
-          });
-          _formData = _formData.copyWith(nextStages: updatedStages);
         });
       }
     });
   }
 
-  // Phase 2: 일정 수정 다이얼로그 - EditStageDialog 위젯으로 분리됨
+  // Phase 12: 일정 수정 다이얼로그 - FormDataUpdater 사용
   void _showEditStageDialog(BuildContext context, int index) {
     final stage = _formData.nextStages[index];
     EditStageDialog.show(
@@ -652,29 +295,23 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     ).then((result) {
       if (result != null) {
         setState(() {
-          final updatedStages = List<Map<String, dynamic>>.from(
-            _formData.nextStages,
+          _formData = FormDataUpdater.updateStage(
+            _formData,
+            index,
+            result['type'] as String,
+            result['date'] as DateTime,
           );
-          updatedStages[index] = {
-            'type': result['type'] as String,
-            'date': result['date'] as DateTime,
-          };
-          _formData = _formData.copyWith(nextStages: updatedStages);
         });
       }
     });
   }
 
-  // Phase 2: 일정 삭제 확인 다이얼로그 - DeleteStageConfirmDialog 위젯으로 분리됨
+  // Phase 12: 일정 삭제 확인 다이얼로그 - FormDataUpdater 사용
   void _showDeleteStageConfirmDialog(BuildContext context, int index) {
     DeleteStageConfirmDialog.show(context).then((result) {
       if (result == true) {
         setState(() {
-          final updatedStages = List<Map<String, dynamic>>.from(
-            _formData.nextStages,
-          );
-          updatedStages.removeAt(index);
-          _formData = _formData.copyWith(nextStages: updatedStages);
+          _formData = FormDataUpdater.removeStage(_formData, index);
         });
       }
     });
@@ -682,29 +319,22 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
 
   // Phase 6: 자기소개서 문항 섹션 - CoverLetterQuestionsSection 위젯으로 분리됨
 
-  // Phase 2: 문항 추가 다이얼로그 - AddQuestionDialog 위젯으로 분리됨
+  // Phase 12: 문항 추가 다이얼로그 - FormDataUpdater 사용
   void _showAddQuestionDialog(BuildContext context) {
     AddQuestionDialog.show(context).then((result) {
       if (result != null) {
         setState(() {
-          final updatedQuestions = List<CoverLetterQuestion>.from(
-            _formData.coverLetterQuestions,
-          );
-          updatedQuestions.add(
-            CoverLetterQuestion(
-              question: result['question'] as String,
-              maxLength: result['maxLength'] as int,
-            ),
-          );
-          _formData = _formData.copyWith(
-            coverLetterQuestions: updatedQuestions,
+          _formData = FormDataUpdater.addQuestion(
+            _formData,
+            result['question'] as String,
+            result['maxLength'] as int,
           );
         });
       }
     });
   }
 
-  // Phase 2: 문항 수정 다이얼로그 - EditQuestionDialog 위젯으로 분리됨
+  // Phase 12: 문항 수정 다이얼로그 - FormDataUpdater 사용
   void _showEditQuestionDialog(BuildContext context, int index) {
     final question = _formData.coverLetterQuestions[index];
     EditQuestionDialog.show(
@@ -714,16 +344,11 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     ).then((result) {
       if (result != null) {
         setState(() {
-          final updatedQuestions = List<CoverLetterQuestion>.from(
-            _formData.coverLetterQuestions,
-          );
-          updatedQuestions[index] = CoverLetterQuestion(
-            question: result['question'] as String,
-            maxLength: result['maxLength'] as int,
-            answer: question.answer,
-          );
-          _formData = _formData.copyWith(
-            coverLetterQuestions: updatedQuestions,
+          _formData = FormDataUpdater.updateQuestion(
+            _formData,
+            index,
+            result['question'] as String,
+            result['maxLength'] as int,
           );
         });
       }
@@ -757,7 +382,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     });
   }
 
-  // Phase 2: 문항 삭제 확인 다이얼로그 - DeleteQuestionConfirmDialog 위젯으로 분리됨
+  // Phase 12: 문항 삭제 확인 다이얼로그 - FormDataUpdater 사용
   void _showDeleteQuestionConfirmDialog(BuildContext context, int index) {
     DeleteQuestionConfirmDialog.show(
       context,
@@ -765,13 +390,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     ).then((result) {
       if (result == true) {
         setState(() {
-          final updatedQuestions = List<CoverLetterQuestion>.from(
-            _formData.coverLetterQuestions,
-          );
-          updatedQuestions.removeAt(index);
-          _formData = _formData.copyWith(
-            coverLetterQuestions: updatedQuestions,
-          );
+          _formData = FormDataUpdater.removeQuestion(_formData, index);
         });
       }
     });
@@ -810,29 +429,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     // 유효성 검사 수행
     if (!_validateRequiredFields()) {
       // 에러가 있으면 첫 번째 에러 필드로 스크롤
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  '필수 입력 항목을 확인해주세요.',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      SnackBarUtils.showError(context, '필수 입력 항목을 확인해주세요.');
       return;
     }
 
@@ -840,77 +437,13 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     _saveApplication();
   }
 
-  // Phase 5: Application 저장
+  // Phase 9: Application 저장 - ApplicationFormConverter 사용
   Future<void> _saveApplication() async {
     try {
-      // NextStage 리스트 변환
-      final List<NextStage> nextStages = _formData.nextStages.map((stage) {
-        return NextStage(
-          type: stage['type'] as String,
-          date: stage['date'] as DateTime,
-        );
-      }).toList();
-
-      // 알림 설정 통합
-      NotificationSettings notificationSettings = NotificationSettings();
-      if (_formData.deadlineNotificationSettings != null) {
-        notificationSettings = notificationSettings.copyWith(
-          deadlineNotification:
-              _formData.deadlineNotificationSettings!.deadlineNotification,
-          deadlineTiming:
-              _formData.deadlineNotificationSettings!.deadlineTiming,
-          customHoursBefore:
-              _formData.deadlineNotificationSettings!.customHoursBefore,
-        );
-      }
-      if (_formData.announcementNotificationSettings != null) {
-        notificationSettings = notificationSettings.copyWith(
-          announcementNotification: _formData
-              .announcementNotificationSettings!
-              .announcementNotification,
-          announcementTiming:
-              _formData.announcementNotificationSettings!.announcementTiming,
-        );
-      }
-
-      // 지원서 링크 처리 - 스킴이 없으면 자동으로 https:// 추가
-      String? applicationLink = _formData.applicationLinkController.text.trim();
-      if (applicationLink.isNotEmpty) {
-        if (!applicationLink.contains(
-          RegExp(r'^https?://', caseSensitive: false),
-        )) {
-          applicationLink = 'https://$applicationLink';
-        }
-      }
-
-      // Phase 7: Application 객체 생성 (수정 모드인 경우 기존 데이터 유지)
-      final now = DateTime.now();
-      final application = Application(
-        id:
-            _formData.editingApplicationId ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        companyName: _formData.companyNameController.text.trim(),
-        position: _formData.positionController.text.trim().isEmpty
-            ? null
-            : _formData.positionController.text.trim(),
-        experienceLevel: _formData.experienceLevel,
-        applicationLink: applicationLink.isEmpty ? null : applicationLink,
-        workplace: _formData.workplaceController.text.trim().isEmpty
-            ? null
-            : _formData.workplaceController.text.trim(),
-        deadline: _formData.deadline!,
-        announcementDate: _formData.announcementDate,
-        preparationChecklist: _formData.preparationChecklist,
-        nextStages: nextStages,
-        coverLetterQuestions: _formData.coverLetterQuestions,
-        memo: _formData.memoController.text.trim().isEmpty
-            ? null
-            : _formData.memoController.text.trim(),
-        status: widget.application?.status ?? ApplicationStatus.notApplied,
-        isApplied: widget.application?.isApplied ?? false,
-        notificationSettings: notificationSettings,
-        createdAt: widget.application?.createdAt ?? now,
-        updatedAt: now, // Phase 7: 수정 시 updatedAt 업데이트
+      // ApplicationFormConverter를 사용하여 Application 객체 생성
+      final application = ApplicationFormConverter.toApplication(
+        _formData,
+        existingApplication: widget.application,
       );
 
       // StorageService를 사용하여 저장
@@ -921,217 +454,23 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
 
       if (success) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _formData.editingApplicationId != null
-                        ? '공고가 성공적으로 수정되었습니다.'
-                        : '공고가 성공적으로 저장되었습니다.',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 2),
-          ),
+        SnackBarUtils.showSuccess(
+          context,
+          _formData.editingApplicationId != null
+              ? '공고가 성공적으로 수정되었습니다.'
+              : '공고가 성공적으로 저장되었습니다.',
         );
         if (!mounted) return;
         Navigator.pop(context, true); // 저장 성공 시 화면 닫기
       } else {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    '저장 중 오류가 발생했습니다.',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        SnackBarUtils.showError(context, '저장 중 오류가 발생했습니다.');
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  '저장 중 오류가 발생했습니다: $e',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      SnackBarUtils.showError(context, '저장 중 오류가 발생했습니다: $e');
     }
   }
 
-  // Phase 1: 링크 테스트 기능
-  Future<void> _testLink(BuildContext context) async {
-    final urlString = _formData.applicationLinkController.text.trim();
-
-    if (urlString.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  '링크를 입력해주세요.',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
-      return;
-    }
-
-    // URL 형식 검증 및 수정
-    Uri? uri;
-    try {
-      uri = Uri.parse(urlString);
-      // http:// 또는 https://가 없으면 추가
-      if (!uri.hasScheme) {
-        uri = Uri.parse('https://$urlString');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  '올바른 URL 형식이 아닙니다.',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
-      return;
-    }
-
-    // URL 열기 - canLaunchUrl 체크 없이 직접 시도
-    // LaunchMode.externalApplication을 사용하면 사용자가 브라우저를 선택할 수 있습니다
-    try {
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
-
-      if (!launched && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    '링크를 열 수 없습니다.',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '링크 열기 실패: $e',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    }
-  }
+  // Phase 11: 링크 테스트 기능은 LinkTestService로 분리됨
 }
