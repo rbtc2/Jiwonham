@@ -544,28 +544,26 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           ),
           const SizedBox(width: 8),
           const Text('보관함'),
-          if (rootAppCount > 0) ...[
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.primary,
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                '$rootAppCount',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.primary,
+                width: 1,
               ),
             ),
-          ],
+            child: Text(
+              '$rootAppCount',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       );
     } else {
@@ -634,28 +632,26 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (folderAppCount > 0) ...[
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Color(folder.color).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Color(folder.color),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                '$folderAppCount',
-                style: TextStyle(
-                  color: Color(folder.color),
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Color(folder.color).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Color(folder.color),
+                width: 1,
               ),
             ),
-          ],
+            child: Text(
+              '$folderAppCount',
+              style: TextStyle(
+                color: Color(folder.color),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       );
     }
