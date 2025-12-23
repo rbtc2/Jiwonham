@@ -10,6 +10,7 @@ class ApplicationFormData {
   final TextEditingController companyNameController;
   final TextEditingController applicationLinkController;
   final TextEditingController positionController;
+  final TextEditingController workplaceController;
   final TextEditingController memoController;
 
   // 필수 필드
@@ -46,6 +47,7 @@ class ApplicationFormData {
     TextEditingController? companyNameController,
     TextEditingController? applicationLinkController,
     TextEditingController? positionController,
+    TextEditingController? workplaceController,
     TextEditingController? memoController,
     this.deadline,
     this.announcementDate,
@@ -66,6 +68,7 @@ class ApplicationFormData {
         applicationLinkController =
             applicationLinkController ?? TextEditingController(),
         positionController = positionController ?? TextEditingController(),
+        workplaceController = workplaceController ?? TextEditingController(),
         memoController = memoController ?? TextEditingController(),
         nextStages = nextStages ?? [],
         coverLetterQuestions = coverLetterQuestions ?? [];
@@ -75,6 +78,7 @@ class ApplicationFormData {
     companyNameController.dispose();
     applicationLinkController.dispose();
     positionController.dispose();
+    workplaceController.dispose();
     memoController.dispose();
   }
 
@@ -83,6 +87,7 @@ class ApplicationFormData {
     TextEditingController? companyNameController,
     TextEditingController? applicationLinkController,
     TextEditingController? positionController,
+    TextEditingController? workplaceController,
     TextEditingController? memoController,
     DateTime? deadline,
     DateTime? Function()? deadlineNull,
@@ -114,6 +119,7 @@ class ApplicationFormData {
       applicationLinkController:
           applicationLinkController ?? this.applicationLinkController,
       positionController: positionController ?? this.positionController,
+      workplaceController: workplaceController ?? this.workplaceController,
       memoController: memoController ?? this.memoController,
       deadline: deadline ?? (deadlineNull != null ? null : this.deadline),
       announcementDate: announcementDate ??

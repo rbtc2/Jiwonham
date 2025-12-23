@@ -15,6 +15,7 @@ class Application {
   final String companyName; // 회사명 (필수)
   final String? position; // 직무명
   final String? applicationLink; // 지원서 링크 (선택)
+  final String? workplace; // 근무처 (선택)
   final DateTime deadline; // 서류 마감일 (필수)
   final DateTime? announcementDate; // 서류 발표일
   final List<NextStage> nextStages; // 다음 전형 일정 리스트
@@ -37,6 +38,7 @@ class Application {
     required this.companyName,
     this.position,
     this.applicationLink,
+    this.workplace,
     required this.deadline,
     this.announcementDate,
     List<NextStage>? nextStages,
@@ -69,6 +71,7 @@ class Application {
       'companyName': companyName,
       'position': position,
       'applicationLink': applicationLink,
+      'workplace': workplace,
       'deadline': deadline.toIso8601String(),
       'announcementDate': announcementDate?.toIso8601String(),
       'nextStages': nextStages.map((stage) => stage.toJson()).toList(),
@@ -97,6 +100,7 @@ class Application {
       companyName: json['companyName'] as String,
       position: json['position'] as String?,
       applicationLink: json['applicationLink'] as String?,
+      workplace: json['workplace'] as String?,
       deadline: DateTime.parse(json['deadline'] as String),
       announcementDate: json['announcementDate'] != null
           ? DateTime.parse(json['announcementDate'] as String)
@@ -120,16 +124,22 @@ class Application {
           [],
       interviewQuestions:
           (json['interviewQuestions'] as List<dynamic>?)
-              ?.map((e) => InterviewQuestion.fromJson(e as Map<String, dynamic>))
+              ?.map(
+                (e) => InterviewQuestion.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
       interviewChecklist:
           (json['interviewChecklist'] as List<dynamic>?)
-              ?.map((e) => InterviewChecklist.fromJson(e as Map<String, dynamic>))
+              ?.map(
+                (e) => InterviewChecklist.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
       interviewSchedule: json['interviewSchedule'] != null
-          ? InterviewSchedule.fromJson(json['interviewSchedule'] as Map<String, dynamic>)
+          ? InterviewSchedule.fromJson(
+              json['interviewSchedule'] as Map<String, dynamic>,
+            )
           : null,
       memo: json['memo'] as String?,
       status: ApplicationStatus.values.firstWhere(
@@ -159,6 +169,7 @@ class Application {
     String? companyName,
     String? position,
     String? applicationLink,
+    String? workplace,
     DateTime? deadline,
     DateTime? announcementDate,
     List<NextStage>? nextStages,
@@ -181,6 +192,7 @@ class Application {
       companyName: companyName ?? this.companyName,
       position: position ?? this.position,
       applicationLink: applicationLink ?? this.applicationLink,
+      workplace: workplace ?? this.workplace,
       deadline: deadline ?? this.deadline,
       announcementDate: announcementDate ?? this.announcementDate,
       nextStages: nextStages ?? this.nextStages,

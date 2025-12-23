@@ -41,8 +41,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final storageService = StorageService();
-      // 보관함 제외한 공고만 가져오기
-      final applications = await storageService.getActiveApplications();
+      // 보관함 통계 제외 설정 확인
+      final excludeArchived = await storageService.getExcludeArchivedFromStatistics();
+      
+      // 설정에 따라 보관함 포함/제외
+      final applications = excludeArchived
+          ? await storageService.getActiveApplications()  // 보관함 제외
+          : await storageService.getAllApplications();     // 보관함 포함
 
       if (!mounted) return;
 

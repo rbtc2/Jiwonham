@@ -340,4 +340,28 @@ class StorageService {
       return false;
     }
   }
+
+  // 보관함 통계 제외 설정 키
+  static const String _excludeArchivedFromStatsKey = 'exclude_archived_from_stats';
+
+  // 보관함 통계 제외 설정 가져오기
+  Future<bool> getExcludeArchivedFromStatistics() async {
+    if (_prefs == null) {
+      await init();
+    }
+    // 기본값: true (보관함 제외)
+    return _prefs?.getBool(_excludeArchivedFromStatsKey) ?? true;
+  }
+
+  // 보관함 통계 제외 설정 저장
+  Future<bool> setExcludeArchivedFromStatistics(bool value) async {
+    if (_prefs == null) {
+      await init();
+    }
+    try {
+      return await _prefs!.setBool(_excludeArchivedFromStatsKey, value);
+    } catch (e) {
+      return false;
+    }
+  }
 }

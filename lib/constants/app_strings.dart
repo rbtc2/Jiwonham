@@ -33,6 +33,7 @@ class AppStrings {
   static const String position = '직무명';
   static const String applicationLink = '지원서 링크';
   static const String applicationLinkRequired = '지원서 링크 *';
+  static const String workplace = '근무처';
   static const String testLink = '링크 테스트';
   static const String deadline = '서류 마감일';
   static const String deadlineRequired = '서류 마감일 *';
@@ -169,6 +170,8 @@ class AppStrings {
   // Settings Screen
   static const String settings = '설정';
   static const String notificationDescription = '알림을 끄면 모든 알림이 비활성화됩니다.';
+  static const String excludeArchivedFromStats = '보관함 통계 제외';
+  static const String excludeArchivedFromStatsDescription = '켜면 보관함에 있는 공고는 통계에서 제외됩니다.';
   static const String premium = '프리미엄';
   static const String removeAds = '광고 제거';
   static const String purchasePremium = '구매하기';

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../widgets/modern_card.dart';
+import '../../services/storage_service.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -18,14 +19,25 @@ class _NotificationSettingsScreenState
     extends State<NotificationSettingsScreen> {
   // 스켈레톤 UI용 상태 (실제 기능 없음)
   bool _enableNotifications = true;
+  bool _excludeArchivedFromStats = true;
   final bool _isPremium = false;
   int _applicationCount = 0; // 실제로는 StorageService에서 가져올 예정
 
   @override
   void initState() {
     super.initState();
-    // TODO: 실제 데이터 로드
+    _loadSettings();
     _loadApplicationCount();
+  }
+
+  Future<void> _loadSettings() async {
+    final storageService = StorageService();
+    final excludeArchived = await storageService.getExcludeArchivedFromStatistics();
+    if (mounted) {
+      setState(() {
+        _excludeArchivedFromStats = excludeArchived;
+      });
+    }
   }
 
   Future<void> _loadApplicationCount() async {
@@ -127,6 +139,39 @@ class _NotificationSettingsScreenState
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.archive_outlined,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 8),
+                const Text(AppStrings.excludeArchivedFromStats),
+              ],
+            ),
+            subtitle: Text(
+              AppStrings.excludeArchivedFromStatsDescription,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+            value: _excludeArchivedFromStats,
+            onChanged: (value) async {
+              final storageService = StorageService();
+              final success = await storageService.setExcludeArchivedFromStatistics(value);
+              if (success && mounted) {
+                setState(() {
+                  _excludeArchivedFromStats = value;
+                });
+              }
+            },
+            contentPadding: EdgeInsets.zero,
           ),
         ],
       ),

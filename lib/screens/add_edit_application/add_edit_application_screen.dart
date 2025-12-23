@@ -117,6 +117,9 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         positionController: TextEditingController(
           text: application.position ?? '',
         ),
+        workplaceController: TextEditingController(
+          text: application.workplace ?? '',
+        ),
         memoController: TextEditingController(text: application.memo ?? ''),
         deadline: application.deadline,
         announcementDate: application.announcementDate,
@@ -276,6 +279,14 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
           onTestLink: (url) async {
             await _testLink(context);
           },
+        ),
+        const SizedBox(height: 24),
+
+        // 근무처 입력
+        LabeledTextField(
+          label: AppStrings.workplace,
+          controller: _formData.workplaceController,
+          hintText: '근무처를 입력하세요',
         ),
         const SizedBox(height: 24),
 
@@ -782,6 +793,9 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
             ? null
             : _formData.positionController.text.trim(),
         applicationLink: applicationLink.isEmpty ? null : applicationLink,
+        workplace: _formData.workplaceController.text.trim().isEmpty
+            ? null
+            : _formData.workplaceController.text.trim(),
         deadline: _formData.deadline!,
         announcementDate: _formData.announcementDate,
         nextStages: nextStages,
