@@ -186,25 +186,27 @@ class CalendarScreenState extends State<CalendarScreen>
           ? _buildLoadingState(context)
           : !_viewModel.hasEvents
           ? _buildEmptyCalendarState(context)
-          : Column(
-              children: [
-                // 캘린더 - 필요한 만큼만 공간 차지
-                Flexible(
-                  fit: FlexFit.loose,
-                  child: _buildCalendar(context),
-                ),
-                // 범례
-                const CalendarLegend(),
-                // 선택된 날짜의 일정 목록 - 남은 공간을 차지
-                Flexible(
-                  child: CalendarScheduleList(
-                    selectedDate: _selectedDate,
-                    events: _viewModel.getEventsForDate(_selectedDate),
-                    getEventTitle: _viewModel.getEventTitle,
-                    onEventTap: (event) => _handleEventTap(event),
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  // 캘린더
+                  _buildCalendar(context),
+                  // 범례
+                  const CalendarLegend(),
+                  const SizedBox(height: 8),
+                  // 선택된 날짜의 일정 목록
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: CalendarScheduleList(
+                      selectedDate: _selectedDate,
+                      events: _viewModel.getEventsForDate(_selectedDate),
+                      getEventTitle: _viewModel.getEventTitle,
+                      onEventTap: (event) => _handleEventTap(event),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
     );
   }

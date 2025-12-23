@@ -203,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.settings_outlined),
             onPressed: () {
               Navigator.push(
                 context,

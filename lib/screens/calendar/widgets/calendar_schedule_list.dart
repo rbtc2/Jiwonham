@@ -38,12 +38,10 @@ class CalendarScheduleList extends StatelessWidget {
 
     return ModernCard(
       padding: const EdgeInsets.all(12.0),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
             ModernSectionHeader(
               title: dateText,
               icon: Icons.event_outlined,
@@ -98,8 +96,7 @@ class CalendarScheduleList extends StatelessWidget {
                   ),
                 );
               }),
-          ],
-        ),
+        ],
       ),
     );
   }
