@@ -19,7 +19,7 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
     AppColors.primary,
     const Color(0xFFF44336), // Red
     const Color(0xFF4CAF50), // Green
-    const Color(0xFF2196F3), // Blue
+    const Color(0xFF3F51B5), // Indigo
     const Color(0xFFFF9800), // Orange
     const Color(0xFF9C27B0), // Purple
     const Color(0xFF00BCD4), // Cyan
