@@ -44,7 +44,12 @@ class _NotificationSettingsScreenState
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 16.0,
+            bottom: MediaQuery.of(context).padding.bottom + 16.0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -56,16 +61,18 @@ class _NotificationSettingsScreenState
               _buildPremiumSection(context),
               const SizedBox(height: 24),
 
-              // 후원하기 섹션
-              _buildDonationSection(context),
-              const SizedBox(height: 24),
-
               // 데이터 관리 섹션
               _buildDataManagementSection(context),
               const SizedBox(height: 24),
 
               // 정보 섹션
               _buildInfoSection(context),
+              const SizedBox(height: 24),
+
+              // 후원하기 섹션
+              _buildDonationSection(context),
+              // 하단 여백 추가
+              const SizedBox(height: 24),
             ],
           ),
         ),
