@@ -7,13 +7,21 @@ import '../../applications/application_list_item.dart';
 
 class ArchiveApplicationList extends StatelessWidget {
   final List<Application> applications;
+  final bool isSelectionMode;
+  final Set<String> selectedApplicationIds;
   final Function(Application) onApplicationTap;
+  final Function(String) onSelectionToggled;
+  final Function(String) onLongPress;
   final Function(String) onRestore;
 
   const ArchiveApplicationList({
     super.key,
     required this.applications,
+    this.isSelectionMode = false,
+    this.selectedApplicationIds = const {},
     required this.onApplicationTap,
+    required this.onSelectionToggled,
+    required this.onLongPress,
     required this.onRestore,
   });
 
@@ -46,30 +54,47 @@ class ArchiveApplicationList extends StatelessWidget {
       itemCount: applications.length,
       itemBuilder: (context, index) {
         final application = applications[index];
-        return Dismissible(
-          key: Key(application.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.restore,
-              color: Colors.white,
-              size: 32,
-            ),
-          ),
-          onDismissed: (direction) {
-            onRestore(application.id);
+        final isSelected = selectedApplicationIds.contains(application.id);
+        
+        Widget item = ApplicationListItem(
+          application: application,
+          isSelectionMode: isSelectionMode,
+          isSelected: isSelected,
+          onChanged: () {},
+          onSelectionChanged: (selected) {
+            onSelectionToggled(application.id);
           },
-          child: ApplicationListItem(
-            application: application,
-            onChanged: () {},
-          ),
+          onLongPress: () {
+            onLongPress(application.id);
+          },
         );
+
+        // 선택 모드가 아닐 때만 스와이프로 복원 가능
+        if (!isSelectionMode) {
+          item = Dismissible(
+            key: Key(application.id),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.restore,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            onDismissed: (direction) {
+              onRestore(application.id);
+            },
+            child: item,
+          );
+        }
+
+        return item;
       },
     );
   }

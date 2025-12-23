@@ -154,7 +154,9 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                widget.application != null ? Icons.edit_outlined : Icons.add_circle_outline,
+                widget.application != null
+                    ? Icons.edit_outlined
+                    : Icons.add_circle_outline,
                 color: AppColors.primary,
                 size: 20,
               ),
@@ -179,15 +181,15 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
               icon: const Icon(Icons.save_outlined, size: 18),
               label: const Text(
                 AppStrings.save,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -705,10 +707,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
               const Expanded(
                 child: Text(
                   '필수 입력 항목을 확인해주세요.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -762,6 +761,16 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         );
       }
 
+      // 지원서 링크 처리 - 스킴이 없으면 자동으로 https:// 추가
+      String? applicationLink = _formData.applicationLinkController.text.trim();
+      if (applicationLink.isNotEmpty) {
+        if (!applicationLink.contains(
+          RegExp(r'^https?://', caseSensitive: false),
+        )) {
+          applicationLink = 'https://$applicationLink';
+        }
+      }
+
       // Phase 7: Application 객체 생성 (수정 모드인 경우 기존 데이터 유지)
       final now = DateTime.now();
       final application = Application(
@@ -772,9 +781,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         position: _formData.positionController.text.trim().isEmpty
             ? null
             : _formData.positionController.text.trim(),
-        applicationLink: _formData.applicationLinkController.text.trim().isEmpty
-            ? null
-            : _formData.applicationLinkController.text.trim(),
+        applicationLink: applicationLink.isEmpty ? null : applicationLink,
         deadline: _formData.deadline!,
         announcementDate: _formData.announcementDate,
         nextStages: nextStages,
@@ -838,10 +845,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
                 const Expanded(
                   child: Text(
                     '저장 중 오류가 발생했습니다.',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
@@ -901,10 +905,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
               const Expanded(
                 child: Text(
                   '링크를 입력해주세요.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -938,10 +939,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
               const Expanded(
                 child: Text(
                   '올바른 URL 형식이 아닙니다.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -975,10 +973,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
                 const Expanded(
                   child: Text(
                     '링크를 열 수 없습니다.',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                 ),
               ],

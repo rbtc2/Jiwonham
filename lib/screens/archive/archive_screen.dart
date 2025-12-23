@@ -2,10 +2,12 @@
 // 보관함에 저장된 공고들을 폴더별로 관리하는 화면
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../constants/app_colors.dart';
 import '../../models/application.dart';
 import '../../models/archive_folder.dart';
 import '../../services/storage_service.dart';
+import '../../widgets/dialogs/multi_delete_confirm_dialog.dart';
 import '../application_detail/application_detail_screen.dart';
 import 'widgets/archive_folder_item.dart';
 import 'widgets/archive_application_list.dart';
@@ -25,6 +27,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   bool _isLoading = true;
   String? _selectedFolderId; // null이면 전체 보관함
   String _searchQuery = '';
+  
+  // 선택 모드 상태
+  bool _isSelectionMode = false;
+  Set<String> _selectedApplicationIds = {};
 
   @override
   void initState() {
@@ -154,18 +160,205 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     }
   }
 
+  // 선택 모드 관리
+  void _exitSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedApplicationIds.clear();
+    });
+  }
+
+  // 항목 선택/해제
+  void _toggleSelection(String applicationId) {
+    setState(() {
+      if (_selectedApplicationIds.contains(applicationId)) {
+        _selectedApplicationIds.remove(applicationId);
+        // 모든 선택 해제 시 선택 모드 비활성화
+        if (_selectedApplicationIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedApplicationIds.add(applicationId);
+        // 첫 번째 선택 시 선택 모드 활성화
+        if (!_isSelectionMode) {
+          _isSelectionMode = true;
+        }
+      }
+    });
+  }
+
+  // 전체 선택/해제
+  void _selectAll() {
+    setState(() {
+      _selectedApplicationIds = _filteredApplications.map((app) => app.id).toSet();
+      if (_selectedApplicationIds.isNotEmpty) {
+        _isSelectionMode = true;
+      }
+    });
+  }
+
+  void _deselectAll() {
+    setState(() {
+      _selectedApplicationIds.clear();
+      _isSelectionMode = false;
+    });
+  }
+
+  // 선택된 공고 복원
+  Future<void> _restoreSelectedApplications() async {
+    if (_selectedApplicationIds.isEmpty) return;
+
+    final selectedIds = List<String>.from(_selectedApplicationIds);
+    final success = await _storageService.restoreApplicationsFromArchive(selectedIds);
+
+    if (success && mounted) {
+      _exitSelectionMode();
+      await _refreshData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${selectedIds.length}개의 공고가 복원되었습니다.')),
+        );
+      }
+    }
+  }
+
+  // 선택된 공고 삭제
+  Future<void> _deleteSelectedApplications() async {
+    if (_selectedApplicationIds.isEmpty) return;
+
+    final selectedCount = _selectedApplicationIds.length;
+    final confirmed = await MultiDeleteConfirmDialog.show(
+      context,
+      selectedCount,
+    );
+
+    if (confirmed == true && mounted) {
+      final selectedIds = List<String>.from(_selectedApplicationIds);
+      int successCount = 0;
+      int failCount = 0;
+
+      for (final id in selectedIds) {
+        final success = await _storageService.deleteApplication(id);
+        if (success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      }
+
+      if (mounted) {
+        _exitSelectionMode();
+        await _refreshData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                failCount > 0
+                    ? '$successCount개 복원, $failCount개 실패'
+                    : '$successCount개의 공고가 삭제되었습니다.',
+              ),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('보관함'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _createFolder,
-            tooltip: '폴더 만들기',
-          ),
-        ],
+        title: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: _isSelectionMode
+              ? Row(
+                  key: const ValueKey('selection'),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.check_circle_outline,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${_selectedApplicationIds.length}개 선택됨',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                    ),
+                  ],
+                )
+              : const Text('보관함'),
+        ),
+        leading: _isSelectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _exitSelectionMode,
+                tooltip: '선택 모드 종료',
+              )
+            : null,
+        actions: _isSelectionMode
+            ? [
+                // 전체 선택/해제 버튼
+                Builder(
+                  builder: (context) {
+                    final filteredApps = _filteredApplications;
+                    final isAllSelected = filteredApps.isNotEmpty &&
+                        _selectedApplicationIds.length == filteredApps.length;
+                    final isEmpty = filteredApps.isEmpty;
+
+                    return IconButton(
+                      icon: Icon(
+                        isAllSelected
+                            ? Icons.check_box
+                            : Icons.check_box_outline_blank,
+                      ),
+                      onPressed: isEmpty
+                          ? null
+                          : () {
+                              HapticFeedback.mediumImpact();
+                              if (isAllSelected) {
+                                _deselectAll();
+                              } else {
+                                _selectAll();
+                              }
+                            },
+                      tooltip: isEmpty
+                          ? '선택할 항목이 없습니다'
+                          : (isAllSelected ? '전체 해제' : '전체 선택'),
+                    );
+                  },
+                ),
+                // 복원 버튼
+                if (_selectedApplicationIds.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.restore),
+                    onPressed: _restoreSelectedApplications,
+                    tooltip: '복원',
+                  ),
+                // 삭제 버튼
+                if (_selectedApplicationIds.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: _deleteSelectedApplications,
+                    tooltip: '삭제',
+                  ),
+              ]
+            : [
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: _createFolder,
+                  tooltip: '폴더 만들기',
+                ),
+              ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -247,16 +440,33 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 Expanded(
                   child: ArchiveApplicationList(
                     applications: _filteredApplications,
+                    isSelectionMode: _isSelectionMode,
+                    selectedApplicationIds: _selectedApplicationIds,
                     onApplicationTap: (application) async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ApplicationDetailScreen(application: application),
-                        ),
-                      );
-                      if (result == true) {
-                        await _refreshData();
+                      if (!_isSelectionMode) {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ApplicationDetailScreen(application: application),
+                          ),
+                        );
+                        if (result == true) {
+                          await _refreshData();
+                        }
+                      }
+                    },
+                    onSelectionToggled: (applicationId) {
+                      _toggleSelection(applicationId);
+                      if (_selectedApplicationIds.contains(applicationId) &&
+                          !_isSelectionMode) {
+                        HapticFeedback.mediumImpact();
+                      }
+                    },
+                    onLongPress: (applicationId) {
+                      if (!_isSelectionMode) {
+                        _toggleSelection(applicationId);
+                        HapticFeedback.mediumImpact();
                       }
                     },
                     onRestore: _handleRestoreApplication,

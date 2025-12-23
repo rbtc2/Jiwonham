@@ -3,15 +3,27 @@
 
 /// URL 형식 검증
 /// http:// 또는 https://로 시작하는지 확인
+/// 스킴이 없으면 자동으로 https://를 추가하여 검증
 bool isValidUrl(String url) {
   if (url.trim().isEmpty) {
     return false;
   }
 
-  // http:// 또는 https://로 시작하는지 확인
-  final urlPattern = RegExp(r'^https?://.+', caseSensitive: false);
+  String urlToCheck = url.trim();
+  
+  // 스킴이 없으면 https://를 추가
+  if (!urlToCheck.contains(RegExp(r'^https?://', caseSensitive: false))) {
+    urlToCheck = 'https://$urlToCheck';
+  }
 
-  return urlPattern.hasMatch(url.trim());
+  // URI 형식 검증
+  try {
+    final uri = Uri.parse(urlToCheck);
+    // 유효한 URI이고, 호스트가 있는지 확인
+    return uri.hasScheme && uri.host.isNotEmpty;
+  } catch (e) {
+    return false;
+  }
 }
 
 /// 회사명 검증
@@ -31,7 +43,7 @@ String? validateUrl(String? url) {
   }
 
   if (!isValidUrl(url)) {
-    return '올바른 URL 형식을 입력해주세요. (예: https://...)';
+    return '올바른 URL 형식을 입력해주세요. (예: https://example.com 또는 example.com)';
   }
 
   return null;
