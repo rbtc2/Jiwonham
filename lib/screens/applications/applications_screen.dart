@@ -306,32 +306,38 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     if (selectedIds.isEmpty) return;
 
     // 폴더 선택 다이얼로그 표시
-    final folderId = await showDialog<String?>(
+    final result = await showDialog<dynamic>(
       context: context,
       builder: (context) => const ArchiveFolderSelectDialog(),
     );
 
-    if (folderId != null || folderId == null) {
-      // folderId가 null이어도 보관함 루트로 이동하는 것이므로 처리
-      final success = await _storageService.moveApplicationsToArchive(
-        selectedIds,
-        folderId: folderId,
-      );
+    // 취소 버튼을 눌렀을 때는 false가 반환되므로 처리하지 않음
+    if (result == false) {
+      return;
+    }
 
-      if (success && mounted) {
-        // 선택 모드 종료
-        _viewModel.exitSelectionMode();
-        // 목록 새로고침
-        await _viewModel.loadApplications();
-        await _loadArchivedCount();
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${selectedIds.length}개의 공고가 보관함으로 이동되었습니다.'),
-            ),
-          );
-        }
+    // result가 String? 타입이면 폴더 ID (null이면 보관함 루트)
+    final folderId = result as String?;
+    
+    // folderId가 null이어도 보관함 루트로 이동하는 것이므로 처리
+    final success = await _storageService.moveApplicationsToArchive(
+      selectedIds,
+      folderId: folderId,
+    );
+
+    if (success && mounted) {
+      // 선택 모드 종료
+      _viewModel.exitSelectionMode();
+      // 목록 새로고침
+      await _viewModel.loadApplications();
+      await _loadArchivedCount();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${selectedIds.length}개의 공고가 보관함으로 이동되었습니다.'),
+          ),
+        );
       }
     }
   }

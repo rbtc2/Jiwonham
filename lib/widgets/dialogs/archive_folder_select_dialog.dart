@@ -101,11 +101,11 @@ class _ArchiveFolderSelectDialogState extends State<ArchiveFolderSelectDialog> {
             ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, false), // 취소 시 false 반환
           child: const Text('취소'),
         ),
         TextButton(
-          onPressed: () => Navigator.pop(context, _selectedFolderId),
+          onPressed: () => Navigator.pop(context, _selectedFolderId), // 이동 시 선택된 폴더 ID 반환
           child: const Text('이동'),
         ),
       ],
