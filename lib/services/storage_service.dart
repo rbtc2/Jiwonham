@@ -168,6 +168,12 @@ class StorageService {
     }
   }
 
+  // 모든 보관함 공고 가져오기 (폴더 구분 없이)
+  Future<List<Application>> getAllArchivedApplications() async {
+    final allApplications = await getAllApplications();
+    return allApplications.where((app) => app.isArchived).toList();
+  }
+
   // 공고를 보관함으로 이동
   Future<bool> moveApplicationToArchive(String applicationId, {String? folderId}) async {
     if (_prefs == null) {

@@ -52,7 +52,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
     try {
       final folders = await _storageService.getAllArchiveFolders();
-      final allArchived = await _storageService.getArchivedApplications();
+      final allArchived = await _storageService.getAllArchivedApplications();
       
       if (!mounted) return;
 
