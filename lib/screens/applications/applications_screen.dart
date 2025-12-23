@@ -337,14 +337,18 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   }
 
   void _handleArchivePressed() async {
-    await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const ArchiveScreen(),
       ),
     );
-    // 보관함 화면에서 돌아온 후 보관함 개수 새로고침
-    if (mounted) {
+    // 보관함 화면에서 복원/삭제가 발생했으면 공고 목록 새로고침
+    if (result == true && mounted) {
+      await _viewModel.loadApplications();
+      await _loadArchivedCount();
+    } else if (mounted) {
+      // 복원/삭제가 없어도 보관함 개수만 새로고침
       await _loadArchivedCount();
     }
   }

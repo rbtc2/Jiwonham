@@ -31,6 +31,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   // 선택 모드 상태
   bool _isSelectionMode = false;
   Set<String> _selectedApplicationIds = {};
+  
+  // 복원/삭제 발생 여부 추적
+  bool _hasRestoredOrDeleted = false;
 
   @override
   void initState() {
@@ -152,6 +155,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final success = await _storageService.restoreApplicationFromArchive(applicationId);
     if (!mounted) return;
     if (success) {
+      setState(() {
+        _hasRestoredOrDeleted = true;
+      });
       await _refreshData();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -212,6 +218,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final success = await _storageService.restoreApplicationsFromArchive(selectedIds);
 
     if (success && mounted) {
+      setState(() {
+        _hasRestoredOrDeleted = true;
+      });
       _exitSelectionMode();
       await _refreshData();
       if (mounted) {
@@ -247,6 +256,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       }
 
       if (mounted) {
+        if (successCount > 0) {
+          setState(() {
+            _hasRestoredOrDeleted = true;
+          });
+        }
         _exitSelectionMode();
         await _refreshData();
         if (mounted) {
@@ -254,7 +268,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             SnackBar(
               content: Text(
                 failCount > 0
-                    ? '$successCount개 복원, $failCount개 실패'
+                    ? '$successCount개 삭제, $failCount개 실패'
                     : '$successCount개의 공고가 삭제되었습니다.',
               ),
             ),
@@ -266,7 +280,15 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: !_hasRestoredOrDeleted,
+      onPopInvokedWithResult: (didPop, result) {
+        // 뒤로 가기 시 복원/삭제가 발생했으면 공고 목록 화면에 알림
+        if (!didPop && _hasRestoredOrDeleted) {
+          Navigator.of(context).pop(true);
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
@@ -474,6 +496,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 ),
               ],
             ),
+      ),
     );
   }
 }
