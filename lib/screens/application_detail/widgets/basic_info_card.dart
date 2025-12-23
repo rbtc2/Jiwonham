@@ -1,5 +1,5 @@
 // 기본 정보 카드 위젯
-// 회사명, 직무명, D-Day 배지, 지원서 링크 버튼을 표시하는 위젯
+// 회사명, 직무명, 구분, 근무지, D-Day 배지, 지원서 링크 버튼을 표시하는 위젯
 
 import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
@@ -48,6 +48,93 @@ class BasicInfoCard extends StatelessWidget {
                           application.position!,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
+                      // 구분과 근무지 정보 배지
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          // 구분 배지
+                          if (application.experienceLevel != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.work_outline,
+                                    size: 14,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    application.experienceLevel!.label,
+                                    style: Theme.of(context)
+                                        .textTheme.bodySmall
+                                        ?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          // 근무지 정보 배지
+                          if (application.workplace != null &&
+                              application.workplace!.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.textSecondary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      application.workplace!,
+                                      style: Theme.of(context)
+                                          .textTheme.bodySmall
+                                          ?.copyWith(
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
