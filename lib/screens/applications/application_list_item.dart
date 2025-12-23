@@ -83,7 +83,7 @@ class ApplicationListItem extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 상단: 알람 아이콘, 지원 완료 배지, 상태 칩, D-day 배지
+                // 상단: 알람 아이콘, 지원 완료 배지, 지원서 링크, 상태 칩, D-day 배지
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -143,9 +143,52 @@ class ApplicationListItem extends StatelessWidget {
                           ),
                       ],
                     ),
-                    // 오른쪽: 상태 칩 + D-day 배지
+                    // 오른쪽: 지원서 링크 아이콘 + 상태 칩 + D-day 배지
                     Row(
                       children: [
+                        // 지원서 링크 아이콘 (있으면)
+                        if (application.applicationLink != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.primary,
+                                width: 1,
+                              ),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.link,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                              onPressed: () async {
+                                try {
+                                  Uri uri = Uri.parse(application.applicationLink!);
+                                  if (!uri.hasScheme) {
+                                    uri = Uri.parse('https://${application.applicationLink}');
+                                  }
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('링크를 열 수 없습니다: $e'),
+                                        backgroundColor: AppColors.error,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              tooltip: '지원서 링크 열기',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         // 상태 칩 (D-day 배지와 동일한 스타일)
                         _buildStatusBadge(context),
                         const SizedBox(width: 8),
@@ -181,36 +224,6 @@ class ApplicationListItem extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // 지원서 링크 아이콘 (있으면)
-                    if (application.applicationLink != null)
-                      IconButton(
-                        icon: Icon(
-                          Icons.link,
-                          size: 20,
-                          color: AppColors.primary,
-                        ),
-                        onPressed: () async {
-                          try {
-                            Uri uri = Uri.parse(application.applicationLink!);
-                            if (!uri.hasScheme) {
-                              uri = Uri.parse('https://${application.applicationLink}');
-                            }
-                            await launchUrl(uri, mode: LaunchMode.externalApplication);
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('링크를 열 수 없습니다: $e'),
-                                  backgroundColor: AppColors.error,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        tooltip: '지원서 링크 열기',
-                      ),
                   ],
                 ),
                 const SizedBox(height: 12),

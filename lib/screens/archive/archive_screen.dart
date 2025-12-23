@@ -308,6 +308,89 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     }
   }
 
+  // AppBar 타이틀 위젯 빌드 (브레드크럼 포함)
+  Widget _buildTitleWidget() {
+    if (_selectedFolderId == null) {
+      // 전체 보관함
+      return Row(
+        key: const ValueKey('all'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.archive_outlined,
+            color: AppColors.primary,
+            size: 24,
+          ),
+          const SizedBox(width: 8),
+          const Text('보관함'),
+        ],
+      );
+    } else {
+      // 특정 폴더 선택
+      final folder = _folders.firstWhere(
+        (f) => f.id == _selectedFolderId,
+        orElse: () => _folders.isNotEmpty ? _folders.first : ArchiveFolder(
+          id: '',
+          name: '',
+        ),
+      );
+
+      // 폴더를 찾지 못한 경우 전체 보관함으로 표시
+      if (folder.id.isEmpty) {
+        return Row(
+          key: const ValueKey('all'),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.archive_outlined,
+              color: AppColors.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text('보관함'),
+          ],
+        );
+      }
+
+      return Row(
+        key: ValueKey('folder_${folder.id}'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.archive_outlined,
+            color: AppColors.primary,
+            size: 24,
+          ),
+          const SizedBox(width: 8),
+          const Text('보관함'),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.chevron_right,
+            size: 16,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.folder,
+            color: Color(folder.color),
+            size: 20,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              folder.name,
+              style: TextStyle(
+                color: Color(folder.color),
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -348,7 +431,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     ),
                   ],
                 )
-              : const Text('보관함'),
+              : _buildTitleWidget(),
         ),
         leading: _isSelectionMode
             ? IconButton(
@@ -356,7 +439,17 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 onPressed: _exitSelectionMode,
                 tooltip: '선택 모드 종료',
               )
-            : null,
+            : _selectedFolderId != null
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      setState(() {
+                        _selectedFolderId = null;
+                      });
+                    },
+                    tooltip: '전체 보관함으로',
+                  )
+                : null,
         actions: _isSelectionMode
             ? [
                 // 전체 선택/해제 버튼
@@ -430,7 +523,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                           // 전체 보관함
                           final isSelected = _selectedFolderId == null;
                           return ArchiveFolderItem(
-                            name: '전체 보관함',
+                            name: '전체',
                             color: AppColors.primary,
                             isSelected: isSelected,
                             onTap: () {

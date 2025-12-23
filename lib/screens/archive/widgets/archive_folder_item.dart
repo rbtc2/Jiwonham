@@ -94,6 +94,7 @@ class _ArchiveFolderItemState extends State<ArchiveFolderItem>
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.folder,
@@ -101,15 +102,19 @@ class _ArchiveFolderItemState extends State<ArchiveFolderItem>
                 size: 32,
               ),
               const SizedBox(height: 8),
-              Text(
-                widget.name,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: widget.isSelected ? widget.color : AppColors.textPrimary,
-                    ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  widget.name,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: widget.isSelected ? widget.color : AppColors.textPrimary,
+                      ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
               ),
               if (widget.itemCount != null && widget.itemCount! > 0) ...[
                 const SizedBox(height: 4),
