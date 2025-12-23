@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'notification_settings.dart';
 import 'cover_letter_question.dart';
+import 'experience_level.dart';
 
 class ApplicationFormData {
   // 컨트롤러
@@ -18,6 +19,7 @@ class ApplicationFormData {
 
   // 선택 필드
   DateTime? announcementDate;
+  ExperienceLevel? experienceLevel;
 
   // 다음 전형 일정
   final List<Map<String, dynamic>> nextStages;
@@ -51,6 +53,7 @@ class ApplicationFormData {
     TextEditingController? memoController,
     this.deadline,
     this.announcementDate,
+    this.experienceLevel,
     List<Map<String, dynamic>>? nextStages,
     List<CoverLetterQuestion>? coverLetterQuestions,
     this.companyNameError,
@@ -93,6 +96,8 @@ class ApplicationFormData {
     DateTime? Function()? deadlineNull,
     DateTime? announcementDate,
     DateTime? Function()? announcementDateNull,
+    ExperienceLevel? experienceLevel,
+    ExperienceLevel? Function()? experienceLevelNull,
     List<Map<String, dynamic>>? nextStages,
     List<CoverLetterQuestion>? coverLetterQuestions,
     String? companyNameError,
@@ -124,6 +129,8 @@ class ApplicationFormData {
       deadline: deadline ?? (deadlineNull != null ? null : this.deadline),
       announcementDate: announcementDate ??
           (announcementDateNull != null ? null : this.announcementDate),
+      experienceLevel: experienceLevel ??
+          (experienceLevelNull != null ? null : this.experienceLevel),
       nextStages: nextStages ?? this.nextStages,
       coverLetterQuestions:
           coverLetterQuestions ?? this.coverLetterQuestions,

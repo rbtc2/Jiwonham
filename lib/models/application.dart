@@ -9,11 +9,13 @@ import 'interview_review.dart';
 import 'interview_question.dart';
 import 'interview_checklist.dart';
 import 'interview_schedule.dart';
+import 'experience_level.dart';
 
 class Application {
   final String id;
   final String companyName; // 회사명 (필수)
   final String? position; // 직무명
+  final ExperienceLevel? experienceLevel; // 구분 (인턴/신입/경력직)
   final String? applicationLink; // 지원서 링크 (선택)
   final String? workplace; // 근무처 (선택)
   final DateTime deadline; // 서류 마감일 (필수)
@@ -37,6 +39,7 @@ class Application {
     required this.id,
     required this.companyName,
     this.position,
+    this.experienceLevel,
     this.applicationLink,
     this.workplace,
     required this.deadline,
@@ -70,6 +73,7 @@ class Application {
       'id': id,
       'companyName': companyName,
       'position': position,
+      'experienceLevel': experienceLevel?.name,
       'applicationLink': applicationLink,
       'workplace': workplace,
       'deadline': deadline.toIso8601String(),
@@ -99,6 +103,12 @@ class Application {
       id: json['id'] as String,
       companyName: json['companyName'] as String,
       position: json['position'] as String?,
+      experienceLevel: json['experienceLevel'] != null
+          ? ExperienceLevel.values.firstWhere(
+              (e) => e.name == json['experienceLevel'],
+              orElse: () => ExperienceLevel.entry,
+            )
+          : null,
       applicationLink: json['applicationLink'] as String?,
       workplace: json['workplace'] as String?,
       deadline: DateTime.parse(json['deadline'] as String),
@@ -168,6 +178,7 @@ class Application {
     String? id,
     String? companyName,
     String? position,
+    ExperienceLevel? experienceLevel,
     String? applicationLink,
     String? workplace,
     DateTime? deadline,
@@ -191,6 +202,7 @@ class Application {
       id: id ?? this.id,
       companyName: companyName ?? this.companyName,
       position: position ?? this.position,
+      experienceLevel: experienceLevel ?? this.experienceLevel,
       applicationLink: applicationLink ?? this.applicationLink,
       workplace: workplace ?? this.workplace,
       deadline: deadline ?? this.deadline,

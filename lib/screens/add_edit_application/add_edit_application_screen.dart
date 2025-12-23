@@ -15,6 +15,7 @@ import '../../services/storage_service.dart';
 import '../../widgets/form_fields/labeled_text_field.dart';
 import '../../widgets/form_fields/link_text_field.dart';
 import '../../widgets/form_fields/date_time_field.dart';
+import '../../widgets/form_fields/experience_level_field.dart';
 // Phase 2: 다이얼로그 위젯 import
 import '../../widgets/dialogs/add_stage_dialog.dart';
 import '../../widgets/dialogs/edit_stage_dialog.dart';
@@ -123,6 +124,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         memoController: TextEditingController(text: application.memo ?? ''),
         deadline: application.deadline,
         announcementDate: application.announcementDate,
+        experienceLevel: application.experienceLevel,
         nextStages: nextStages,
         coverLetterQuestions: List.from(application.coverLetterQuestions),
         deadlineIncludeTime: deadlineIncludeTime,
@@ -260,6 +262,17 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
           label: AppStrings.position,
           controller: _formData.positionController,
           hintText: '직무명을 입력하세요',
+        ),
+        const SizedBox(height: 24),
+
+        // 구분 선택
+        ExperienceLevelField(
+          selectedLevel: _formData.experienceLevel,
+          onChanged: (level) {
+            setState(() {
+              _formData = _formData.copyWith(experienceLevel: level);
+            });
+          },
         ),
         const SizedBox(height: 24),
 
@@ -792,6 +805,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         position: _formData.positionController.text.trim().isEmpty
             ? null
             : _formData.positionController.text.trim(),
+        experienceLevel: _formData.experienceLevel,
         applicationLink: applicationLink.isEmpty ? null : applicationLink,
         workplace: _formData.workplaceController.text.trim().isEmpty
             ? null
