@@ -233,9 +233,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   // 폴더 이름 수정
   Future<void> _renameFolder(ArchiveFolder folder) async {
-    final result = await showDialog<ArchiveFolder>(
-      context: context,
-      builder: (context) => EditFolderDialog(folder: folder),
+    final result = await EditFolderDialog.show(
+      context,
+      folder,
     );
 
     if (result != null) {
@@ -274,9 +274,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   // 폴더 색상 변경
   Future<void> _changeFolderColor(ArchiveFolder folder) async {
-    final result = await showDialog<ArchiveFolder>(
-      context: context,
-      builder: (context) => EditFolderColorDialog(folder: folder),
+    final result = await EditFolderColorDialog.show(
+      context,
+      folder,
     );
 
     if (result != null) {
