@@ -148,6 +148,17 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                         );
                       }
                     },
+                    onChecklistToggle: (index) async {
+                      await viewModel.togglePreparationChecklist(index);
+                      if (context.mounted && viewModel.errorMessage != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(viewModel.errorMessage!),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    },
                   ),
                   // 자기소개서 탭
                   CoverLetterTab(

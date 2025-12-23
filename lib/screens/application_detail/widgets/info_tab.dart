@@ -8,12 +8,14 @@ import 'application_info_section.dart';
 import 'basic_info_card.dart';
 import 'memo_section.dart';
 import 'status_section.dart';
+import 'preparation_checklist_section.dart';
 
 class InfoTab extends StatelessWidget {
   final Application application;
   final Function(String) onLinkTap;
   final Function(String) onMemoUpdated;
   final Function(ApplicationStatus) onStatusChanged;
+  final Function(int) onChecklistToggle;
 
   const InfoTab({
     super.key,
@@ -21,6 +23,7 @@ class InfoTab extends StatelessWidget {
     required this.onLinkTap,
     required this.onMemoUpdated,
     required this.onStatusChanged,
+    required this.onChecklistToggle,
   });
 
   @override
@@ -38,6 +41,11 @@ class InfoTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ApplicationInfoSection(application: application),
+          const SizedBox(height: 16),
+          PreparationChecklistSection(
+            checklist: application.preparationChecklist,
+            onToggleCheck: onChecklistToggle,
+          ),
           const SizedBox(height: 16),
           MemoSection(
             application: application,

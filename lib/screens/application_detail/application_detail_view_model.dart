@@ -7,6 +7,7 @@ import '../../models/application_status.dart';
 import '../../models/interview_review.dart';
 import '../../models/interview_question.dart';
 import '../../models/cover_letter_question.dart';
+import '../../models/preparation_checklist.dart';
 import '../../services/storage_service.dart';
 
 class ApplicationDetailViewModel extends ChangeNotifier {
@@ -416,6 +417,44 @@ class ApplicationDetailViewModel extends ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = '면접 예상 질문을 삭제하는 중 오류가 발생했습니다: $e';
+      notifyListeners();
+    }
+  }
+
+  // 지원 준비 체크리스트 토글
+  Future<void> togglePreparationChecklist(int index) async {
+    _errorMessage = null;
+    if (index < 0 || index >= _application.preparationChecklist.length) {
+      _errorMessage = '유효하지 않은 체크리스트 인덱스입니다.';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final updatedChecklist = List<PreparationChecklist>.from(
+        _application.preparationChecklist,
+      );
+      updatedChecklist[index] = updatedChecklist[index].copyWith(
+        isChecked: !updatedChecklist[index].isChecked,
+      );
+
+      final updatedApplication = _application.copyWith(
+        preparationChecklist: updatedChecklist,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        notifyListeners();
+      } else {
+        _errorMessage = '체크리스트를 저장하는 중 오류가 발생했습니다.';
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = '체크리스트를 저장하는 중 오류가 발생했습니다: $e';
       notifyListeners();
     }
   }
