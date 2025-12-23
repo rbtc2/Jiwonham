@@ -62,11 +62,6 @@ class StatusSection extends StatelessWidget {
                   ),
                   _buildStatusRadio(
                     context,
-                    ApplicationStatus.applied,
-                    AppStrings.appliedStatus,
-                  ),
-                  _buildStatusRadio(
-                    context,
                     ApplicationStatus.inProgress,
                     AppStrings.inProgressStatus,
                   ),
