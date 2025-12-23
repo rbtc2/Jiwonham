@@ -2,135 +2,207 @@
 
 import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
+import '../../../constants/app_strings.dart';
 import '../../../models/archive_folder.dart';
+import '../../../widgets/dialogs/modern_bottom_sheet.dart';
 
-class CreateFolderDialog extends StatefulWidget {
-  final int? nextOrder;
+class CreateFolderDialog {
+  static Future<ArchiveFolder?> show(BuildContext context, int? nextOrder) {
+    final nameController = TextEditingController();
+    final selectedColorNotifier = ValueNotifier<Color>(AppColors.primary);
+    final isValidNotifier = ValueNotifier<bool>(false);
+    final focusNode = FocusNode();
 
-  const CreateFolderDialog({
-    super.key,
-    this.nextOrder,
-  });
+    final List<Color> colorOptions = [
+      AppColors.primary,
+      const Color(0xFFF44336), // Red
+      const Color(0xFF4CAF50), // Green
+      const Color(0xFF3F51B5), // Indigo
+      const Color(0xFFFF9800), // Orange
+      const Color(0xFF9C27B0), // Purple
+      const Color(0xFF00BCD4), // Cyan
+      const Color(0xFFFFEB3B), // Yellow
+    ];
 
-  @override
-  State<CreateFolderDialog> createState() => _CreateFolderDialogState();
-}
-
-class _CreateFolderDialogState extends State<CreateFolderDialog> {
-  final TextEditingController _nameController = TextEditingController();
-  Color _selectedColor = AppColors.primary;
-  
-  final List<Color> _colorOptions = [
-    AppColors.primary,
-    const Color(0xFFF44336), // Red
-    const Color(0xFF4CAF50), // Green
-    const Color(0xFF3F51B5), // Indigo
-    const Color(0xFFFF9800), // Orange
-    const Color(0xFF9C27B0), // Purple
-    const Color(0xFF00BCD4), // Cyan
-    const Color(0xFFFFEB3B), // Yellow
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    // TextField 변경 감지를 위해 리스너 추가
-    _nameController.addListener(() {
-      setState(() {}); // 버튼 상태 업데이트
+    // 자동 포커스
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (focusNode.canRequestFocus) {
+        focusNode.requestFocus();
+      }
     });
-  }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
+    // 이름 변경 감지
+    nameController.addListener(() {
+      final isValid = nameController.text.trim().isNotEmpty;
+      if (isValidNotifier.value != isValid) {
+        isValidNotifier.value = isValid;
+      }
+    });
 
-  void _createFolder() {
-    final folder = ArchiveFolder(
-      id: 'folder_${DateTime.now().millisecondsSinceEpoch}_${_nameController.text.trim().hashCode}',
-      name: _nameController.text.trim(),
-      color: _selectedColor.toARGB32(),
-      order: widget.nextOrder ?? 0,
-    );
-    Navigator.pop(context, folder);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('새 폴더 만들기'),
+    return ModernBottomSheet.showCustom<ArchiveFolder>(
+      context: context,
+      header: const ModernBottomSheetHeader(
+        title: '새 폴더 만들기',
+        icon: Icons.create_new_folder_outlined,
+        iconColor: AppColors.primary,
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 폴더 이름 입력
           TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
+            controller: nameController,
+            focusNode: focusNode,
+            decoration: InputDecoration(
               labelText: '폴더 이름',
               hintText: '폴더 이름을 입력하세요',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: AppColors.surface,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              counterText: '${nameController.text.length}/20',
+              counterStyle: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
             ),
             autofocus: true,
-            maxLength: 20, // 최대 길이 제한
+            maxLength: 20,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) {
-              // Enter 키로도 만들기 가능
-              if (_nameController.text.trim().isNotEmpty) {
-                _createFolder();
+              if (isValidNotifier.value) {
+                final selectedColor = selectedColorNotifier.value;
+                final folder = ArchiveFolder(
+                  id: 'folder_${DateTime.now().millisecondsSinceEpoch}_${nameController.text.trim().hashCode}',
+                  name: nameController.text.trim(),
+                  color: selectedColor.toARGB32(),
+                  order: nextOrder ?? 0,
+                );
+                nameController.dispose();
+                focusNode.dispose();
+                selectedColorNotifier.dispose();
+                isValidNotifier.dispose();
+                Navigator.pop(context, folder);
               }
             },
           ),
+          const SizedBox(height: 24),
+          // 폴더 색상 선택
+          Text(
+            '폴더 색상',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 16),
-          const Text('폴더 색상'),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _colorOptions.map((color) {
-              final isSelected = color == _selectedColor;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedColor = color;
-                  });
-                },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? AppColors.textPrimary : Colors.transparent,
-                      width: isSelected ? 3 : 0,
+          ValueListenableBuilder<Color>(
+            valueListenable: selectedColorNotifier,
+            builder: (context, selectedColor, _) {
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: colorOptions.map((color) {
+                  final isSelected = color == selectedColor;
+                  return GestureDetector(
+                    onTap: () {
+                      selectedColorNotifier.value = color;
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.textPrimary
+                              : Colors.transparent,
+                          width: isSelected ? 3 : 0,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: color.withValues(alpha: 0.4),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                      ),
+                      child: isSelected
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 28,
+                            )
+                          : null,
                     ),
-                  ),
-                  child: isSelected
-                      ? const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 24,
-                        )
-                      : null,
-                ),
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
-        TextButton(
-          onPressed: _nameController.text.trim().isEmpty
-              ? null
-              : _createFolder,
-          child: const Text('만들기'),
-        ),
-      ],
+      actions: ModernBottomSheetActions(
+        cancelText: AppStrings.cancel,
+        confirmText: '만들기',
+        onCancel: () {
+          nameController.dispose();
+          focusNode.dispose();
+          selectedColorNotifier.dispose();
+          isValidNotifier.dispose();
+          Navigator.pop(context);
+        },
+        onConfirm: () {
+          if (!isValidNotifier.value) {
+            return; // 유효하지 않으면 아무것도 하지 않음
+          }
+
+          final selectedColor = selectedColorNotifier.value;
+          final folder = ArchiveFolder(
+            id: 'folder_${DateTime.now().millisecondsSinceEpoch}_${nameController.text.trim().hashCode}',
+            name: nameController.text.trim(),
+            color: selectedColor.toARGB32(),
+            order: nextOrder ?? 0,
+          );
+          nameController.dispose();
+          focusNode.dispose();
+          selectedColorNotifier.dispose();
+          isValidNotifier.dispose();
+          Navigator.pop(context, folder);
+        },
+        confirmButtonColor: AppColors.primary,
+      ),
     );
   }
 }
-

@@ -103,9 +103,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     // 다음 order 값 계산 (현재 폴더 개수)
     final nextOrder = _folders.length;
     
-    final result = await showDialog<ArchiveFolder>(
-      context: context,
-      builder: (context) => CreateFolderDialog(nextOrder: nextOrder),
+    final result = await CreateFolderDialog.show(
+      context,
+      nextOrder,
     );
 
     if (result != null) {
