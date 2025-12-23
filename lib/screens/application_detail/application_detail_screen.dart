@@ -247,6 +247,86 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
                         }
                       }
                     },
+                    onQuestionAdded: (question) async {
+                      await viewModel.addInterviewQuestion(question);
+                      if (context.mounted) {
+                        if (viewModel.errorMessage != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(viewModel.errorMessage!),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('면접 예상 질문이 추가되었습니다.'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    onQuestionUpdated: (index, question) async {
+                      await viewModel.updateInterviewQuestion(index, question);
+                      if (context.mounted) {
+                        if (viewModel.errorMessage != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(viewModel.errorMessage!),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('면접 예상 질문이 수정되었습니다.'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    onAnswerUpdated: (index, question) async {
+                      await viewModel.updateInterviewAnswer(index, question);
+                      if (context.mounted) {
+                        if (viewModel.errorMessage != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(viewModel.errorMessage!),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('답변이 저장되었습니다.'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    onQuestionDeleted: (index) async {
+                      await viewModel.deleteInterviewQuestion(index);
+                      if (context.mounted) {
+                        if (viewModel.errorMessage != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(viewModel.errorMessage!),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('면접 예상 질문이 삭제되었습니다.'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                 ],
               ),

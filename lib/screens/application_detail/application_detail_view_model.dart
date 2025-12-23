@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/application.dart';
 import '../../models/application_status.dart';
 import '../../models/interview_review.dart';
+import '../../models/interview_question.dart';
 import '../../models/cover_letter_question.dart';
 import '../../services/storage_service.dart';
 
@@ -261,6 +262,150 @@ class ApplicationDetailViewModel extends ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = '자기소개서 문항을 저장하는 중 오류가 발생했습니다: $e';
+      notifyListeners();
+    }
+  }
+
+  // 면접 예상 질문 추가
+  Future<void> addInterviewQuestion(InterviewQuestion question) async {
+    _errorMessage = null;
+    try {
+      final updatedQuestions = List<InterviewQuestion>.from(
+        _application.interviewQuestions,
+      );
+      updatedQuestions.add(question);
+
+      final updatedApplication = _application.copyWith(
+        interviewQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        notifyListeners();
+      } else {
+        _errorMessage = '면접 예상 질문을 저장하는 중 오류가 발생했습니다.';
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = '면접 예상 질문을 저장하는 중 오류가 발생했습니다: $e';
+      notifyListeners();
+    }
+  }
+
+  // 면접 예상 질문 수정
+  Future<void> updateInterviewQuestion(
+    int index,
+    InterviewQuestion question,
+  ) async {
+    _errorMessage = null;
+    if (index < 0 || index >= _application.interviewQuestions.length) {
+      _errorMessage = '유효하지 않은 면접 예상 질문 인덱스입니다.';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final updatedQuestions = List<InterviewQuestion>.from(
+        _application.interviewQuestions,
+      );
+      updatedQuestions[index] = question;
+
+      final updatedApplication = _application.copyWith(
+        interviewQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        notifyListeners();
+      } else {
+        _errorMessage = '면접 예상 질문을 저장하는 중 오류가 발생했습니다.';
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = '면접 예상 질문을 저장하는 중 오류가 발생했습니다: $e';
+      notifyListeners();
+    }
+  }
+
+  // 면접 예상 질문 답변 업데이트
+  Future<void> updateInterviewAnswer(
+    int index,
+    InterviewQuestion question,
+  ) async {
+    _errorMessage = null;
+    if (index < 0 || index >= _application.interviewQuestions.length) {
+      _errorMessage = '유효하지 않은 면접 예상 질문 인덱스입니다.';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final updatedQuestions = List<InterviewQuestion>.from(
+        _application.interviewQuestions,
+      );
+      updatedQuestions[index] = question;
+
+      final updatedApplication = _application.copyWith(
+        interviewQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        notifyListeners();
+      } else {
+        _errorMessage = '면접 예상 질문 답변을 저장하는 중 오류가 발생했습니다.';
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = '면접 예상 질문 답변을 저장하는 중 오류가 발생했습니다: $e';
+      notifyListeners();
+    }
+  }
+
+  // 면접 예상 질문 삭제
+  Future<void> deleteInterviewQuestion(int index) async {
+    _errorMessage = null;
+    if (index < 0 || index >= _application.interviewQuestions.length) {
+      _errorMessage = '유효하지 않은 면접 예상 질문 인덱스입니다.';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final updatedQuestions = List<InterviewQuestion>.from(
+        _application.interviewQuestions,
+      );
+      updatedQuestions.removeAt(index);
+
+      final updatedApplication = _application.copyWith(
+        interviewQuestions: updatedQuestions,
+        updatedAt: DateTime.now(),
+      );
+
+      final storageService = StorageService();
+      final success = await storageService.saveApplication(updatedApplication);
+      if (success) {
+        _application = updatedApplication;
+        _hasChanges = true;
+        notifyListeners();
+      } else {
+        _errorMessage = '면접 예상 질문을 삭제하는 중 오류가 발생했습니다.';
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = '면접 예상 질문을 삭제하는 중 오류가 발생했습니다: $e';
       notifyListeners();
     }
   }

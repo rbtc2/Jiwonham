@@ -125,12 +125,14 @@ class AppStrings {
   // Interview Preparation
   static const String interviewPreparation = '면접 준비';
   static const String interviewQuestionsPrep = '면접 질문 준비';
+  static const String interviewExpectedQuestions = '면접 예상 질문';
   static const String addInterviewPrepQuestion = '질문 추가';
   static const String editInterviewPrepQuestion = '질문 수정';
   static const String deleteInterviewPrepQuestion = '질문 삭제';
   static const String writeInterviewAnswer = '답변 작성';
   static const String editInterviewAnswer = '답변 수정';
   static const String noInterviewQuestions = '면접 질문이 없습니다. 질문을 추가해보세요.';
+  static const String interviewExpectedQuestionsDesc = '면접 전 준비하는 예상 질문과 답변';
   static const String interviewChecklist = '체크리스트';
   static const String addChecklistItem = '항목 추가';
   static const String editChecklistItem = '항목 수정';
