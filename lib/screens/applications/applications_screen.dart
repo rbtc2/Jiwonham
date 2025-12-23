@@ -2,17 +2,19 @@
 // 모든 공고를 목록 형태로 보여주고, 검색 및 필터 기능 제공
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../models/application.dart';
 import '../../models/application_status.dart';
 import '../add_edit_application/add_edit_application_screen.dart';
+import '../archive/archive_screen.dart';
+import '../../widgets/dialogs/archive_folder_select_dialog.dart';
 import 'applications_view_model.dart';
 import 'widgets/search_query_chip.dart';
 import 'widgets/applications_app_bar.dart';
 import 'widgets/application_list_view.dart';
 import 'applications_tab_helper.dart';
+import '../../services/storage_service.dart';
 
 class ApplicationsScreen extends StatefulWidget {
   const ApplicationsScreen({super.key});
@@ -26,6 +28,8 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   late ApplicationsViewModel _viewModel;
+  final StorageService _storageService = StorageService();
+  int _archivedCount = 0;
 
   // Phase 4: 검색 모드 상태는 ViewModel로 이동, TextEditingController만 유지
   final TextEditingController _searchController = TextEditingController();
@@ -45,6 +49,16 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     WidgetsBinding.instance.addObserver(this);
     // Phase 1: 데이터 로드
     _viewModel.loadApplications();
+    _loadArchivedCount();
+  }
+
+  Future<void> _loadArchivedCount() async {
+    final archived = await _storageService.getArchivedApplications();
+    if (mounted) {
+      setState(() {
+        _archivedCount = archived.length;
+      });
+    }
   }
 
   void _onViewModelChanged() {
@@ -127,6 +141,9 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
           onSelectAll: () => _handleSelectAll(filteredApplications),
           onDeselectAll: _handleDeselectAll,
           onDeleteSelected: _handleDeleteSelected,
+          onMoveToArchive: _handleMoveToArchive,
+          onArchivePressed: _handleArchivePressed,
+          archivedCount: _archivedCount,
         ),
         body: Column(
           children: [
@@ -280,6 +297,56 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
   void _handleSearchQueryChipDeleted() {
     _viewModel.setSearchQuery('');
     _searchController.clear();
+  }
+
+  Future<void> _handleMoveToArchive() async {
+    if (!mounted) return;
+    
+    final selectedIds = _viewModel.selectedApplicationIds.toList();
+    if (selectedIds.isEmpty) return;
+
+    // 폴더 선택 다이얼로그 표시
+    final folderId = await showDialog<String?>(
+      context: context,
+      builder: (context) => const ArchiveFolderSelectDialog(),
+    );
+
+    if (folderId != null || folderId == null) {
+      // folderId가 null이어도 보관함 루트로 이동하는 것이므로 처리
+      final success = await _storageService.moveApplicationsToArchive(
+        selectedIds,
+        folderId: folderId,
+      );
+
+      if (success && mounted) {
+        // 선택 모드 종료
+        _viewModel.exitSelectionMode();
+        // 목록 새로고침
+        await _viewModel.loadApplications();
+        await _loadArchivedCount();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${selectedIds.length}개의 공고가 보관함으로 이동되었습니다.'),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _handleArchivePressed() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ArchiveScreen(),
+      ),
+    );
+    // 보관함 화면에서 돌아온 후 보관함 개수 새로고침
+    if (mounted) {
+      await _loadArchivedCount();
+    }
   }
 
   // Phase 5: 새 공고 추가 처리

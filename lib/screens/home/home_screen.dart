@@ -41,7 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final storageService = StorageService();
-      final applications = await storageService.getAllApplications();
+      // 보관함 제외한 공고만 가져오기
+      final applications = await storageService.getActiveApplications();
 
       if (!mounted) return;
 

@@ -26,6 +26,8 @@ class Application {
   final String? memo; // 기타 메모
   final ApplicationStatus status; // 상태
   final bool isApplied; // 지원 완료 체크
+  final bool isArchived; // 보관함 여부
+  final String? archiveFolderId; // 보관함 폴더 ID (null이면 보관함 루트)
   final NotificationSettings notificationSettings; // 알림 설정
   final DateTime createdAt; // 생성일
   final DateTime updatedAt; // 수정일
@@ -46,6 +48,8 @@ class Application {
     this.memo,
     this.status = ApplicationStatus.notApplied,
     this.isApplied = false,
+    this.isArchived = false,
+    this.archiveFolderId,
     NotificationSettings? notificationSettings,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -78,6 +82,8 @@ class Application {
       'memo': memo,
       'status': status.name,
       'isApplied': isApplied,
+      'isArchived': isArchived,
+      'archiveFolderId': archiveFolderId,
       'notificationSettings': notificationSettings.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -131,6 +137,8 @@ class Application {
         orElse: () => ApplicationStatus.notApplied,
       ),
       isApplied: json['isApplied'] as bool? ?? false,
+      isArchived: json['isArchived'] as bool? ?? false,
+      archiveFolderId: json['archiveFolderId'] as String?,
       notificationSettings: json['notificationSettings'] != null
           ? NotificationSettings.fromJson(
               json['notificationSettings'] as Map<String, dynamic>,
@@ -162,6 +170,8 @@ class Application {
     String? memo,
     ApplicationStatus? status,
     bool? isApplied,
+    bool? isArchived,
+    String? archiveFolderId,
     NotificationSettings? notificationSettings,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -182,6 +192,8 @@ class Application {
       memo: memo ?? this.memo,
       status: status ?? this.status,
       isApplied: isApplied ?? this.isApplied,
+      isArchived: isArchived ?? this.isArchived,
+      archiveFolderId: archiveFolderId ?? this.archiveFolderId,
       notificationSettings: notificationSettings ?? this.notificationSettings,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

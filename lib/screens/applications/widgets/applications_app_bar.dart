@@ -28,6 +28,9 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
   final VoidCallback onSelectAll;
   final VoidCallback onDeselectAll;
   final Future<void> Function() onDeleteSelected;
+  final Future<void> Function() onMoveToArchive;
+  final VoidCallback onArchivePressed;
+  final int archivedCount; // 보관함 공고 개수
 
   const ApplicationsAppBar({
     super.key,
@@ -48,6 +51,9 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
     required this.onSelectAll,
     required this.onDeselectAll,
     required this.onDeleteSelected,
+    required this.onMoveToArchive,
+    required this.onArchivePressed,
+    this.archivedCount = 0,
   });
 
   @override
@@ -183,6 +189,15 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
                   );
                 },
               ),
+              // 보관함으로 이동 버튼
+              if (selectedCount > 0)
+                IconButton(
+                  icon: const Icon(Icons.archive_outlined),
+                  onPressed: () async {
+                    await onMoveToArchive();
+                  },
+                  tooltip: '보관함으로 이동',
+                ),
               // Phase 4: 삭제 버튼
               if (selectedCount > 0)
                 IconButton(
@@ -219,6 +234,32 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
                         tooltip: AppStrings.search,
                       ),
                       if (searchQuery.isNotEmpty)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 8,
+                              minHeight: 8,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  // 보관함 아이콘 (보관함에 공고가 있으면 배지 표시)
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.archive_outlined),
+                        onPressed: onArchivePressed,
+                        tooltip: '보관함',
+                      ),
+                      if (archivedCount > 0)
                         Positioned(
                           right: 8,
                           top: 8,
