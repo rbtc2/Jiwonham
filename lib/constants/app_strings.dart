@@ -33,7 +33,7 @@ class AppStrings {
   static const String position = '직무명';
   static const String applicationLink = '지원서 링크';
   static const String applicationLinkRequired = '지원서 링크 *';
-  static const String workplace = '근무처';
+  static const String workplace = '근무지';
   static const String testLink = '링크 테스트';
   static const String deadline = '서류 마감일';
   static const String deadlineRequired = '서류 마감일 *';

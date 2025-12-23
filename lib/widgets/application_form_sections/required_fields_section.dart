@@ -82,11 +82,11 @@ class RequiredFieldsSection extends StatelessWidget {
         ),
         const SizedBox(height: 24),
 
-        // 근무처 입력
+        // 근무지 입력
         LabeledTextField(
           label: AppStrings.workplace,
           controller: formData.workplaceController,
-          hintText: '근무처를 입력하세요',
+          hintText: '근무지역을 입력하세요.',
         ),
         const SizedBox(height: 24),
 
