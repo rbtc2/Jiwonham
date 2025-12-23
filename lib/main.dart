@@ -5,6 +5,7 @@ import 'screens/main_navigation.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_strings.dart';
 import 'services/storage_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   // 처리되지 않은 에러를 잡기 위한 Zone 설정
@@ -14,6 +15,13 @@ void main() async {
     try {
       // StorageService 초기화
       await StorageService().init();
+      
+      // NotificationService 초기화
+      await NotificationService().initialize();
+      
+      // 기존 알림 재스케줄링
+      await _rescheduleAllNotifications();
+      
       runApp(const MyApp());
     } catch (e, stackTrace) {
       // 초기화 중 에러 발생 시 로그 출력
@@ -27,6 +35,24 @@ void main() async {
     debugPrint('처리되지 않은 에러: $error');
     debugPrint('스택 트레이스: $stackTrace');
   });
+}
+
+/// 기존 알림 재스케줄링
+Future<void> _rescheduleAllNotifications() async {
+  try {
+    final storageService = StorageService();
+    final notificationService = NotificationService();
+    
+    // 활성 공고만 가져오기 (보관함 제외)
+    final applications = await storageService.getActiveApplications();
+    
+    // 각 공고의 알림 재스케줄링
+    for (final application in applications) {
+      await notificationService.scheduleApplicationNotifications(application);
+    }
+  } catch (e) {
+    debugPrint('알림 재스케줄링 중 에러 발생: $e');
+  }
 }
 
 class MyApp extends StatelessWidget {
