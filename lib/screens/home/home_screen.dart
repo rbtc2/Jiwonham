@@ -143,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         elevation: 0,
       ),
-      body: _viewModel.isLoading
+      body: _viewModel.isLoading && _viewModel.applications.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : _viewModel.errorMessage != null && _viewModel.applications.isEmpty
           ? ErrorDisplayWidget(
@@ -152,74 +152,82 @@ class _HomeScreenState extends State<HomeScreen> {
                 _viewModel.refresh();
               },
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Phase 9: 에러가 있지만 데이터가 있는 경우 경고 표시
-                  if (_viewModel.errorMessage != null &&
-                      _viewModel.applications.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.error.withValues(alpha: 0.3),
+          : RefreshIndicator(
+              onRefresh: () async {
+                // 새로고침 시 ViewModel의 데이터 로드 및 ApplicationsScreen 새로고침
+                await _viewModel.loadApplications();
+                _refreshApplicationsScreen();
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Phase 9: 에러가 있지만 데이터가 있는 경우 경고 표시
+                    if (_viewModel.errorMessage != null &&
+                        _viewModel.applications.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: AppColors.error,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '일부 데이터를 불러오지 못했습니다.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: AppColors.error),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                _viewModel.refresh();
+                              },
+                              child: const Text('다시 시도'),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            color: AppColors.error,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '일부 데이터를 불러오지 못했습니다.',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.error),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              _viewModel.refresh();
-                            },
-                            child: const Text('다시 시도'),
-                          ),
-                        ],
-                      ),
+
+                    // Phase 7: 오늘의 통계 섹션 (ViewModel 사용)
+                    StatisticsSection(
+                      totalApplications: _viewModel.totalApplications,
+                      inProgressCount: _viewModel.inProgressCount,
+                      passedCount: _viewModel.passedCount,
                     ),
+                    const SizedBox(height: 24),
 
-                  // Phase 7: 오늘의 통계 섹션 (ViewModel 사용)
-                  StatisticsSection(
-                    totalApplications: _viewModel.totalApplications,
-                    inProgressCount: _viewModel.inProgressCount,
-                    passedCount: _viewModel.passedCount,
-                  ),
-                  const SizedBox(height: 24),
+                    // Phase 7: 마감 임박 공고 섹션 (ViewModel 사용)
+                    UrgentApplicationsSection(
+                      urgentApplications: _viewModel.urgentApplications,
+                      onViewAll: () {
+                        // 공고 목록 화면으로 이동
+                        final mainNavigationState = context
+                            .findAncestorStateOfType<MainNavigationState>();
+                        if (mainNavigationState != null) {
+                          mainNavigationState.setCurrentIndex(1);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 24),
 
-                  // Phase 7: 마감 임박 공고 섹션 (ViewModel 사용)
-                  UrgentApplicationsSection(
-                    urgentApplications: _viewModel.urgentApplications,
-                    onViewAll: () {
-                      // 공고 목록 화면으로 이동
-                      final mainNavigationState = context
-                          .findAncestorStateOfType<MainNavigationState>();
-                      if (mainNavigationState != null) {
-                        mainNavigationState.setCurrentIndex(1);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Phase 7: 오늘의 일정 섹션 (ViewModel 사용)
-                  TodayScheduleSection(schedules: _viewModel.todaySchedules),
-                ],
+                    // Phase 7: 오늘의 일정 섹션 (ViewModel 사용)
+                    TodayScheduleSection(schedules: _viewModel.todaySchedules),
+                  ],
+                ),
               ),
             ),
       floatingActionButton: FloatingActionButton.extended(

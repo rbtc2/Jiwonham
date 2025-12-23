@@ -1,9 +1,7 @@
 // 폴더 위치 변경 다이얼로그
 
 import 'package:flutter/material.dart';
-import '../../../constants/app_colors.dart';
 import '../../../models/archive_folder.dart';
-import '../../../services/storage_service.dart';
 
 class MoveFolderDialog extends StatelessWidget {
   final ArchiveFolder folder;
@@ -14,28 +12,6 @@ class MoveFolderDialog extends StatelessWidget {
     required this.folder,
     required this.allFolders,
   });
-
-  Future<void> _moveFolder(BuildContext context, bool moveLeft) async {
-    final storageService = StorageService();
-    final success = await storageService.moveFolderOrder(folder.id, moveLeft);
-    
-    if (context.mounted) {
-      if (success) {
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              moveLeft 
-                ? '이미 맨 앞에 있습니다.'
-                : '이미 맨 뒤에 있습니다.',
-            ),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,13 +31,13 @@ class MoveFolderDialog extends StatelessWidget {
             children: [
               // 좌측 이동 버튼
               Expanded(
-                child: ElevatedButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: canMoveLeft
-                      ? () => _moveFolder(context, true)
+                      ? () => Navigator.pop(context, 'left')
                       : null,
                   icon: const Icon(Icons.arrow_back),
                   label: const Text('좌측 이동'),
-                  style: ElevatedButton.styleFrom(
+                  style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
@@ -69,13 +45,13 @@ class MoveFolderDialog extends StatelessWidget {
               const SizedBox(width: 16),
               // 우측 이동 버튼
               Expanded(
-                child: ElevatedButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: canMoveRight
-                      ? () => _moveFolder(context, false)
+                      ? () => Navigator.pop(context, 'right')
                       : null,
                   icon: const Icon(Icons.arrow_forward),
                   label: const Text('우측 이동'),
-                  style: ElevatedButton.styleFrom(
+                  style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),

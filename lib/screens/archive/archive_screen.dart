@@ -315,7 +315,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   // 폴더 위치 변경
   Future<void> _moveFolderPosition(ArchiveFolder folder) async {
-    final result = await showDialog<bool>(
+    final result = await showDialog<String>(
       context: context,
       builder: (context) => MoveFolderDialog(
         folder: folder,
@@ -323,13 +323,38 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       ),
     );
 
-    if (result == true && mounted) {
-      await _refreshData();
-      if (mounted) {
+    if (result != null && mounted) {
+      final moveLeft = result == 'left';
+      final success = await _storageService.moveFolderOrder(folder.id, moveLeft);
+      
+      if (success && mounted) {
+        await _refreshData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text('폴더 위치가 변경되었습니다.'),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('폴더 위치가 변경되었습니다.'),
-            backgroundColor: AppColors.success,
+          SnackBar(
+            content: Text(
+              moveLeft 
+                ? '이미 맨 앞에 있습니다.'
+                : '이미 맨 뒤에 있습니다.',
+            ),
+            backgroundColor: AppColors.error,
           ),
         );
       }
