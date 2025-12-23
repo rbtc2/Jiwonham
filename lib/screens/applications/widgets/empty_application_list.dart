@@ -97,9 +97,3 @@ class EmptyApplicationList extends StatelessWidget {
   }
 }
 
-
-
-
-
-
-

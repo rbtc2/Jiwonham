@@ -96,11 +96,14 @@ class DateTimeField extends StatelessWidget {
               ),
               const SizedBox(width: 12),
             ],
-            Text(
-              label,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+            Flexible(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -142,14 +145,17 @@ class DateTimeField extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        _formatDateTime(selectedDate, selectedTime, includeTime),
-                        style: TextStyle(
-                          color: selectedDate != null
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
+                      Flexible(
+                        child: Text(
+                          _formatDateTime(selectedDate, selectedTime, includeTime),
+                          style: TextStyle(
+                            color: selectedDate != null
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Icon(
@@ -164,10 +170,10 @@ class DateTimeField extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             // 시간 포함 토글
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
@@ -180,10 +186,10 @@ class DateTimeField extends StatelessWidget {
                     '시간',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textPrimary,
-                      fontSize: 13,
+                      fontSize: 12,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Switch(
                     value: includeTime,
                     onChanged: onTimeToggled ?? (value) {},
@@ -192,7 +198,7 @@ class DateTimeField extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             // 알림 설정 버튼
             if (onNotificationSettingsTap != null)
               Container(
@@ -219,10 +225,14 @@ class DateTimeField extends StatelessWidget {
                   icon: Icon(
                     _getNotificationIcon(notificationSettings),
                     color: notificationColor,
-                    size: 22,
+                    size: 20,
                   ),
                   tooltip: '알림 설정',
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
                 ),
               ),
           ],

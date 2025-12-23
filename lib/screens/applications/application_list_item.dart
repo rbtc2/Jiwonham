@@ -234,12 +234,6 @@ class ApplicationListItem extends StatelessWidget {
                       width: 56,
                       height: 56,
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                       child: AnimatedOpacity(
                         duration: const Duration(milliseconds: 200),
                         opacity: 1.0,

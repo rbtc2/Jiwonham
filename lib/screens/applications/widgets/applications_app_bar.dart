@@ -23,7 +23,7 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
   final List<Application> filteredApplications;
   final ApplicationStatus currentTabStatus;
   final VoidCallback onSearchPressed;
-  final VoidCallback onFilterPressed;
+  final Future<void> Function(ApplicationStatus?, String?) onFilterPressed;
   final VoidCallback onExitSearchMode;
   final VoidCallback onExitSelectionMode;
   final VoidCallback onClearSearchQuery;
@@ -67,9 +67,30 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
       title: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: isSelectionMode
-            ? Text(
-                '$selectedCount개 선택됨',
+            ? Row(
                 key: const ValueKey('selection'),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.check_circle_outline,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '$selectedCount개 선택됨',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
+                  ),
+                ],
               )
             : isSearchMode
                 ? ApplicationSearchBar(
@@ -81,20 +102,50 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(AppStrings.applicationsTitle),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.description_outlined,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            AppStrings.applicationsTitle,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                            ),
+                          ),
+                        ],
+                      ),
                       if (hasActiveFilters) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          _buildActiveFiltersText(),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                              ),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 40), // 아이콘 + 간격 고려
+                          child: Text(
+                            _buildActiveFiltersText(),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ],
                     ],
                   ),
       ),
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      backgroundColor: AppColors.surface,
+      elevation: 0,
       leading: isSelectionMode
           ? IconButton(
               icon: const Icon(Icons.close),
@@ -205,8 +256,10 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
                             initialDeadlineFilter: deadlineFilter,
                           );
                           if (result != null) {
-                            // 필터 적용은 부모에서 처리
-                            onFilterPressed();
+                            await onFilterPressed(
+                              result['status'] as ApplicationStatus?,
+                              result['deadline'] as String?,
+                            );
                           }
                         },
                         tooltip: AppStrings.filter,
@@ -295,17 +348,42 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
       bottom: TabBar(
         controller: tabController,
         tabs: const [
-          Tab(text: AppStrings.all),
-          Tab(text: AppStrings.notApplied),
-          Tab(text: AppStrings.inProgress),
-          Tab(text: AppStrings.passed),
-          Tab(text: AppStrings.rejected),
+          Tab(
+            text: AppStrings.all,
+            height: 48,
+          ),
+          Tab(
+            text: AppStrings.notApplied,
+            height: 48,
+          ),
+          Tab(
+            text: AppStrings.inProgress,
+            height: 48,
+          ),
+          Tab(
+            text: AppStrings.passed,
+            height: 48,
+          ),
+          Tab(
+            text: AppStrings.rejected,
+            height: 48,
+          ),
         ],
         isScrollable: false,
         tabAlignment: TabAlignment.center,
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.textSecondary,
         indicatorColor: AppColors.primary,
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
       ),
     );
   }
@@ -343,6 +421,9 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
     return filters.join(' • ');
   }
 
+  // ViewModel의 buildActiveFiltersText와 동일한 로직을 사용하기 위한 메서드
+  // 필요시 ViewModel에서 가져올 수도 있음
+
   String _getStatusText(ApplicationStatus status) {
     switch (status) {
       case ApplicationStatus.notApplied:
@@ -371,10 +452,3 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
     }
   }
 }
-
-
-
-
-
-
-

@@ -74,26 +74,29 @@ class ModernBottomSheet extends StatelessWidget {
       context: context,
       isScrollControlled: isScrollControlled,
       backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: ModernBottomSheet(
-          header: ModernBottomSheetHeader(
-            title: title,
-            icon: icon,
-            iconColor: iconColor,
+      builder: (context) {
+        final mediaQuery = MediaQuery.of(context);
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: mediaQuery.viewInsets.bottom + mediaQuery.padding.bottom,
           ),
-          content: inputField,
-          actions: ModernBottomSheetActions(
-            cancelText: cancelText,
-            confirmText: confirmText,
-            onCancel: onCancel,
-            onConfirm: onConfirm,
+          child: ModernBottomSheet(
+            header: ModernBottomSheetHeader(
+              title: title,
+              icon: icon,
+              iconColor: iconColor,
+            ),
+            content: inputField,
+            actions: ModernBottomSheetActions(
+              cancelText: cancelText,
+              confirmText: confirmText,
+              onCancel: onCancel,
+              onConfirm: onConfirm,
+            ),
+            isScrollControlled: isScrollControlled,
           ),
-          isScrollControlled: isScrollControlled,
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -110,18 +113,21 @@ class ModernBottomSheet extends StatelessWidget {
       context: context,
       isScrollControlled: isScrollControlled,
       backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: ModernBottomSheet(
-          header: header,
-          content: content,
-          actions: actions,
-          isScrollControlled: isScrollControlled,
-          maxHeight: maxHeight,
-        ),
-      ),
+      builder: (context) {
+        final mediaQuery = MediaQuery.of(context);
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: mediaQuery.viewInsets.bottom + mediaQuery.padding.bottom,
+          ),
+          child: ModernBottomSheet(
+            header: header,
+            content: content,
+            actions: actions,
+            isScrollControlled: isScrollControlled,
+            maxHeight: maxHeight,
+          ),
+        );
+      },
     );
   }
 
@@ -141,25 +147,33 @@ class ModernBottomSheet extends StatelessWidget {
       context: context,
       isScrollControlled: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => ModernBottomSheet(
-        header: ModernBottomSheetHeader(
-          title: title,
-          icon: icon ?? Icons.info_outline,
-          iconColor: iconColor ?? AppColors.info,
-        ),
-        content: Text(
-          message,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        actions: ModernBottomSheetActions(
-          cancelText: cancelText ?? AppStrings.cancel,
-          confirmText: confirmText ?? AppStrings.confirm,
-          onCancel: () => Navigator.pop(context, false),
-          onConfirm: onConfirm ?? () => Navigator.pop(context, true),
-          confirmButtonColor: confirmButtonColor,
-        ),
-        isScrollControlled: false,
-      ),
+      builder: (context) {
+        final mediaQuery = MediaQuery.of(context);
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: mediaQuery.viewInsets.bottom + mediaQuery.padding.bottom,
+          ),
+          child: ModernBottomSheet(
+            header: ModernBottomSheetHeader(
+              title: title,
+              icon: icon ?? Icons.info_outline,
+              iconColor: iconColor ?? AppColors.info,
+            ),
+            content: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            actions: ModernBottomSheetActions(
+              cancelText: cancelText ?? AppStrings.cancel,
+              confirmText: confirmText ?? AppStrings.confirm,
+              onCancel: () => Navigator.pop(context, false),
+              onConfirm: onConfirm ?? () => Navigator.pop(context, true),
+              confirmButtonColor: confirmButtonColor,
+            ),
+            isScrollControlled: false,
+          ),
+        );
+      },
     );
   }
 
@@ -235,7 +249,9 @@ class ModernBottomSheet extends StatelessWidget {
               _buildActions(context),
             ],
             SizedBox(
-              height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
+              height: MediaQuery.of(context).viewInsets.bottom > 0 
+                ? 8 
+                : 0,
             ),
           ],
         ),

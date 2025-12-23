@@ -24,6 +24,9 @@ class ApplicationsViewModel extends ChangeNotifier {
   bool _isSelectionMode = false;
   Set<String> _selectedApplicationIds = {};
 
+  // 검색 모드 상태 (Phase 4: UI 상태를 ViewModel로 이동)
+  bool _isSearchMode = false;
+
   // Getters
   List<Application> get applications => _applications;
   bool get isLoading => _isLoading;
@@ -35,6 +38,7 @@ class ApplicationsViewModel extends ChangeNotifier {
   bool get isSelectionMode => _isSelectionMode;
   Set<String> get selectedApplicationIds => _selectedApplicationIds;
   int get selectedCount => _selectedApplicationIds.length;
+  bool get isSearchMode => _isSearchMode;
 
   // 데이터 로드
   Future<void> loadApplications() async {
@@ -59,6 +63,10 @@ class ApplicationsViewModel extends ChangeNotifier {
   // 검색 쿼리 설정
   void setSearchQuery(String query) {
     _searchQuery = query;
+    // Phase 4: 검색어가 비어있고 검색 모드일 때 검색 모드 자동 종료
+    if (query.isEmpty && _isSearchMode) {
+      _isSearchMode = false;
+    }
     notifyListeners();
   }
 
@@ -174,6 +182,17 @@ class ApplicationsViewModel extends ChangeNotifier {
     _searchQuery = '';
     _filterStatus = null;
     _deadlineFilter = null;
+    notifyListeners();
+  }
+
+  // Phase 4: 검색 모드 관리
+  void enterSearchMode() {
+    _isSearchMode = true;
+    notifyListeners();
+  }
+
+  void exitSearchMode() {
+    _isSearchMode = false;
     notifyListeners();
   }
 
