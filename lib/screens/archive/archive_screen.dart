@@ -34,6 +34,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   
   // 복원/삭제 발생 여부 추적
   bool _hasRestoredOrDeleted = false;
+  
+  // 새로 생성된 폴더 ID 추적 (애니메이션용)
+  String? _newlyCreatedFolderId;
 
   @override
   void initState() {
@@ -104,10 +107,37 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       if (success && mounted) {
         await _refreshData();
         if (mounted) {
+          // 새로 생성된 폴더를 자동으로 선택
+          setState(() {
+            _selectedFolderId = result.id;
+            _newlyCreatedFolderId = result.id; // 애니메이션용
+          });
+          
+          // 성공 메시지
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('폴더가 생성되었습니다.')),
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text('${result.name} 폴더가 생성되었습니다.'),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 2),
+            ),
           );
         }
+      } else if (mounted) {
+        // 실패 메시지
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('폴더 생성에 실패했습니다.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
@@ -415,14 +445,17 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                         final folderApps = _archivedApplications
                             .where((app) => app.archiveFolderId == folder.id)
                             .length;
+                        final isNewlyCreated = folder.id == _newlyCreatedFolderId;
                         return ArchiveFolderItem(
                           name: folder.name,
                           color: Color(folder.color),
                           isSelected: isSelected,
                           itemCount: folderApps,
+                          isNewlyCreated: isNewlyCreated,
                           onTap: () {
                             setState(() {
                               _selectedFolderId = folder.id;
+                              _newlyCreatedFolderId = null; // 선택 시 하이라이트 해제
                             });
                           },
                           onLongPress: () => _deleteFolder(folder),
