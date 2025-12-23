@@ -10,6 +10,7 @@ import 'interview_question.dart';
 import 'interview_checklist.dart';
 import 'interview_schedule.dart';
 import 'experience_level.dart';
+import 'preparation_checklist.dart';
 
 class Application {
   final String id;
@@ -20,6 +21,7 @@ class Application {
   final String? workplace; // 근무처 (선택)
   final DateTime deadline; // 서류 마감일 (필수)
   final DateTime? announcementDate; // 서류 발표일
+  final List<PreparationChecklist> preparationChecklist; // 지원 준비 체크리스트
   final List<NextStage> nextStages; // 다음 전형 일정 리스트
   final List<CoverLetterQuestion> coverLetterQuestions; // 자기소개서 문항 리스트
   final List<InterviewReview> interviewReviews; // 면접 후기 리스트
@@ -44,6 +46,7 @@ class Application {
     this.workplace,
     required this.deadline,
     this.announcementDate,
+    List<PreparationChecklist>? preparationChecklist,
     List<NextStage>? nextStages,
     List<CoverLetterQuestion>? coverLetterQuestions,
     List<InterviewReview>? interviewReviews,
@@ -58,7 +61,8 @@ class Application {
     NotificationSettings? notificationSettings,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : nextStages = nextStages ?? [],
+  }) : preparationChecklist = preparationChecklist ?? [],
+       nextStages = nextStages ?? [],
        coverLetterQuestions = coverLetterQuestions ?? [],
        interviewReviews = interviewReviews ?? [],
        interviewQuestions = interviewQuestions ?? [],
@@ -78,6 +82,9 @@ class Application {
       'workplace': workplace,
       'deadline': deadline.toIso8601String(),
       'announcementDate': announcementDate?.toIso8601String(),
+      'preparationChecklist': preparationChecklist
+          .map((item) => item.toJson())
+          .toList(),
       'nextStages': nextStages.map((stage) => stage.toJson()).toList(),
       'coverLetterQuestions': coverLetterQuestions
           .map((q) => q.toJson())
@@ -115,6 +122,13 @@ class Application {
       announcementDate: json['announcementDate'] != null
           ? DateTime.parse(json['announcementDate'] as String)
           : null,
+      preparationChecklist:
+          (json['preparationChecklist'] as List<dynamic>?)
+              ?.map(
+                (e) => PreparationChecklist.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
       nextStages:
           (json['nextStages'] as List<dynamic>?)
               ?.map((e) => NextStage.fromJson(e as Map<String, dynamic>))
@@ -183,6 +197,7 @@ class Application {
     String? workplace,
     DateTime? deadline,
     DateTime? announcementDate,
+    List<PreparationChecklist>? preparationChecklist,
     List<NextStage>? nextStages,
     List<CoverLetterQuestion>? coverLetterQuestions,
     List<InterviewReview>? interviewReviews,
@@ -207,6 +222,7 @@ class Application {
       workplace: workplace ?? this.workplace,
       deadline: deadline ?? this.deadline,
       announcementDate: announcementDate ?? this.announcementDate,
+      preparationChecklist: preparationChecklist ?? this.preparationChecklist,
       nextStages: nextStages ?? this.nextStages,
       coverLetterQuestions: coverLetterQuestions ?? this.coverLetterQuestions,
       interviewReviews: interviewReviews ?? this.interviewReviews,

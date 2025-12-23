@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'notification_settings.dart';
 import 'cover_letter_question.dart';
 import 'experience_level.dart';
+import 'preparation_checklist.dart';
 
 class ApplicationFormData {
   // 컨트롤러
@@ -23,6 +24,9 @@ class ApplicationFormData {
 
   // 다음 전형 일정
   final List<Map<String, dynamic>> nextStages;
+
+  // 지원 준비 체크리스트
+  final List<PreparationChecklist> preparationChecklist;
 
   // 자기소개서 문항
   final List<CoverLetterQuestion> coverLetterQuestions;
@@ -54,6 +58,7 @@ class ApplicationFormData {
     this.deadline,
     this.announcementDate,
     this.experienceLevel,
+    List<PreparationChecklist>? preparationChecklist,
     List<Map<String, dynamic>>? nextStages,
     List<CoverLetterQuestion>? coverLetterQuestions,
     this.companyNameError,
@@ -73,6 +78,7 @@ class ApplicationFormData {
         positionController = positionController ?? TextEditingController(),
         workplaceController = workplaceController ?? TextEditingController(),
         memoController = memoController ?? TextEditingController(),
+        preparationChecklist = preparationChecklist ?? [],
         nextStages = nextStages ?? [],
         coverLetterQuestions = coverLetterQuestions ?? [];
 
@@ -98,6 +104,7 @@ class ApplicationFormData {
     DateTime? Function()? announcementDateNull,
     ExperienceLevel? experienceLevel,
     ExperienceLevel? Function()? experienceLevelNull,
+    List<PreparationChecklist>? preparationChecklist,
     List<Map<String, dynamic>>? nextStages,
     List<CoverLetterQuestion>? coverLetterQuestions,
     String? companyNameError,
@@ -131,6 +138,7 @@ class ApplicationFormData {
           (announcementDateNull != null ? null : this.announcementDate),
       experienceLevel: experienceLevel ??
           (experienceLevelNull != null ? null : this.experienceLevel),
+      preparationChecklist: preparationChecklist ?? this.preparationChecklist,
       nextStages: nextStages ?? this.nextStages,
       coverLetterQuestions:
           coverLetterQuestions ?? this.coverLetterQuestions,

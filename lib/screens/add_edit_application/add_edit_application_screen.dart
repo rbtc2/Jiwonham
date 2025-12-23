@@ -10,6 +10,7 @@ import '../../models/notification_settings.dart';
 import '../../models/application.dart';
 import '../../models/next_stage.dart';
 import '../../models/application_status.dart';
+import '../../models/preparation_checklist.dart';
 import '../../services/storage_service.dart';
 // Phase 1: 폼 필드 위젯 import
 import '../../widgets/form_fields/labeled_text_field.dart';
@@ -20,12 +21,16 @@ import '../../widgets/form_fields/experience_level_field.dart';
 import '../../widgets/dialogs/add_stage_dialog.dart';
 import '../../widgets/dialogs/edit_stage_dialog.dart';
 import '../../widgets/dialogs/delete_stage_confirm_dialog.dart';
+import '../../widgets/dialogs/add_checklist_item_dialog.dart';
+import '../../widgets/dialogs/edit_checklist_item_dialog.dart';
+import '../../widgets/dialogs/delete_checklist_item_confirm_dialog.dart';
 import '../../widgets/dialogs/add_question_dialog.dart';
 import '../../widgets/dialogs/edit_question_dialog.dart';
 import '../../widgets/dialogs/delete_question_confirm_dialog.dart';
 import '../../widgets/dialogs/notification_settings_dialog.dart';
 import '../../utils/validation.dart';
 // Phase 6: 섹션별 위젯 import
+import '../../widgets/application_form_sections/preparation_checklist_section.dart';
 import '../../widgets/application_form_sections/next_stages_section.dart';
 import '../../widgets/application_form_sections/cover_letter_questions_section.dart';
 // Phase 7: 상태 관리
@@ -125,6 +130,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         deadline: application.deadline,
         announcementDate: application.announcementDate,
         experienceLevel: application.experienceLevel,
+        preparationChecklist: List.from(application.preparationChecklist),
         nextStages: nextStages,
         coverLetterQuestions: List.from(application.coverLetterQuestions),
         deadlineIncludeTime: deadlineIncludeTime,
@@ -517,6 +523,27 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        PreparationChecklistSection(
+          checklist: _formData.preparationChecklist,
+          onAddItem: () => _showAddChecklistItemDialog(context),
+          onEditItem: (index) => _showEditChecklistItemDialog(context, index),
+          onDeleteItem: (index) =>
+              _showDeleteChecklistItemConfirmDialog(context, index),
+          onToggleCheck: (index) {
+            setState(() {
+              final updatedChecklist = List<PreparationChecklist>.from(
+                _formData.preparationChecklist,
+              );
+              updatedChecklist[index] = updatedChecklist[index].copyWith(
+                isChecked: !updatedChecklist[index].isChecked,
+              );
+              _formData = _formData.copyWith(
+                preparationChecklist: updatedChecklist,
+              );
+            });
+          },
+        ),
+        const SizedBox(height: 24),
         NextStagesSection(
           stages: _formData.nextStages,
           onAddStage: () => _showAddStageDialog(context),
@@ -534,6 +561,67 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
         ),
       ],
     );
+  }
+
+  // Phase 2: 체크리스트 항목 추가 다이얼로그
+  void _showAddChecklistItemDialog(BuildContext context) {
+    AddChecklistItemDialog.show(context).then((result) {
+      if (result != null) {
+        setState(() {
+          final updatedChecklist = List<PreparationChecklist>.from(
+            _formData.preparationChecklist,
+          );
+          updatedChecklist.add(
+            PreparationChecklist(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              item: result,
+              isChecked: false,
+            ),
+          );
+          _formData = _formData.copyWith(
+            preparationChecklist: updatedChecklist,
+          );
+        });
+      }
+    });
+  }
+
+  // Phase 2: 체크리스트 항목 수정 다이얼로그
+  void _showEditChecklistItemDialog(BuildContext context, int index) {
+    final item = _formData.preparationChecklist[index];
+    EditChecklistItemDialog.show(context, item.item).then((result) {
+      if (result != null) {
+        setState(() {
+          final updatedChecklist = List<PreparationChecklist>.from(
+            _formData.preparationChecklist,
+          );
+          updatedChecklist[index] = updatedChecklist[index].copyWith(
+            item: result,
+          );
+          _formData = _formData.copyWith(
+            preparationChecklist: updatedChecklist,
+          );
+        });
+      }
+    });
+  }
+
+  // Phase 2: 체크리스트 항목 삭제 확인 다이얼로그
+  void _showDeleteChecklistItemConfirmDialog(BuildContext context, int index) {
+    final item = _formData.preparationChecklist[index];
+    DeleteChecklistItemConfirmDialog.show(context, item.item).then((result) {
+      if (result == true) {
+        setState(() {
+          final updatedChecklist = List<PreparationChecklist>.from(
+            _formData.preparationChecklist,
+          );
+          updatedChecklist.removeAt(index);
+          _formData = _formData.copyWith(
+            preparationChecklist: updatedChecklist,
+          );
+        });
+      }
+    });
   }
 
   // Phase 2: 일정 추가 다이얼로그 - AddStageDialog 위젯으로 분리됨
@@ -812,6 +900,7 @@ class _AddEditApplicationScreenState extends State<AddEditApplicationScreen> {
             : _formData.workplaceController.text.trim(),
         deadline: _formData.deadline!,
         announcementDate: _formData.announcementDate,
+        preparationChecklist: _formData.preparationChecklist,
         nextStages: nextStages,
         coverLetterQuestions: _formData.coverLetterQuestions,
         memo: _formData.memoController.text.trim().isEmpty
