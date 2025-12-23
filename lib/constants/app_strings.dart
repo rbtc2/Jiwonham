@@ -163,4 +163,25 @@ class AppStrings {
   static const String customTime = '사용자 지정';
   static const String timeBefore = '시간 전';
   static const String selectTime = '시간 선택';
+
+  // Settings Screen
+  static const String settings = '설정';
+  static const String notificationDescription = '알림을 끄면 모든 알림이 비활성화됩니다.';
+  static const String premium = '프리미엄';
+  static const String removeAds = '광고 제거';
+  static const String purchasePremium = '구매하기';
+  static const String alreadyPurchased = '이미 구매됨';
+  static const String premiumDescription = '광고 없는 깔끔한 환경을 경험하세요.';
+  static const String donation = '후원하기';
+  static const String buyDeveloperCoffee = '개발자에게 커피 사주기';
+  static const String donationDescription = '개발에 힘이 됩니다!';
+  static const String dataManagement = '데이터 관리';
+  static const String exportData = '데이터 내보내기';
+  static const String deleteAllData = '모든 데이터 삭제';
+  static const String savedApplications = '저장된 공고';
+  static const String info = '정보';
+  static const String appVersion = '앱 버전';
+  static const String developerInfo = '개발자 정보';
+  static const String sendFeedback = '피드백 보내기';
+  static const String count = '개';
 }

@@ -1,10 +1,10 @@
-// 알림 설정 화면
-// 전체 알림 및 개별 알림 설정을 관리하는 화면
+// 설정 화면
+// 알림, 프리미엄, 후원, 데이터 관리, 정보를 관리하는 화면
 
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
-import '../../models/notification_timing.dart';
+import '../../widgets/modern_card.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -16,49 +16,56 @@ class NotificationSettingsScreen extends StatefulWidget {
 
 class _NotificationSettingsScreenState
     extends State<NotificationSettingsScreen> {
-  // 알림 설정 상태
-  bool _enableAllNotifications = true;
-  bool _enableDeadlineNotification = true;
-  bool _enableAnnouncementNotification = true;
-  bool _enableInterviewNotification = true;
+  // 스켈레톤 UI용 상태 (실제 기능 없음)
+  bool _enableNotifications = true;
+  final bool _isPremium = false;
+  int _applicationCount = 0; // 실제로는 StorageService에서 가져올 예정
 
-  NotificationTiming _deadlineTiming = NotificationTiming.daysBefore3;
-  NotificationTiming _announcementTiming = NotificationTiming.onTheDay;
-  NotificationTiming _interviewTiming = NotificationTiming.onTheDay;
+  @override
+  void initState() {
+    super.initState();
+    // TODO: 실제 데이터 로드
+    _loadApplicationCount();
+  }
 
-  int? _deadlineCustomHours;
-  int? _interviewCustomHours;
-
-  TimeOfDay _defaultNotificationTime = const TimeOfDay(hour: 9, minute: 0);
+  Future<void> _loadApplicationCount() async {
+    // TODO: StorageService에서 공고 개수 가져오기
+    setState(() {
+      _applicationCount = 12; // 임시 값
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.notificationSettings)),
+      appBar: AppBar(
+        title: const Text(AppStrings.settings),
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 전체 알림 활성화
-              _buildEnableAllNotifications(context),
+              // 알림 설정 섹션
+              _buildNotificationSection(context),
               const SizedBox(height: 24),
 
-              // 마감일 알림 설정
-              _buildDeadlineNotificationSection(context),
+              // 프리미엄 섹션
+              _buildPremiumSection(context),
               const SizedBox(height: 24),
 
-              // 발표일 알림 설정
-              _buildAnnouncementNotificationSection(context),
+              // 후원하기 섹션
+              _buildDonationSection(context),
               const SizedBox(height: 24),
 
-              // 면접 알림 설정
-              _buildInterviewNotificationSection(context),
+              // 데이터 관리 섹션
+              _buildDataManagementSection(context),
               const SizedBox(height: 24),
 
-              // 기본 알림 시간 설정
-              _buildDefaultNotificationTimeSection(context),
+              // 정보 섹션
+              _buildInfoSection(context),
             ],
           ),
         ),
@@ -66,474 +73,378 @@ class _NotificationSettingsScreenState
     );
   }
 
-  Widget _buildEnableAllNotifications(BuildContext context) {
-    return Card(
-      child: SwitchListTile(
-        title: Row(
-          children: [
-            Icon(Icons.notifications, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Text(
-              AppStrings.enableNotifications,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        subtitle: Text(
-          '모든 알림을 한 번에 켜거나 끌 수 있습니다',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-        ),
-        value: _enableAllNotifications,
-        onChanged: (value) {
-          setState(() {
-            _enableAllNotifications = value;
-            if (!value) {
-              _enableDeadlineNotification = false;
-              _enableAnnouncementNotification = false;
-              _enableInterviewNotification = false;
-            } else {
-              _enableDeadlineNotification = true;
-              _enableAnnouncementNotification = true;
-              _enableInterviewNotification = true;
-            }
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildDeadlineNotificationSection(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.event_busy, color: AppColors.error),
-                const SizedBox(width: 12),
-                Text(
-                  AppStrings.deadlineNotification,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: Text(AppStrings.receiveNotification),
-              value: _enableDeadlineNotification && _enableAllNotifications,
-              onChanged: _enableAllNotifications
-                  ? (value) {
-                      setState(() {
-                        _enableDeadlineNotification = value;
-                      });
-                    }
-                  : null,
-              contentPadding: EdgeInsets.zero,
-            ),
-            if (_enableDeadlineNotification && _enableAllNotifications) ...[
-              const SizedBox(height: 8),
-              Text(
-                AppStrings.notificationTiming,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              RadioGroup<NotificationTiming>(
-                groupValue: _deadlineTiming,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _deadlineTiming = value;
-                      if (value == NotificationTiming.custom) {
-                        _showCustomHoursDialog(
-                          context,
-                          initialHours: _deadlineCustomHours ?? 24,
-                          onSaved: (hours) {
-                            setState(() {
-                              _deadlineCustomHours = hours;
-                            });
-                          },
-                        );
-                      }
-                    });
-                  }
-                },
-                child: Column(
-                  children: [
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.daysBefore7,
-                      AppStrings.daysBefore7,
-                    ),
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.daysBefore3,
-                      AppStrings.daysBefore3,
-                    ),
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.daysBefore1,
-                      AppStrings.daysBefore1,
-                    ),
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.onTheDay,
-                      AppStrings.onTheDay,
-                    ),
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.custom,
-                      _deadlineTiming == NotificationTiming.custom &&
-                              _deadlineCustomHours != null
-                          ? '${AppStrings.customTime} ($_deadlineCustomHours시간 전)'
-                          : AppStrings.customTime,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAnnouncementNotificationSection(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.campaign, color: AppColors.info),
-                const SizedBox(width: 12),
-                Text(
-                  AppStrings.announcementNotification,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: Text(AppStrings.receiveNotification),
-              value: _enableAnnouncementNotification && _enableAllNotifications,
-              onChanged: _enableAllNotifications
-                  ? (value) {
-                      setState(() {
-                        _enableAnnouncementNotification = value;
-                      });
-                    }
-                  : null,
-              contentPadding: EdgeInsets.zero,
-            ),
-            if (_enableAnnouncementNotification && _enableAllNotifications) ...[
-              const SizedBox(height: 8),
-              Text(
-                AppStrings.notificationTiming,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              RadioGroup<NotificationTiming>(
-                groupValue: _announcementTiming,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _announcementTiming = value;
-                    });
-                  }
-                },
-                child: Column(
-                  children: [
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.onTheDay,
-                      AppStrings.onTheDay,
-                    ),
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.daysBefore1,
-                      AppStrings.daysBefore1,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInterviewNotificationSection(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.phone_in_talk, color: AppColors.warning),
-                const SizedBox(width: 12),
-                Text(
-                  AppStrings.interviewNotification,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: Text(AppStrings.receiveNotification),
-              value: _enableInterviewNotification && _enableAllNotifications,
-              onChanged: _enableAllNotifications
-                  ? (value) {
-                      setState(() {
-                        _enableInterviewNotification = value;
-                      });
-                    }
-                  : null,
-              contentPadding: EdgeInsets.zero,
-            ),
-            if (_enableInterviewNotification && _enableAllNotifications) ...[
-              const SizedBox(height: 8),
-              Text(
-                AppStrings.notificationTiming,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              RadioGroup<NotificationTiming>(
-                groupValue: _interviewTiming,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _interviewTiming = value;
-                      if (value == NotificationTiming.custom) {
-                        _showCustomHoursDialog(
-                          context,
-                          initialHours: _interviewCustomHours ?? 1,
-                          onSaved: (hours) {
-                            setState(() {
-                              _interviewCustomHours = hours;
-                            });
-                          },
-                        );
-                      }
-                    });
-                  }
-                },
-                child: Column(
-                  children: [
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.daysBefore1,
-                      AppStrings.daysBefore1,
-                    ),
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.onTheDay,
-                      AppStrings.onTheDay,
-                    ),
-                    _buildTimingRadio(
-                      context,
-                      NotificationTiming.custom,
-                      _interviewTiming == NotificationTiming.custom &&
-                              _interviewCustomHours != null
-                          ? '${AppStrings.timeBefore} ($_interviewCustomHours시간 전)'
-                          : '${AppStrings.timeBefore} (예: 1시간 전)',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDefaultNotificationTimeSection(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.access_time, color: AppColors.textSecondary),
-                const SizedBox(width: 12),
-                Text(
-                  AppStrings.defaultNotificationTime,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: () async {
-                final TimeOfDay? picked = await showTimePicker(
-                  context: context,
-                  initialTime: _defaultNotificationTime,
-                );
-                if (picked != null) {
-                  setState(() {
-                    _defaultNotificationTime = picked;
-                  });
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatTime(_defaultNotificationTime),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const Icon(Icons.access_time),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimingRadio(
-    BuildContext context,
-    NotificationTiming value,
-    String label,
-  ) {
-    return RadioListTile<NotificationTiming>(
-      title: Text(label),
-      value: value,
-      contentPadding: EdgeInsets.zero,
-    );
-  }
-
-  String _formatTime(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  Future<void> _showCustomHoursDialog(
-    BuildContext context, {
-    required int initialHours,
-    required Function(int) onSaved,
-  }) async {
-    final hoursController = TextEditingController(
-      text: initialHours.toString(),
-    );
-    bool isValid = true;
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('사용자 지정 시간'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+  // 알림 설정 섹션
+  Widget _buildNotificationSection(BuildContext context) {
+    return ModernCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              const Text('알림을 받을 시간을 입력하세요 (시간 단위)'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: hoursController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: '시간 전',
-                  hintText: '24',
-                  filled: true,
-                  fillColor: AppColors.background,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                      width: 1,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
-                  ),
-                  errorText: !isValid && hoursController.text.trim().isEmpty
-                      ? '시간을 입력해주세요.'
-                      : null,
-                  contentPadding: const EdgeInsets.all(16),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                onChanged: (value) {
-                  final hours = int.tryParse(value.trim());
-                  setState(() {
-                    isValid = hours != null && hours > 0;
-                  });
-                },
+                child: const Icon(
+                  Icons.notifications_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                AppStrings.receiveNotification,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: const Text(AppStrings.receiveNotification),
+            value: _enableNotifications,
+            onChanged: (value) {
+              // TODO: 실제 기능 구현
+              setState(() {
+                _enableNotifications = value;
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            AppStrings.notificationDescription,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 프리미엄 섹션
+  Widget _buildPremiumSection(BuildContext context) {
+    return ModernCard(
+      backgroundColor: AppColors.primary.withValues(alpha: 0.05),
+      elevation: 4,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.star,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                AppStrings.premium,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_isPremium)
+            Row(
+              children: [
+                const Icon(
+                  Icons.check_circle,
+                  color: AppColors.success,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  AppStrings.alreadyPurchased,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            )
+          else
+            ElevatedButton.icon(
               onPressed: () {
-                Navigator.pop(dialogContext);
+                // TODO: 프리미엄 구매 기능 구현
               },
-              child: const Text('취소'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final hours = int.tryParse(hoursController.text.trim());
-                if (hours != null && hours > 0) {
-                  onSaved(hours);
-                  Navigator.pop(dialogContext);
-                } else {
-                  setState(() {
-                    isValid = false;
-                  });
-                }
-              },
+              icon: const Icon(Icons.shopping_cart),
+              label: Text('${AppStrings.purchasePremium} (₩1,000)'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
-              child: const Text('저장'),
             ),
-          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(
+                Icons.block,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                AppStrings.removeAds,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            AppStrings.premiumDescription,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 후원하기 섹션
+  Widget _buildDonationSection(BuildContext context) {
+    return ModernCard(
+      child: InkWell(
+        onTap: () {
+          // TODO: 후원 다이얼로그 표시
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.local_cafe,
+                  color: AppColors.warning,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.buyDeveloperCoffee,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      AppStrings.donationDescription,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
 
-    hoursController.dispose();
+  // 데이터 관리 섹션
+  Widget _buildDataManagementSection(BuildContext context) {
+    return ModernCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.storage,
+                  color: AppColors.info,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                AppStrings.dataManagement,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildDataManagementItem(
+            context,
+            icon: Icons.download,
+            title: AppStrings.exportData,
+            onTap: () {
+              // TODO: 데이터 내보내기 기능 구현
+            },
+          ),
+          const Divider(height: 1),
+          _buildDataManagementItem(
+            context,
+            icon: Icons.delete_outline,
+            title: AppStrings.deleteAllData,
+            iconColor: AppColors.error,
+            onTap: () {
+              // TODO: 데이터 삭제 확인 다이얼로그 표시
+            },
+          ),
+          const Divider(height: 1),
+          _buildDataManagementItem(
+            context,
+            icon: Icons.description_outlined,
+            title: '${AppStrings.savedApplications}: $_applicationCount${AppStrings.count}',
+            isReadOnly: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataManagementItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    Color? iconColor,
+    VoidCallback? onTap,
+    bool isReadOnly = false,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: iconColor ?? AppColors.textSecondary,
+      ),
+      title: Text(title),
+      trailing: isReadOnly
+          ? null
+          : const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
+      onTap: isReadOnly ? null : onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+    );
+  }
+
+  // 정보 섹션
+  Widget _buildInfoSection(BuildContext context) {
+    return ModernCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.info_outline,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                AppStrings.info,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildInfoItem(
+            context,
+            icon: Icons.phone_android,
+            title: '${AppStrings.appVersion}: 1.0.0',
+            isReadOnly: true,
+          ),
+          const Divider(height: 1),
+          _buildInfoItem(
+            context,
+            icon: Icons.person_outline,
+            title: AppStrings.developerInfo,
+            onTap: () {
+              // TODO: 개발자 정보 다이얼로그 표시
+            },
+          ),
+          const Divider(height: 1),
+          _buildInfoItem(
+            context,
+            icon: Icons.feedback_outlined,
+            title: AppStrings.sendFeedback,
+            onTap: () {
+              // TODO: 피드백 보내기 기능 구현
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    VoidCallback? onTap,
+    bool isReadOnly = false,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: AppColors.textSecondary,
+      ),
+      title: Text(title),
+      trailing: isReadOnly
+          ? null
+          : const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
+      onTap: isReadOnly ? null : onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+    );
   }
 }
