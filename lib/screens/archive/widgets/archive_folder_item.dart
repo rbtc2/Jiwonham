@@ -80,8 +80,9 @@ class _ArchiveFolderItemState extends State<ArchiveFolderItem>
           onLongPress: widget.onLongPress,
           child: Container(
         width: 100,
+        height: 100,
         margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: widget.isSelected
                 ? widget.color.withValues(alpha: 0.1)
@@ -99,9 +100,9 @@ class _ArchiveFolderItemState extends State<ArchiveFolderItem>
               Icon(
                 Icons.folder,
                 color: widget.color,
-                size: 32,
+                size: 30,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               SizedBox(
                 width: double.infinity,
                 child: Text(
@@ -109,7 +110,7 @@ class _ArchiveFolderItemState extends State<ArchiveFolderItem>
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.normal,
                         color: widget.isSelected ? widget.color : AppColors.textPrimary,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -118,11 +119,12 @@ class _ArchiveFolderItemState extends State<ArchiveFolderItem>
                 ),
               ),
               if (widget.itemCount != null && widget.itemCount! > 0) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   '${widget.itemCount}개',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
+                        fontSize: 10,
                       ),
                 ),
               ],
