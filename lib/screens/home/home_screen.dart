@@ -105,13 +105,19 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              // 설정 화면으로 이동하고 결과를 받음
+              final settingsChanged = await Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const NotificationSettingsScreen(),
                 ),
               );
+
+              // 설정이 변경되었으면 데이터 새로고침
+              if (settingsChanged == true && mounted) {
+                _viewModel.refresh();
+              }
             },
             tooltip: AppStrings.notificationSettings,
           ),

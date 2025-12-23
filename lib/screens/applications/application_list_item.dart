@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../models/application.dart';
+import '../../models/application_status.dart';
 import '../../models/notification_settings.dart';
 import '../../widgets/d_day_badge.dart';
-import '../../widgets/status_chip.dart';
 import '../../widgets/modern_card.dart';
 import '../application_detail/application_detail_screen.dart';
 
@@ -83,7 +83,7 @@ class ApplicationListItem extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 상단: 알람 아이콘, 지원 완료 배지, D-day 배지
+                // 상단: 알람 아이콘, 지원 완료 배지, 상태 칩, D-day 배지
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -143,8 +143,15 @@ class ApplicationListItem extends StatelessWidget {
                           ),
                       ],
                     ),
-                    // 오른쪽: D-day 배지
-                    DDayBadge(deadline: application.deadline),
+                    // 오른쪽: 상태 칩 + D-day 배지
+                    Row(
+                      children: [
+                        // 상태 칩 (D-day 배지와 동일한 스타일)
+                        _buildStatusBadge(context),
+                        const SizedBox(width: 8),
+                        DDayBadge(deadline: application.deadline),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -418,74 +425,6 @@ class ApplicationListItem extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
-
-                // 준비 체크리스트 진행률 (있으면)
-                if (application.preparationChecklist.isNotEmpty) ...[
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.checklist,
-                        size: 16,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '준비 체크리스트',
-                                  style: Theme.of(context)
-                                      .textTheme.bodySmall
-                                      ?.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                Text(
-                                  '${application.preparationChecklist.where((item) => item.isChecked).length}/${application.preparationChecklist.length}',
-                                  style: Theme.of(context)
-                                      .textTheme.bodySmall
-                                      ?.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: application.preparationChecklist.isEmpty
-                                    ? 0
-                                    : application.preparationChecklist
-                                            .where((item) => item.isChecked)
-                                            .length /
-                                        application.preparationChecklist.length,
-                                backgroundColor:
-                                    AppColors.textSecondary.withValues(alpha: 0.1),
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.primary,
-                                ),
-                                minHeight: 4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // 상태 칩
-                StatusChip(status: application.status),
               ],
             ),
             // 선택 모드일 때 체크박스를 왼쪽 상단에 오버레이로 배치
@@ -538,6 +477,54 @@ class ApplicationListItem extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // 상태 배지 빌더 (D-day 배지와 동일한 스타일)
+  Widget _buildStatusBadge(BuildContext context) {
+    final status = application.status;
+    
+    String statusText;
+    Color statusColor;
+    
+    switch (status) {
+      case ApplicationStatus.notApplied:
+        statusText = '지원 전';
+        statusColor = AppColors.textSecondary;
+        break;
+      case ApplicationStatus.applied:
+        statusText = '지원 완료';
+        statusColor = AppColors.primary;
+        break;
+      case ApplicationStatus.inProgress:
+        statusText = '진행중';
+        statusColor = AppColors.warning;
+        break;
+      case ApplicationStatus.passed:
+        statusText = '합격';
+        statusColor = AppColors.success;
+        break;
+      case ApplicationStatus.rejected:
+        statusText = '불합격';
+        statusColor = AppColors.error;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: statusColor, width: 1),
+      ),
+      child: Text(
+        statusText,
+        style: TextStyle(
+          color: statusColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+    );
   }
 
   // 알람이 설정되어 있는지 확인하는 헬퍼 메서드

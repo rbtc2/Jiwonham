@@ -22,6 +22,7 @@ class _NotificationSettingsScreenState
   bool _excludeArchivedFromStats = true;
   final bool _isPremium = false;
   int _applicationCount = 0; // 실제로는 StorageService에서 가져올 예정
+  bool _settingsChanged = false; // 설정 변경 여부 추적
 
   @override
   void initState() {
@@ -49,7 +50,15 @@ class _NotificationSettingsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          // 뒤로가기 시 설정 변경 여부를 결과로 반환
+          Navigator.of(context).pop(_settingsChanged);
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.settings),
         elevation: 0,
@@ -88,6 +97,7 @@ class _NotificationSettingsScreenState
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -168,6 +178,7 @@ class _NotificationSettingsScreenState
               if (success && mounted) {
                 setState(() {
                   _excludeArchivedFromStats = value;
+                  _settingsChanged = true; // 설정 변경 표시
                 });
               }
             },
