@@ -46,7 +46,7 @@ class InterviewReviewTab extends StatelessWidget {
             onAnswerUpdated: onAnswerUpdated,
             onQuestionDeleted: onQuestionDeleted,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           InterviewReviewSection(
             application: application,
             onReviewAdded: onReviewAdded,

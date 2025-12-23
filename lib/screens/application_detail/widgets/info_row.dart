@@ -23,7 +23,7 @@ class InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: AppColors.textSecondary),
+        Icon(icon, size: 18, color: AppColors.textSecondary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -34,6 +34,7 @@ class InfoRow extends StatelessWidget {
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
+                        fontSize: 11,
                       ),
                 ),
               const SizedBox(height: 4),
@@ -42,7 +43,9 @@ class InfoRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       value,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   if (badge != null) ...[

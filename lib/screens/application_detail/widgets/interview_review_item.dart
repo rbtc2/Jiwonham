@@ -48,6 +48,7 @@ class InterviewReviewItem extends StatelessWidget {
                     formatDate(review.date),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
+                          fontSize: 11,
                         ),
                   ),
                   const SizedBox(width: 8),
@@ -91,6 +92,7 @@ class InterviewReviewItem extends StatelessWidget {
               AppStrings.interviewQuestions,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: 11,
                   ),
             ),
             const SizedBox(height: 4),
@@ -107,7 +109,9 @@ class InterviewReviewItem extends StatelessWidget {
                     Expanded(
                       child: Text(
                         q,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -120,12 +124,15 @@ class InterviewReviewItem extends StatelessWidget {
             AppStrings.interviewReviewText,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: 11,
                 ),
           ),
           const SizedBox(height: 4),
           Text(
             review.review,
-            style: Theme.of(context).textTheme.bodySmall,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 8),
           Row(

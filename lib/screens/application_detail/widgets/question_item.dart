@@ -41,6 +41,7 @@ class QuestionItem extends StatelessWidget {
                     question,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w500,
+                          fontSize: 13,
                         ),
                   ),
                 ),
@@ -65,7 +66,9 @@ class QuestionItem extends StatelessWidget {
                   children: [
                     Text(
                       answer,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 12,
+                      ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),

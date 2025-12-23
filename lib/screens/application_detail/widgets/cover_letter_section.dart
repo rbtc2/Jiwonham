@@ -25,7 +25,7 @@ class CoverLetterSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -40,6 +40,7 @@ class CoverLetterSection extends StatelessWidget {
                         AppStrings.coverLetterAnswers,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
+                              fontSize: 18,
                             ),
                       ),
                       const SizedBox(height: 4),
@@ -60,7 +61,7 @@ class CoverLetterSection extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             if (application.coverLetterQuestions.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(16.0),

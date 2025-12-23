@@ -18,7 +18,7 @@ class ApplicationInfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -26,9 +26,10 @@ class ApplicationInfoSection extends StatelessWidget {
               '지원 정보',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             InfoRow(
               icon: Icons.calendar_today,
               label: '서류 마감일',

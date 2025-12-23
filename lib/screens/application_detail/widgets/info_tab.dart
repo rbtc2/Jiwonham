@@ -55,14 +55,14 @@ class InfoTab extends StatelessWidget {
                   application: application,
                   onLinkTap: onLinkTap,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 ApplicationInfoSection(application: application),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 PreparationChecklistSection(
                   checklist: application.preparationChecklist,
                   onToggleCheck: onChecklistToggle,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 MemoSection(
                   application: application,
                   onMemoUpdated: onMemoUpdated,

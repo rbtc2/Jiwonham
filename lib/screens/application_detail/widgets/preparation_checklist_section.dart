@@ -25,7 +25,7 @@ class PreparationChecklistSection extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -33,9 +33,10 @@ class PreparationChecklistSection extends StatelessWidget {
               '지원 준비 체크리스트',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             if (checklist.isEmpty)
               Container(
                 padding: const EdgeInsets.all(20.0),
@@ -95,14 +96,14 @@ class PreparationChecklistSection extends StatelessWidget {
                       '진행률: ',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.textSecondary,
-                            fontSize: 14,
+                            fontSize: 13,
                           ),
                     ),
                     Text(
                       '$completedCount/$totalCount 완료',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 13,
                             color: percentage == 100
                                 ? AppColors.success
                                 : AppColors.textPrimary,
@@ -115,7 +116,7 @@ class PreparationChecklistSection extends StatelessWidget {
                             color: percentage == 100
                                 ? AppColors.success
                                 : AppColors.textSecondary,
-                            fontSize: 14,
+                            fontSize: 13,
                           ),
                     ),
                   ],
@@ -160,6 +161,7 @@ class PreparationChecklistSection extends StatelessWidget {
                     color: item.isChecked
                         ? AppColors.textSecondary
                         : AppColors.textPrimary,
+                    fontSize: 13,
                   ),
             ),
           ),

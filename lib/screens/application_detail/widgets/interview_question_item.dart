@@ -28,7 +28,7 @@ class InterviewQuestionItem extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
@@ -45,6 +45,7 @@ class InterviewQuestionItem extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
+                      fontSize: 16,
                     ),
               ),
               Expanded(
@@ -52,6 +53,7 @@ class InterviewQuestionItem extends StatelessWidget {
                   question.question,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                 ),
               ),
@@ -67,12 +69,15 @@ class InterviewQuestionItem extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.success,
+                        fontSize: 13,
                       ),
                 ),
                 Expanded(
                   child: Text(
                     question.answer!,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],

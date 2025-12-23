@@ -27,7 +27,7 @@ class InterviewReviewSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -42,6 +42,7 @@ class InterviewReviewSection extends StatelessWidget {
                         AppStrings.interviewReview,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
+                              fontSize: 18,
                             ),
                       ),
                       const SizedBox(height: 4),

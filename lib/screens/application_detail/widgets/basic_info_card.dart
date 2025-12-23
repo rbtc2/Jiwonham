@@ -26,7 +26,7 @@ class BasicInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -39,14 +39,19 @@ class BasicInfoCard extends StatelessWidget {
                       Text(
                         application.companyName,
                         style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                            ?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       if (application.position != null &&
                           application.position!.isNotEmpty)
                         Text(
                           application.position!,
-                          style: Theme.of(context).textTheme.titleMedium,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: 14,
+                          ),
                         ),
                       // 구분과 근무지 정보 배지
                       const SizedBox(height: 8),
