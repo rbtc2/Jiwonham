@@ -7,7 +7,6 @@ import '../../../constants/app_colors.dart';
 import '../../../constants/app_strings.dart';
 import '../../../models/application.dart';
 import '../../../models/application_status.dart';
-import '../../../widgets/dialogs/application_filter_dialog.dart';
 import '../../../widgets/dialogs/multi_delete_confirm_dialog.dart';
 import 'application_search_bar.dart';
 
@@ -15,15 +14,12 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
   final bool isSelectionMode;
   final bool isSearchMode;
   final String searchQuery;
-  final ApplicationStatus? filterStatus;
-  final String? deadlineFilter;
   final String sortBy;
   final int selectedCount;
   final TabController tabController;
   final List<Application> filteredApplications;
   final ApplicationStatus currentTabStatus;
   final VoidCallback onSearchPressed;
-  final Future<void> Function(ApplicationStatus?, String?) onFilterPressed;
   final VoidCallback onExitSearchMode;
   final VoidCallback onExitSelectionMode;
   final VoidCallback onClearSearchQuery;
@@ -38,15 +34,12 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
     required this.isSelectionMode,
     required this.isSearchMode,
     required this.searchQuery,
-    required this.filterStatus,
-    required this.deadlineFilter,
     required this.sortBy,
     required this.selectedCount,
     required this.tabController,
     required this.filteredApplications,
     required this.currentTabStatus,
     required this.onSearchPressed,
-    required this.onFilterPressed,
     required this.onExitSearchMode,
     required this.onExitSelectionMode,
     required this.onClearSearchQuery,
@@ -59,8 +52,7 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
 
   @override
   Widget build(BuildContext context) {
-    final hasActiveFilters =
-        searchQuery.isNotEmpty || filterStatus != null || deadlineFilter != null;
+    final hasActiveFilters = searchQuery.isNotEmpty;
 
     return AppBar(
       // PHASE 7: 선택 모드 진입 시 AppBar 애니메이션
@@ -244,44 +236,6 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
                         ),
                     ],
                   ),
-                  // Phase 5: 필터 아이콘 (필터가 적용되었을 때 배지 표시)
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.filter_list),
-                        onPressed: () async {
-                          final result = await ApplicationFilterDialog.show(
-                            context,
-                            initialStatusFilter: filterStatus,
-                            initialDeadlineFilter: deadlineFilter,
-                          );
-                          if (result != null) {
-                            await onFilterPressed(
-                              result['status'] as ApplicationStatus?,
-                              result['deadline'] as String?,
-                            );
-                          }
-                        },
-                        tooltip: AppStrings.filter,
-                      ),
-                      if (filterStatus != null || deadlineFilter != null)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 8,
-                              minHeight: 8,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
                   // Phase 5: 정렬 메뉴 (현재 정렬 상태 표시)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.sort),
@@ -392,51 +346,10 @@ class ApplicationsAppBar extends StatelessWidget implements PreferredSizeWidget 
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 48);
 
   String _buildActiveFiltersText() {
-    final List<String> filters = [];
-
     if (searchQuery.isNotEmpty) {
-      filters.add('검색: $searchQuery');
+      return '검색: $searchQuery';
     }
-    if (filterStatus != null) {
-      filters.add('상태: ${_getStatusText(filterStatus!)}');
-    }
-    if (deadlineFilter != null) {
-      String deadlineText = '';
-      switch (deadlineFilter) {
-        case AppStrings.deadlineWithin7Days:
-          deadlineText = 'D-7 이내';
-          break;
-        case AppStrings.deadlineWithin3Days:
-          deadlineText = 'D-3 이내';
-          break;
-        case AppStrings.deadlinePassed:
-          deadlineText = '마감됨';
-          break;
-      }
-      if (deadlineText.isNotEmpty) {
-        filters.add('마감일: $deadlineText');
-      }
-    }
-
-    return filters.join(' • ');
-  }
-
-  // ViewModel의 buildActiveFiltersText와 동일한 로직을 사용하기 위한 메서드
-  // 필요시 ViewModel에서 가져올 수도 있음
-
-  String _getStatusText(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.notApplied:
-        return AppStrings.notApplied;
-      case ApplicationStatus.inProgress:
-        return AppStrings.inProgress;
-      case ApplicationStatus.passed:
-        return AppStrings.passed;
-      case ApplicationStatus.rejected:
-        return AppStrings.rejected;
-      default:
-        return AppStrings.all;
-    }
+    return '';
   }
 
   String _getSortByText(String sortBy) {

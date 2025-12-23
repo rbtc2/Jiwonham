@@ -113,15 +113,12 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
           isSelectionMode: _viewModel.isSelectionMode,
           isSearchMode: _viewModel.isSearchMode,
           searchQuery: _viewModel.searchQuery,
-          filterStatus: _viewModel.filterStatus,
-          deadlineFilter: _viewModel.deadlineFilter,
           sortBy: _viewModel.sortBy,
           selectedCount: _viewModel.selectedCount,
           tabController: _tabController,
           filteredApplications: filteredApplications,
           currentTabStatus: currentStatus,
           onSearchPressed: _handleSearchPressed,
-          onFilterPressed: _handleFilterPressed,
           onExitSearchMode: _handleExitSearchMode,
           onExitSelectionMode: _handleExitSelectionMode,
           onClearSearchQuery: _handleClearSearchQuery,
@@ -178,10 +175,7 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     );
 
     // 활성 필터 확인
-    final hasActiveFilters =
-        _viewModel.searchQuery.isNotEmpty ||
-        _viewModel.filterStatus != null ||
-        _viewModel.deadlineFilter != null;
+    final hasActiveFilters = _viewModel.searchQuery.isNotEmpty;
 
     return ApplicationListView(
       isLoading: _viewModel.isLoading,
@@ -244,9 +238,6 @@ class ApplicationsScreenState extends State<ApplicationsScreen>
     _searchController.text = _viewModel.searchQuery;
   }
 
-  Future<void> _handleFilterPressed(ApplicationStatus? status, String? deadline) async {
-    _viewModel.setFilter(status, deadline);
-  }
 
   void _handleExitSearchMode() {
     _viewModel.exitSearchMode();
