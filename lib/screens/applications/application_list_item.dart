@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../models/application.dart';
+import '../../models/notification_settings.dart';
 import '../../widgets/d_day_badge.dart';
 import '../../widgets/status_chip.dart';
 import '../../widgets/modern_card.dart';
@@ -81,10 +82,28 @@ class ApplicationListItem extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 상단: D-day 배지
+                // 상단: D-day 배지와 알람 아이콘
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  children: [DDayBadge(deadline: application.deadline)],
+                  children: [
+                    DDayBadge(deadline: application.deadline),
+                    // 알람이 설정되어 있으면 표시
+                    if (_hasNotification(application.notificationSettings)) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.notifications_active,
+                          color: AppColors.warning,
+                          size: 18,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 16),
 
@@ -265,5 +284,12 @@ class ApplicationListItem extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // 알람이 설정되어 있는지 확인하는 헬퍼 메서드
+  bool _hasNotification(NotificationSettings notificationSettings) {
+    return notificationSettings.deadlineNotification ||
+        notificationSettings.announcementNotification ||
+        notificationSettings.interviewNotification;
   }
 }
