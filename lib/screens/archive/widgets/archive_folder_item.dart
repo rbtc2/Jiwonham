@@ -7,7 +7,6 @@ class ArchiveFolderItem extends StatefulWidget {
   final String name;
   final Color color;
   final bool isSelected;
-  final int? itemCount;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final bool isNewlyCreated;
@@ -17,7 +16,6 @@ class ArchiveFolderItem extends StatefulWidget {
     required this.name,
     required this.color,
     required this.isSelected,
-    this.itemCount,
     required this.onTap,
     this.onLongPress,
     this.isNewlyCreated = false,
@@ -118,16 +116,6 @@ class _ArchiveFolderItemState extends State<ArchiveFolderItem>
                   softWrap: false,
                 ),
               ),
-              if (widget.itemCount != null && widget.itemCount! > 0) ...[
-                const SizedBox(height: 1),
-                Text(
-                  '${widget.itemCount}개',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontSize: 9,
-                      ),
-                ),
-              ],
             ],
           ),
         ),

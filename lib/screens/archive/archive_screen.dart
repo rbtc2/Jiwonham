@@ -527,6 +527,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   // AppBar 타이틀 위젯 빌드 (브레드크럼 포함)
   Widget _buildTitleWidget() {
+    // 현재 선택된 폴더/전체 보관함의 공고 개수 계산
+    final currentApps = _selectedFolderId == null
+        ? _archivedApplications.length
+        : _archivedApplications.where((app) => app.archiveFolderId == _selectedFolderId).length;
+    
     if (_selectedFolderId == null) {
       // 전체 보관함
       return Row(
@@ -540,6 +545,22 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           ),
           const SizedBox(width: 8),
           const Text('보관함'),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$currentApps',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       );
     } else {
@@ -565,6 +586,22 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             ),
             const SizedBox(width: 8),
             const Text('보관함'),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$currentApps',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         );
       }
@@ -601,6 +638,22 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 fontWeight: FontWeight.w600,
               ),
               overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Color(folder.color).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$currentApps',
+              style: TextStyle(
+                color: Color(folder.color),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -752,15 +805,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                         }
                         final folder = _folders[index - 1];
                         final isSelected = _selectedFolderId == folder.id;
-                        final folderApps = _archivedApplications
-                            .where((app) => app.archiveFolderId == folder.id)
-                            .length;
                         final isNewlyCreated = folder.id == _newlyCreatedFolderId;
                         return ArchiveFolderItem(
                           name: folder.name,
                           color: Color(folder.color),
                           isSelected: isSelected,
-                          itemCount: folderApps,
                           isNewlyCreated: isNewlyCreated,
                           onTap: () {
                             setState(() {
