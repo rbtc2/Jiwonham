@@ -2,6 +2,7 @@
 // 공고 목록에서 각 공고를 표시하는 재사용 가능한 위젯
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../models/application.dart';
 import '../../models/notification_settings.dart';
@@ -82,27 +83,67 @@ class ApplicationListItem extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 상단: 알람 아이콘과 D-day 배지
+                // 상단: 알람 아이콘, 지원 완료 배지, D-day 배지
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // 알람이 설정되어 있으면 표시 (D-day 배지 앞에 위치)
-                    if (_hasNotification(application.notificationSettings)) ...[
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppColors.warning.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.notifications_active,
-                          color: AppColors.warning,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    // D-day 배지 (항상 제일 우측에 위치)
+                    // 왼쪽: 알람 아이콘 + 지원 완료 배지
+                    Row(
+                      children: [
+                        if (_hasNotification(application.notificationSettings)) ...[
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.warning.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.notifications_active,
+                              color: AppColors.warning,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        if (application.isApplied)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.success,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  size: 14,
+                                  color: AppColors.success,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '지원완료',
+                                  style: Theme.of(context)
+                                      .textTheme.bodySmall
+                                      ?.copyWith(
+                                    color: AppColors.success,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                    // 오른쪽: D-day 배지
                     DDayBadge(deadline: application.deadline),
                   ],
                 ),
@@ -133,6 +174,36 @@ class ApplicationListItem extends StatelessWidget {
                         ),
                       ),
                     ),
+                    // 지원서 링크 아이콘 (있으면)
+                    if (application.applicationLink != null)
+                      IconButton(
+                        icon: Icon(
+                          Icons.link,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        onPressed: () async {
+                          try {
+                            Uri uri = Uri.parse(application.applicationLink!);
+                            if (!uri.hasScheme) {
+                              uri = Uri.parse('https://${application.applicationLink}');
+                            }
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('링크를 열 수 없습니다: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: '지원서 링크 열기',
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -169,12 +240,103 @@ class ApplicationListItem extends StatelessWidget {
                   const SizedBox(height: 12),
                 ],
 
+                // 구분 및 근무지 배지
+                if (application.experienceLevel != null ||
+                    (application.workplace != null &&
+                        application.workplace!.isNotEmpty)) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (application.experienceLevel != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.primary,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                application.experienceLevel!.label,
+                                style: Theme.of(context)
+                                    .textTheme.bodySmall
+                                    ?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (application.workplace != null &&
+                          application.workplace!.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.textSecondary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.textSecondary.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 14,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  application.workplace!,
+                                  style: Theme.of(context)
+                                      .textTheme.bodySmall
+                                      ?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
                 // 날짜 정보
                 Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
+                  spacing: 12,
+                  runSpacing: 10,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
+                    // 마감일
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -200,7 +362,34 @@ class ApplicationListItem extends StatelessWidget {
                         ),
                       ],
                     ),
-                    // 다음 전형 일정이 있으면 표시
+                    // 서류 발표일
+                    if (application.announcementDate != null)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.campaign,
+                              size: 16,
+                              color: AppColors.success,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '발표: ${_formatDate(application.announcementDate!)}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    // 다음 전형 일정
                     if (application.nextStages.isNotEmpty)
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -219,7 +408,7 @@ class ApplicationListItem extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '면접: ${_formatDate(application.nextStages.first.date)}',
+                            '${application.nextStages.first.type}: ${_formatDate(application.nextStages.first.date)}',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 13,
@@ -229,7 +418,71 @@ class ApplicationListItem extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+
+                // 준비 체크리스트 진행률 (있으면)
+                if (application.preparationChecklist.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.checklist,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '준비 체크리스트',
+                                  style: Theme.of(context)
+                                      .textTheme.bodySmall
+                                      ?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  '${application.preparationChecklist.where((item) => item.isChecked).length}/${application.preparationChecklist.length}',
+                                  style: Theme.of(context)
+                                      .textTheme.bodySmall
+                                      ?.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: application.preparationChecklist.isEmpty
+                                    ? 0
+                                    : application.preparationChecklist
+                                            .where((item) => item.isChecked)
+                                            .length /
+                                        application.preparationChecklist.length,
+                                backgroundColor:
+                                    AppColors.textSecondary.withValues(alpha: 0.1),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.primary,
+                                ),
+                                minHeight: 4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
                 // 상태 칩
                 StatusChip(status: application.status),
