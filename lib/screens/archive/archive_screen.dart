@@ -13,6 +13,7 @@ import 'widgets/archive_folder_item.dart';
 import 'widgets/archive_application_list.dart';
 import 'widgets/create_folder_dialog.dart';
 import 'widgets/edit_folder_dialog.dart';
+import 'widgets/edit_folder_color_dialog.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -77,8 +78,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     List<Application> apps;
     
     if (_selectedFolderId == null) {
-      // 전체 보관함: 폴더에 속하지 않은 공고만
-      apps = _archivedApplications.where((app) => app.archiveFolderId == null).toList();
+      // 전체 보관함: 모든 보관함 공고 표시 (폴더 구분 없이)
+      apps = _archivedApplications.toList();
     } else {
       // 특정 폴더의 공고만
       apps = _archivedApplications.where((app) => app.archiveFolderId == _selectedFolderId).toList();
@@ -175,6 +176,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               ),
               // 구분선
               const Divider(height: 1),
+              // 폴더 색상 변경
+              ListTile(
+                leading: Icon(Icons.palette_outlined, color: AppColors.primary),
+                title: const Text('폴더 색상 변경'),
+                onTap: () => Navigator.pop(context, 'changeColor'),
+              ),
+              // 구분선
+              const Divider(height: 1),
               // 폴더 삭제
               ListTile(
                 leading: Icon(Icons.delete_outline, color: AppColors.error),
@@ -201,6 +210,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
     if (result == 'rename') {
       await _renameFolder(folder);
+    } else if (result == 'changeColor') {
+      await _changeFolderColor(folder);
     } else if (result == 'delete') {
       await _deleteFolder(folder);
     }
@@ -240,6 +251,47 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('폴더 이름 변경에 실패했습니다.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // 폴더 색상 변경
+  Future<void> _changeFolderColor(ArchiveFolder folder) async {
+    final result = await showDialog<ArchiveFolder>(
+      context: context,
+      builder: (context) => EditFolderColorDialog(folder: folder),
+    );
+
+    if (result != null) {
+      final success = await _storageService.saveArchiveFolder(result);
+      if (success && mounted) {
+        await _refreshData();
+        if (mounted) {
+          // 성공 메시지
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text('폴더 색상이 변경되었습니다.'),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else if (mounted) {
+        // 실패 메시지
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('폴더 색상 변경에 실패했습니다.'),
             backgroundColor: AppColors.error,
           ),
         );
