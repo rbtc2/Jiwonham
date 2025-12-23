@@ -5,7 +5,12 @@ import '../../../constants/app_colors.dart';
 import '../../../models/archive_folder.dart';
 
 class CreateFolderDialog extends StatefulWidget {
-  const CreateFolderDialog({super.key});
+  final int? nextOrder;
+
+  const CreateFolderDialog({
+    super.key,
+    this.nextOrder,
+  });
 
   @override
   State<CreateFolderDialog> createState() => _CreateFolderDialogState();
@@ -46,6 +51,7 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
       id: 'folder_${DateTime.now().millisecondsSinceEpoch}_${_nameController.text.trim().hashCode}',
       name: _nameController.text.trim(),
       color: _selectedColor.toARGB32(),
+      order: widget.nextOrder ?? 0,
     );
     Navigator.pop(context, folder);
   }

@@ -282,12 +282,81 @@ class StorageService {
         }
       }
 
-      // 생성일 기준으로 정렬
-      folders.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      // order 기준으로 정렬 (order가 같으면 생성일 기준)
+      folders.sort((a, b) {
+        if (a.order != b.order) {
+          return a.order.compareTo(b.order);
+        }
+        return a.createdAt.compareTo(b.createdAt);
+      });
 
       return folders;
     } catch (e) {
       return [];
+    }
+  }
+
+  // 폴더 순서 변경 (좌측/우측 이동)
+  Future<bool> moveFolderOrder(String folderId, bool moveLeft) async {
+    if (_prefs == null) {
+      await init();
+    }
+
+    try {
+      final allFolders = await getAllArchiveFolders();
+      final currentFolderIndex = allFolders.indexWhere((f) => f.id == folderId);
+      
+      if (currentFolderIndex == -1) {
+        return false;
+      }
+
+      // 좌측 이동 (앞으로): order 감소
+      if (moveLeft) {
+        if (currentFolderIndex == 0) {
+          // 이미 맨 앞이면 이동 불가
+          return false;
+        }
+        // 이전 폴더와 order 교환
+        final currentFolder = allFolders[currentFolderIndex];
+        final previousFolder = allFolders[currentFolderIndex - 1];
+        
+        final updatedCurrent = currentFolder.copyWith(
+          order: previousFolder.order,
+          updatedAt: DateTime.now(),
+        );
+        final updatedPrevious = previousFolder.copyWith(
+          order: currentFolder.order,
+          updatedAt: DateTime.now(),
+        );
+        
+        await saveArchiveFolder(updatedCurrent);
+        await saveArchiveFolder(updatedPrevious);
+      } else {
+        // 우측 이동 (뒤로): order 증가
+        if (currentFolderIndex == allFolders.length - 1) {
+          // 이미 맨 뒤면 이동 불가
+          return false;
+        }
+        // 다음 폴더와 order 교환
+        final currentFolder = allFolders[currentFolderIndex];
+        final nextFolder = allFolders[currentFolderIndex + 1];
+        
+        final updatedCurrent = currentFolder.copyWith(
+          order: nextFolder.order,
+          updatedAt: DateTime.now(),
+        );
+        final updatedNext = nextFolder.copyWith(
+          order: currentFolder.order,
+          updatedAt: DateTime.now(),
+        );
+        
+        await saveArchiveFolder(updatedCurrent);
+        await saveArchiveFolder(updatedNext);
+      }
+
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 

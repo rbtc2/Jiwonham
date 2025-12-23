@@ -14,6 +14,7 @@ import 'widgets/archive_application_list.dart';
 import 'widgets/create_folder_dialog.dart';
 import 'widgets/edit_folder_dialog.dart';
 import 'widgets/edit_folder_color_dialog.dart';
+import 'widgets/move_folder_dialog.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -99,9 +100,12 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   }
 
   Future<void> _createFolder() async {
+    // 다음 order 값 계산 (현재 폴더 개수)
+    final nextOrder = _folders.length;
+    
     final result = await showDialog<ArchiveFolder>(
       context: context,
-      builder: (context) => const CreateFolderDialog(),
+      builder: (context) => CreateFolderDialog(nextOrder: nextOrder),
     );
 
     if (result != null) {
@@ -184,6 +188,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               ),
               // 구분선
               const Divider(height: 1),
+              // 폴더 위치 변경
+              ListTile(
+                leading: Icon(Icons.swap_horiz, color: AppColors.primary),
+                title: const Text('폴더 위치 변경'),
+                onTap: () => Navigator.pop(context, 'movePosition'),
+              ),
+              // 구분선
+              const Divider(height: 1),
               // 폴더 삭제
               ListTile(
                 leading: Icon(Icons.delete_outline, color: AppColors.error),
@@ -212,6 +224,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       await _renameFolder(folder);
     } else if (result == 'changeColor') {
       await _changeFolderColor(folder);
+    } else if (result == 'movePosition') {
+      await _moveFolderPosition(folder);
     } else if (result == 'delete') {
       await _deleteFolder(folder);
     }
@@ -293,6 +307,29 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           const SnackBar(
             content: Text('폴더 색상 변경에 실패했습니다.'),
             backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // 폴더 위치 변경
+  Future<void> _moveFolderPosition(ArchiveFolder folder) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => MoveFolderDialog(
+        folder: folder,
+        allFolders: _folders,
+      ),
+    );
+
+    if (result == true && mounted) {
+      await _refreshData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('폴더 위치가 변경되었습니다.'),
+            backgroundColor: AppColors.success,
           ),
         );
       }
