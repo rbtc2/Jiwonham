@@ -7,33 +7,24 @@ import '../models/application_form_data.dart';
 import '../models/next_stage.dart';
 import '../models/notification_settings.dart';
 import '../models/application_status.dart';
+import '../utils/date_time_form_utils.dart';
 
 class ApplicationFormConverter {
   // Application을 ApplicationFormData로 변환
   static ApplicationFormData fromApplication(Application application) {
-    // 시간 정보 추출
-    bool deadlineIncludeTime = false;
-    TimeOfDay? deadlineTime;
-    if (application.deadline.hour != 0 || application.deadline.minute != 0) {
-      deadlineIncludeTime = true;
-      deadlineTime = TimeOfDay(
-        hour: application.deadline.hour,
-        minute: application.deadline.minute,
-      );
-    }
+    // Phase 13: 시간 정보 추출 - DateTimeFormUtils 사용
+    final deadlineTimeInfo =
+        DateTimeFormUtils.extractTimeInfo(application.deadline);
+    final bool deadlineIncludeTime = deadlineTimeInfo.includeTime;
+    final TimeOfDay? deadlineTime = deadlineTimeInfo.time;
 
     bool announcementDateIncludeTime = false;
     TimeOfDay? announcementDateTime;
     if (application.announcementDate != null) {
-      final announcementHour = application.announcementDate!.hour;
-      final announcementMinute = application.announcementDate!.minute;
-      if (announcementHour != 0 || announcementMinute != 0) {
-        announcementDateIncludeTime = true;
-        announcementDateTime = TimeOfDay(
-          hour: announcementHour,
-          minute: announcementMinute,
-        );
-      }
+      final announcementTimeInfo =
+          DateTimeFormUtils.extractTimeInfo(application.announcementDate!);
+      announcementDateIncludeTime = announcementTimeInfo.includeTime;
+      announcementDateTime = announcementTimeInfo.time;
     }
 
     // NextStage 리스트 변환

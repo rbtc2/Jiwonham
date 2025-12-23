@@ -9,6 +9,7 @@ import '../../widgets/form_fields/labeled_text_field.dart';
 import '../../widgets/form_fields/link_text_field.dart';
 import '../../widgets/form_fields/date_time_field.dart';
 import '../../widgets/form_fields/experience_level_field.dart';
+import '../../utils/date_time_form_utils.dart';
 
 class RequiredFieldsSection extends StatelessWidget {
   final ApplicationFormData formData;
@@ -25,20 +26,7 @@ class RequiredFieldsSection extends StatelessWidget {
     this.onTestLink,
   });
 
-  // DateTime과 TimeOfDay를 결합하는 헬퍼 함수
-  DateTime? _combineDateTime(DateTime? date, TimeOfDay? time, bool includeTime) {
-    if (date == null) return null;
-    if (includeTime && time != null) {
-      return DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-      );
-    }
-    return DateTime(date.year, date.month, date.day);
-  }
+  // Phase 13: DateTime과 TimeOfDay 결합은 DateTimeFormUtils로 분리됨
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +99,7 @@ class RequiredFieldsSection extends StatelessWidget {
           includeTime: formData.deadlineIncludeTime,
           selectedTime: formData.deadlineTime,
           onDateSelected: (date) {
-            final newDeadline = _combineDateTime(
+            final newDeadline = DateTimeFormUtils.combineDateTime(
               date,
               formData.deadlineTime,
               formData.deadlineIncludeTime,
@@ -127,7 +115,7 @@ class RequiredFieldsSection extends StatelessWidget {
             final newDeadlineTime = includeTime
                 ? (formData.deadlineTime ?? const TimeOfDay(hour: 0, minute: 0))
                 : null;
-            final newDeadline = _combineDateTime(
+            final newDeadline = DateTimeFormUtils.combineDateTime(
               formData.deadline,
               newDeadlineTime,
               includeTime,
@@ -141,7 +129,7 @@ class RequiredFieldsSection extends StatelessWidget {
             );
           },
           onTimeSelected: (time) {
-            final newDeadline = _combineDateTime(
+            final newDeadline = DateTimeFormUtils.combineDateTime(
               formData.deadline,
               time,
               formData.deadlineIncludeTime,
@@ -171,7 +159,7 @@ class RequiredFieldsSection extends StatelessWidget {
           includeTime: formData.announcementDateIncludeTime,
           selectedTime: formData.announcementDateTime,
           onDateSelected: (date) {
-            final newAnnouncementDate = _combineDateTime(
+            final newAnnouncementDate = DateTimeFormUtils.combineDateTime(
               date,
               formData.announcementDateTime,
               formData.announcementDateIncludeTime,
@@ -185,7 +173,7 @@ class RequiredFieldsSection extends StatelessWidget {
                 ? (formData.announcementDateTime ??
                     const TimeOfDay(hour: 0, minute: 0))
                 : null;
-            final newAnnouncementDate = _combineDateTime(
+            final newAnnouncementDate = DateTimeFormUtils.combineDateTime(
               formData.announcementDate,
               newAnnouncementDateTime,
               includeTime,
@@ -199,7 +187,7 @@ class RequiredFieldsSection extends StatelessWidget {
             );
           },
           onTimeSelected: (time) {
-            final newAnnouncementDate = _combineDateTime(
+            final newAnnouncementDate = DateTimeFormUtils.combineDateTime(
               formData.announcementDate,
               time,
               formData.announcementDateIncludeTime,
