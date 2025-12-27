@@ -106,6 +106,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final result = await CreateFolderDialog.show(
       context,
       nextOrder,
+      existingFolders: _folders,
     );
 
     if (result != null) {

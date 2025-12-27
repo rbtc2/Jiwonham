@@ -28,6 +28,7 @@ class ModernBottomSheetActions {
   final Color? confirmButtonColor;
   final bool showCancelButton;
   final bool showConfirmButton;
+  final bool confirmButtonEnabled;
 
   const ModernBottomSheetActions({
     this.cancelText,
@@ -37,14 +38,16 @@ class ModernBottomSheetActions {
     this.confirmButtonColor,
     this.showCancelButton = true,
     this.showConfirmButton = true,
+    this.confirmButtonEnabled = true,
   });
 }
 
 /// 모던 Bottom Sheet 위젯
-class ModernBottomSheet extends StatelessWidget {
+class ModernBottomSheet extends StatefulWidget {
   final ModernBottomSheetHeader? header;
   final Widget content;
   final ModernBottomSheetActions? actions;
+  final ValueNotifier<ModernBottomSheetActions?>? actionsNotifier;
   final bool isScrollControlled;
   final double? maxHeight;
 
@@ -53,9 +56,31 @@ class ModernBottomSheet extends StatelessWidget {
     this.header,
     required this.content,
     this.actions,
+    this.actionsNotifier,
     this.isScrollControlled = true,
     this.maxHeight,
-  });
+  }) : assert(actions == null || actionsNotifier == null, 'actions와 actionsNotifier는 동시에 사용할 수 없습니다.');
+
+  @override
+  State<ModernBottomSheet> createState() => _ModernBottomSheetState();
+}
+
+class _ModernBottomSheetState extends State<ModernBottomSheet> {
+  @override
+  void initState() {
+    super.initState();
+    widget.actionsNotifier?.addListener(_onActionsChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.actionsNotifier?.removeListener(_onActionsChanged);
+    super.dispose();
+  }
+
+  void _onActionsChanged() {
+    setState(() {});
+  }
 
   /// 간단한 입력 다이얼로그 표시
   static Future<T?> showInput<T>({
@@ -179,9 +204,11 @@ class ModernBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentActions = widget.actionsNotifier?.value ?? widget.actions;
+    
     Widget sheetContent = Container(
-      constraints: maxHeight != null
-          ? BoxConstraints(maxHeight: maxHeight!)
+      constraints: widget.maxHeight != null
+          ? BoxConstraints(maxHeight: widget.maxHeight!)
           : null,
       decoration: const BoxDecoration(
         color: AppColors.surface,
@@ -208,25 +235,25 @@ class ModernBottomSheet extends StatelessWidget {
               ),
             ),
             // 헤더
-            if (header != null) ...[
+            if (widget.header != null) ...[
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: header!.iconColor.withValues(alpha: 0.1),
+                      color: widget.header!.iconColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      header!.icon,
-                      color: header!.iconColor,
+                      widget.header!.icon,
+                      color: widget.header!.iconColor,
                       size: 24,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      header!.title,
+                      widget.header!.title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 22,
@@ -240,13 +267,13 @@ class ModernBottomSheet extends StatelessWidget {
             // 콘텐츠
             Flexible(
               child: SingleChildScrollView(
-                child: content,
+                child: widget.content,
               ),
             ),
             // 액션 버튼
-            if (actions != null) ...[
+            if (currentActions != null) ...[
               const SizedBox(height: 24),
-              _buildActions(context),
+              _buildActions(context, currentActions),
             ],
             SizedBox(
               height: MediaQuery.of(context).viewInsets.bottom > 0 
@@ -258,9 +285,9 @@ class ModernBottomSheet extends StatelessWidget {
       ),
     );
 
-    if (maxHeight != null) {
+    if (widget.maxHeight != null) {
       sheetContent = ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight!),
+        constraints: BoxConstraints(maxHeight: widget.maxHeight!),
         child: sheetContent,
       );
     }
@@ -268,8 +295,7 @@ class ModernBottomSheet extends StatelessWidget {
     return sheetContent;
   }
 
-  Widget _buildActions(BuildContext context) {
-    final actions = this.actions!;
+  Widget _buildActions(BuildContext context, ModernBottomSheetActions actions) {
     final hasBothButtons = actions.showCancelButton && actions.showConfirmButton;
 
     if (!actions.showCancelButton && !actions.showConfirmButton) {
@@ -282,10 +308,14 @@ class ModernBottomSheet extends StatelessWidget {
         return SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: actions.onConfirm,
+            onPressed: actions.confirmButtonEnabled ? actions.onConfirm : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: actions.confirmButtonColor ?? AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: actions.confirmButtonEnabled
+                  ? (actions.confirmButtonColor ?? AppColors.primary)
+                  : Colors.grey.shade300,
+              foregroundColor: actions.confirmButtonEnabled
+                  ? Colors.white
+                  : Colors.grey.shade600,
               padding: const EdgeInsets.symmetric(vertical: 16),
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -356,10 +386,14 @@ class ModernBottomSheet extends StatelessWidget {
           Expanded(
             flex: 2,
             child: ElevatedButton(
-              onPressed: actions.onConfirm,
+              onPressed: actions.confirmButtonEnabled ? actions.onConfirm : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: actions.confirmButtonColor ?? AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: actions.confirmButtonEnabled
+                    ? (actions.confirmButtonColor ?? AppColors.primary)
+                    : Colors.grey.shade300,
+                foregroundColor: actions.confirmButtonEnabled
+                    ? Colors.white
+                    : Colors.grey.shade600,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
