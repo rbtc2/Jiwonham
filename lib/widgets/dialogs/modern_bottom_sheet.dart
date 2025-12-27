@@ -61,27 +61,6 @@ class ModernBottomSheet extends StatefulWidget {
     this.maxHeight,
   }) : assert(actions == null || actionsNotifier == null, 'actions와 actionsNotifier는 동시에 사용할 수 없습니다.');
 
-  @override
-  State<ModernBottomSheet> createState() => _ModernBottomSheetState();
-}
-
-class _ModernBottomSheetState extends State<ModernBottomSheet> {
-  @override
-  void initState() {
-    super.initState();
-    widget.actionsNotifier?.addListener(_onActionsChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.actionsNotifier?.removeListener(_onActionsChanged);
-    super.dispose();
-  }
-
-  void _onActionsChanged() {
-    setState(() {});
-  }
-
   /// 간단한 입력 다이얼로그 표시
   static Future<T?> showInput<T>({
     required BuildContext context,
@@ -200,6 +179,27 @@ class _ModernBottomSheetState extends State<ModernBottomSheet> {
         );
       },
     );
+  }
+
+  @override
+  State<ModernBottomSheet> createState() => _ModernBottomSheetState();
+}
+
+class _ModernBottomSheetState extends State<ModernBottomSheet> {
+  @override
+  void initState() {
+    super.initState();
+    widget.actionsNotifier?.addListener(_onActionsChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.actionsNotifier?.removeListener(_onActionsChanged);
+    super.dispose();
+  }
+
+  void _onActionsChanged() {
+    setState(() {});
   }
 
   @override
