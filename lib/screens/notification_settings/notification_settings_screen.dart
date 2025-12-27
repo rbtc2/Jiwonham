@@ -6,6 +6,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../widgets/modern_card.dart';
 import '../../services/storage_service.dart';
+import '../../widgets/dialogs/app_info_dialog.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -452,17 +453,10 @@ class _NotificationSettingsScreenState
           const SizedBox(height: 16),
           _buildInfoItem(
             context,
-            icon: Icons.phone_android,
-            title: '${AppStrings.appVersion}: 1.0.0',
-            isReadOnly: true,
-          ),
-          const Divider(height: 1),
-          _buildInfoItem(
-            context,
             icon: Icons.person_outline,
             title: AppStrings.developerInfo,
             onTap: () {
-              // TODO: 개발자 정보 다이얼로그 표시
+              AppInfoDialog.show(context);
             },
           ),
           const Divider(height: 1),

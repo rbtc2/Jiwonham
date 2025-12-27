@@ -186,7 +186,7 @@ class AppStrings {
   static const String savedApplications = '저장된 공고';
   static const String info = '정보';
   static const String appVersion = '앱 버전';
-  static const String developerInfo = '개발자 정보';
+  static const String developerInfo = '앱 정보';
   static const String sendFeedback = '피드백 보내기';
   static const String count = '개';
 }
